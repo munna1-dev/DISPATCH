@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US Courier | Global Logistics & Verified Tracking Portal</title>
+  <meta name="description" content="Official US Courier portal for live parcel tracking, express freight delivery, and verified shipment waybill receipts.">
+  
+  <!-- CSS & FontAwesome -->
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- QR Libraries -->
+  
+  <!-- Dynamic Schema.org JSON-LD structured data for Google Web Search -->
+  <script id="schema-jsonld" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ParcelDelivery",
+    "deliveryStatus": "https://schema.org/InTransit",
+    "trackingNumber": "",
+    "provider": {
+      "@type": "Organization",
+      "name": "US Courier Enterprise Logistics",
+      "url": "https://registry.npmjs.org"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <a onclick="showSection('home')" class="logo-brand">
+      <i class="fa-solid fa-truck-fast"></i>
+      <span>US COURIER</span>
+    </a>
+    <nav>
+      <ul>
+        <li><a onclick="showSection('home')" id="nav-home" class="active">Home</a></li>
+        <li><a onclick="showSection('tracking')" id="nav-tracking">Track Parcel</a></li>
+        <li><a onclick="showSection('services')" id="nav-services">Services</a></li>
+        <li><a onclick="showSection('contact')" id="nav-contact">Contact Us</a></li>
+        <li><a onclick="showSection('admin-login')" id="nav-admin">Admin Portal</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main Viewport -->
+  <main id="app-viewport">
+    
+    <!-- View: Home -->
+    <section id="view-home">
+      <div class="hero">
+        <h1>Global Precision Freight & Instant Tracking</h1>
+        <p>Real-time location telemetry, direct QR code scanning, and verified shipment custody across international supply chains.</p>
+        
+        <div class="tracking-search-card">
+          <form onsubmit="handleTrackSubmit(event, 'home-tracking-input')">
+            <div class="search-input-group">
+              <input type="text" id="home-tracking-input" class="form-control" placeholder="Enter Tracking Waybill Number..." value="" required>
+              <button type="submit" class="btn-gold"><i class="fa-solid fa-magnifying-glass"></i> Track</button>
+              <button type="button" onclick="openQrScannerModal()" class="btn-outline" style="border-color: var(--accent-gold); color: var(--accent-gold);">
+                <i class="fa-solid fa-qrcode"></i> Scan QR
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="container">
+        <!-- Live Operations Metrics -->
+        <div class="grid-4" style="margin-top: -3rem; margin-bottom: 3rem; z-index: 10; position: relative;">
+          <div class="card" style="text-align: center; border-color: var(--accent-gold);">
+            <h2 style="color: var(--accent-gold);">99.8%</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">On-Time Arrival Rate</p>
+          </div>
+          <div class="card" style="text-align: center; border-color: var(--accent-gold);">
+            <h2 style="color: var(--accent-gold);">140+</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Air & Ocean Gateways</p>
+          </div>
+          <div class="card" style="text-align: center; border-color: var(--accent-gold);">
+            <h2 style="color: var(--accent-gold);">24 / 7</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Live Telemetry Monitoring</p>
+          </div>
+          <div class="card" style="text-align: center; border-color: var(--accent-gold);">
+            <h2 style="color: var(--accent-gold);">256-Bit</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Cryptographic Authenticity</p>
+          </div>
+        </div>
+
+        <h2 style="text-align: center; margin-bottom: 2rem;">Logistics Solutions & Network Capabilities</h2>
+
+        <div class="grid-3">
+          <div class="card">
+            <i class="fa-solid fa-plane-departure" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <h3>Priority Air Cargo</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Scheduled express air freight connecting North America, Asia-Pacific, and European transit hubs.</p>
+          </div>
+          <div class="card">
+            <i class="fa-solid fa-qrcode" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <h3>QR Code Verification</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Scan package waybill QR codes instantly using your mobile or desktop camera for instant status reports.</p>
+          </div>
+          <div class="card">
+            <i class="fa-solid fa-file-invoice" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <h3>Official Certified Waybills</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Print verified official tracking receipts complete with dynamic QR validation and official company seals.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View: Services -->
+    <section id="view-services" style="display: none;">
+      <div class="container">
+        <div class="card">
+          <h2>Logistics & Courier Services</h2>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">US Courier operates a multi-modal freight network covering ground, air, and ocean transit routes.</p>
+          <div class="grid-2">
+            <div>
+              <h4 style="color: var(--accent-gold);">Domestic Ground Express</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted);">Scheduled time-definite distribution across North American hubs with direct vehicle telemetry.</p>
+            </div>
+            <div>
+              <h4 style="color: var(--accent-gold);">International Air Cargo</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted);">Priority global air gateways facilitating customs clearance and fast transit between US, TW, and EU hubs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View: Public Contact Us -->
+    <section id="view-contact" style="display: none;">
+      <div class="container" style="max-width: 800px;">
+        <div class="card">
+          <h2>Contact US Courier Support</h2>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Send a direct dispatch message to our operations management desk.</p>
+          
+          <div id="contact-alert" style="display: none; padding: 0.8rem; margin-bottom: 1rem; border-radius: 6px; font-weight: 600;"></div>
+
+          <form onsubmit="handleContactSubmit(event)">
+            <div class="grid-2">
+              <div style="margin-bottom: 1rem;">
+                <label style="font-size: 0.8rem; color: var(--text-muted);">Your Name</label>
+                <input type="text" id="cnt-name" class="form-control" placeholder="John Doe" required>
+              </div>
+              <div style="margin-bottom: 1rem;">
+                <label style="font-size: 0.8rem; color: var(--text-muted);">Email Address</label>
+                <input type="email" id="cnt-email" class="form-control" placeholder="john@example.com" required>
+              </div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label style="font-size: 0.8rem; color: var(--text-muted);">Subject / Waybill Inquiry</label>
+              <input type="text" id="cnt-subject" class="form-control" placeholder="Inquiry regarding shipment" required>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+              <label style="font-size: 0.8rem; color: var(--text-muted);">Message</label>
+              <textarea id="cnt-message" class="form-control" rows="5" placeholder="Please provide details..." required></textarea>
+            </div>
+            <button type="submit" class="btn-gold"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- View: Dedicated Tracking Page -->
+    <section id="view-tracking" style="display: none;">
+      <div class="container">
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <form onsubmit="handleTrackSubmit(event, 'page-tracking-input')">
+            <div class="search-input-group">
+              <input type="text" id="page-tracking-input" class="form-control" placeholder="Enter Tracking Waybill Number..." required>
+              <button type="submit" class="btn-gold"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+              <button type="button" onclick="openQrScannerModal()" class="btn-outline" style="border-color: var(--accent-gold); color: var(--accent-gold);">
+                <i class="fa-solid fa-qrcode"></i> Scan QR
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div id="tracking-loading" class="card" style="display: none; text-align: center;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-gold);"></i>
+          <p style="margin-top: 0.5rem; color: var(--text-muted);">Fetching logistics telemetry & verifying signature...</p>
+        </div>
+
+        <div id="tracking-error" class="card" style="display: none; border-color: var(--status-delayed); color: var(--status-delayed);"></div>
+
+        <div id="tracking-results" style="display: none;">
+          <div class="card">
+            <div class="console-header">
+              <h3><i class="fa-solid fa-map-location-dot" style="color: var(--accent-gold);"></i> Operations Map & Live Telemetry</h3>
+              <span id="trk-status-badge" class="badge badge-transit">In Transit</span>
+            </div>
+            
+            <div class="map-canvas-container">
+              <canvas id="liveMapCanvas"></canvas>
+            </div>
+
+            <div class="console-telemetry-bar">
+              <div class="telemetry-item">
+                <span class="telemetry-label">Origin Gateway</span>
+                <span id="tel-origin" class="telemetry-val">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Active Facility / Location</span>
+                <span id="tel-current" class="telemetry-val" style="color: var(--accent-gold);">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Destination</span>
+                <span id="tel-destination" class="telemetry-val">-</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Est. Arrival Date</span>
+                <span id="tel-eta" class="telemetry-val">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Waybill Overview</h3>
+                <button onclick="triggerPrintOfficialReceipt()" class="btn-gold" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                  <i class="fa-solid fa-print"></i> Print Official Receipt
+                </button>
+              </div>
+              <table style="width:100%;">
+                <tr><td><strong>Tracking Number:</strong></td> <td id="trk-number-val" style="font-family: monospace; color: var(--accent-gold);">-</td></tr>
+                <tr><td><strong>Service Level:</strong></td> <td id="trk-service-val">-</td></tr>
+                <tr><td><strong>Shipper Name:</strong></td> <td id="trk-sender-val">-</td></tr>
+                <tr><td><strong>Consignee Name:</strong></td> <td id="trk-recipient-val">-</td></tr>
+                <tr><td><strong>Package Count / Wt:</strong></td> <td id="trk-pkg-val">-</td></tr>
+                <tr><td><strong>Declared Value:</strong></td> <td id="trk-val-val">-</td></tr>
+                <tr><td><strong>Cargo Manifest:</strong></td> <td id="trk-desc-val">-</td></tr>
+              </table>
+
+              <!-- QR Code Render Container -->
+              <div style="margin-top: 1.5rem; text-align: center; background: #fff; padding: 1rem; border-radius: 8px;">
+                <div id="public-parcel-qrcode" style="display: inline-block;"></div>
+                <p style="color: #111; font-size: 0.75rem; margin-top: 0.5rem; font-weight: bold;">Scan to Verify Waybill Authenticity</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Shipment Chronology & Event Log</h3>
+              <div id="timeline-container" class="timeline"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View: Admin Login -->
+    <section id="view-admin-login" style="display: none;">
+      <div class="container" style="max-width: 420px; margin-top: 3rem;">
+        <div class="card">
+          <h2 style="text-align: center; margin-bottom: 0.5rem;">US Courier Admin</h2>
+          <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Authorized Operations Management Portal</p>
+          <form onsubmit="handleAdminLogin(event)" autocomplete="off">
+            <div style="margin-bottom: 1rem;">
+              <label style="font-size: 0.8rem; color: var(--text-muted);">Operator Email</label>
+              <input type="email" id="login-email" class="form-control" autocomplete="off" required>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+              <label style="font-size: 0.8rem; color: var(--text-muted);">Password</label>
+              <input type="password" id="login-password" class="form-control" autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="btn-gold" style="width: 100%;">Sign In</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- View: Admin Operations Portal -->
+    <section id="view-admin-dashboard" style="display: none;">
+      <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2>Logistics Operations Console</h2>
+          <div>
+            <button onclick="showModal('modal-create-shipment')" class="btn-gold"><i class="fa-solid fa-plus"></i> New Parcel</button>
+            <button onclick="handleAdminLogout()" class="btn-outline" style="margin-left:0.5rem;">Logout</button>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-bottom: 1.5rem;">
+          <div class="card">
+            <span class="telemetry-label">TOTAL SHIPMENTS</span>
+            <h2 id="kpi-total">0</h2>
+          </div>
+          <div class="card">
+            <span class="telemetry-label">IN TRANSIT</span>
+            <h2 id="kpi-transit" style="color: var(--status-transit);">0</h2>
+          </div>
+          <div class="card">
+            <span class="telemetry-label">DELIVERED</span>
+            <h2 id="kpi-delivered" style="color: var(--status-delivered);">0</h2>
+          </div>
+          <div class="card">
+            <span class="telemetry-label">UNREAD MESSAGES</span>
+            <h2 id="kpi-messages" style="color: var(--accent-gold);">0</h2>
+          </div>
+        </div>
+
+        <!-- Admin Messages Table -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-envelope" style="color: var(--accent-gold);"></i> Operations Dispatch Messages</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sender</th>
+                  <th>Email</th>
+                  <th>Subject</th>
+                  <th>Message</th>
+                  <th>Received</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-messages-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin Shipments Table -->
+        <div class="card">
+          <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-boxes-packing" style="color: var(--accent-gold);"></i> Active Waybills & Parcels</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tracking Number</th>
+                  <th>Origin -> Destination</th>
+                  <th>Current Node</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-shipments-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Camera QR Code Scanner -->
+  <div id="modal-qr-scanner" class="modal-overlay">
+    <div class="card" style="max-width: 500px; width: 90%;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3><i class="fa-solid fa-qrcode" style="color: var(--accent-gold);"></i> Scan Parcel QR Code</h3>
+        <button onclick="closeQrScannerModal()" class="btn-outline" style="padding: 0.2rem 0.6rem;">&times;</button>
+      </div>
+      <div id="qr-reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
+      <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+        Point your camera at a US Courier QR Code to parse tracking waybill.
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal: Create New Parcel -->
+  <div id="modal-create-shipment" class="modal-overlay">
+    <div class="card" style="max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto;">
+      <h3 style="margin-bottom: 1rem;">Generate Express Shipment Waybill</h3>
+      <form onsubmit="handleCreateShipmentSubmit(event)">
+        <div class="grid-2">
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Sender Name</label>
+            <input type="text" id="cs-sender-name" class="form-control" required placeholder="Taiwan Electronics Corp">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Sender City / Country</label>
+            <input type="text" id="cs-sender-country" class="form-control" required value="Taipei, Taiwan">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Recipient Name</label>
+            <input type="text" id="cs-recipient-name" class="form-control" required placeholder="Metro Distribution Hub">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Recipient City / Country</label>
+            <input type="text" id="cs-recipient-country" class="form-control" required value="New York, USA">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Origin Gateway</label>
+            <input type="text" id="cs-origin" class="form-control" required placeholder="Taipei, Taiwan">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Destination Gateway</label>
+            <input type="text" id="cs-destination" class="form-control" required placeholder="New York, NY, USA">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Service Level</label>
+            <select id="cs-service" class="form-control">
+              <option>Express Air Freight</option>
+              <option>Standard Ground Express</option>
+              <option>Priority Ocean Container</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Est. Delivery Date</label>
+            <input type="date" id="cs-eta" class="form-control" required>
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Package Count & Weight (kg)</label>
+            <div style="display:flex; gap:0.5rem;">
+              <input type="number" id="cs-pkg-count" class="form-control" value="1" placeholder="Count">
+              <input type="number" step="0.1" id="cs-weight" class="form-control" value="2.5" placeholder="Weight">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Declared Value</label>
+            <div style="display:flex; gap:0.5rem;">
+              <select id="cs-currency" class="form-control" style="width: 90px;">
+                <option>USD</option><option>EUR</option><option>GBP</option>
+                <option>NGN</option><option>CAD</option><option>AUD</option>
+                <option>JPY</option><option>CNY</option><option>TWD</option>
+              </select>
+              <input type="number" id="cs-value" class="form-control" placeholder="2500">
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem;">
+          <label style="font-size:0.8rem; color:var(--text-muted);">Cargo Description</label>
+          <input type="text" id="cs-desc" class="form-control" placeholder="Microcontrollers and precision hardware">
+        </div>
+        <div style="margin-top: 1.5rem; text-align: right;">
+          <button type="button" onclick="hideModal('modal-create-shipment')" class="btn-outline">Cancel</button>
+          <button type="submit" class="btn-gold">Generate & Save Waybill</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Update Parcel Telemetry & Status Form -->
+  <div id="modal-update-shipment" class="modal-overlay">
+    <div class="card" style="max-width: 600px; width: 90%;">
+      <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-pen-to-square" style="color:var(--accent-gold);"></i> Update Parcel Telemetry & Node</h3>
+      <form onsubmit="handleUpdateShipmentSubmit(event)">
+        <input type="hidden" id="us-shipment-id">
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size:0.8rem; color:var(--text-muted);">Select Status Option or Enter Custom</label>
+          <select id="us-status-select" class="form-control" onchange="toggleCustomStatusInput(this)">
+            <option value="In Transit">In Transit</option>
+            <option value="Out for Delivery">Out for Delivery</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Customs Hold">Customs Hold</option>
+            <option value="Delayed">Delayed</option>
+            <option value="CUSTOM">-- Enter Custom Status --</option>
+          </select>
+          <input type="text" id="us-status-custom" class="form-control" placeholder="Type custom status..." style="display:none; margin-top:0.5rem;">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size:0.8rem; color:var(--text-muted);">Current Facility / Node Location</label>
+          <input type="text" id="us-location" class="form-control" required placeholder="Transit Gateway - Los Angeles, CA">
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Event Timestamp Date & Time</label>
+            <input type="datetime-local" id="us-timestamp" class="form-control" required>
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Updated Est. Delivery Date</label>
+            <input type="date" id="us-eta" class="form-control">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-size:0.8rem; color:var(--text-muted);">Event Audit Log Description</label>
+          <input type="text" id="us-description" class="form-control" placeholder="Inspected at customs authority and released for flight clearance">
+        </div>
+
+        <div style="text-align: right;">
+          <button type="button" onclick="hideModal('modal-update-shipment')" class="btn-outline">Cancel</button>
+          <button type="submit" class="btn-gold">Update Telemetry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Printable Official Waybill Receipt Sheet -->
+  <div id="printable-receipt-container" style="display:none;">
+    <div class="official-receipt-sheet">
+      <div class="receipt-header">
+        <div>
+          <h1 style="font-size:1.8rem; color:#111; margin-bottom:0.2rem;"><i class="fa-solid fa-truck-fast"></i> US COURIER</h1>
+          <p style="font-size:0.8rem; color:#555;">ENTERPRISE LOGISTICS & GLOBAL FREIGHT SERVICES</p>
+        </div>
+        <div style="text-align:right;">
+          <h2 style="font-size:1.1rem; color:#b30000;">OFFICIAL WAYBILL RECEIPT</h2>
+          <p style="font-size:0.8rem; color:#555;" id="prt-date">Date: </p>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; background:#f9f9f9; padding:1rem; border:1px solid #ddd;">
+        <div>
+          <p style="font-size:0.75rem; color:#666; text-transform:uppercase;">Tracking Number</p>
+          <h2 id="prt-tracking" style="font-family:monospace; color:#111;">-</h2>
+        </div>
+        <div>
+          <p style="font-size:0.75rem; color:#666; text-transform:uppercase;">Service Level</p>
+          <h3 id="prt-service" style="color:#111;">-</h3>
+        </div>
+        <div>
+          <p style="font-size:0.75rem; color:#666; text-transform:uppercase;">Current Status</p>
+          <h3 id="prt-status" style="color:#2ecc71;">-</h3>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+        <div style="border:1px solid #ddd; padding:1rem;">
+          <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:0.85rem;">SHIPPER DETAILS</h4>
+          <p id="prt-sender-name"><strong>Name:</strong> -</p>
+          <p id="prt-sender-origin"><strong>Origin:</strong> -</p>
+        </div>
+        <div style="border:1px solid #ddd; padding:1rem;">
+          <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:0.85rem;">CONSIGNEE DETAILS</h4>
+          <p id="prt-recipient-name"><strong>Name:</strong> -</p>
+          <p id="prt-recipient-dest"><strong>Destination:</strong> -</p>
+        </div>
+      </div>
+
+      <div style="border:1px solid #ddd; padding:1rem; margin-bottom:1.5rem;">
+        <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:0.85rem;">CARGO & MANIFEST DATA</h4>
+        <p id="prt-desc"><strong>Cargo Manifest:</strong> -</p>
+        <p id="prt-pkg"><strong>Package Count / Weight:</strong> -</p>
+        <p id="prt-value"><strong>Declared Value:</strong> -</p>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem;">
+        <div id="prt-qrcode-box"></div>
+        <div style="text-align:center; margin-right:3rem;">
+          <div style="border-bottom:1px solid #111; width:200px; margin-bottom:0.3rem;"></div>
+          <p style="font-size:0.75rem; color:#555;">Authorized Dispatch Officer</p>
+        </div>
+      </div>
+
+      <!-- Official Verification Stamp -->
+      <div class="receipt-stamp">
+        <span>US COURIER</span>
+        <span>VERIFIED</span>
+        <span>OFFICIAL SEAL</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>
