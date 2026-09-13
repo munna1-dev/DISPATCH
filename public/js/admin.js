@@ -171,7 +171,7 @@ async function loadAdminDashboard() {
               "
             >
               <i
-                class="fa-solid fa-inbox"
+                class="icon icon-inbox"
                 style="
                   font-size:1.5rem;
                   margin-bottom:0.5rem;
@@ -281,7 +281,7 @@ async function loadAdminDashboard() {
                   "
                   onclick="openMessageReply(${m.id})"
                 >
-                  <i class="fa-solid fa-reply"></i>
+                  <i class="icon icon-reply"></i>
                   Reply
                 </button>
 
@@ -314,7 +314,7 @@ async function loadAdminDashboard() {
                   "
                   onclick="deleteMessage(${m.id})"
                 >
-                  <i class="fa-solid fa-trash"></i>
+                  <i class="icon icon-trash"></i>
                   Delete
                 </button>
 
@@ -446,7 +446,7 @@ async function loadAdminDashboard() {
                   )}'
                 )"
               >
-                <i class="fa-solid fa-pen"></i>
+                <i class="icon icon-edit"></i>
                 Update Node
               </button>
             </td>
@@ -1018,7 +1018,7 @@ function createReplyModal() {
           "
           aria-label="Close reply window"
         >
-          <i class="fa-solid fa-xmark"></i>
+          <i class="icon icon-close"></i>
         </button>
 
       </div>
@@ -1186,7 +1186,7 @@ function createReplyModal() {
           class="btn-gold"
           onclick="sendMessageReply()"
         >
-          <i class="fa-solid fa-paper-plane"></i>
+          <i class="icon icon-send"></i>
           Send Reply
         </button>
 
@@ -1347,7 +1347,7 @@ async function sendMessageReply() {
   button.disabled = true;
 
   button.innerHTML = `
-    <i class="fa-solid fa-spinner fa-spin"></i>
+    <i class="icon icon-spinner icon-spin"></i>
     Sending...
   `;
 
@@ -1414,14 +1414,14 @@ async function sendMessageReply() {
           font-weight:600;
         "
       >
-        <i class="fa-solid fa-circle-check"></i>
+        <i class="icon icon-check"></i>
         Reply sent successfully.
       </span>
     `;
 
 
     button.innerHTML = `
-      <i class="fa-solid fa-circle-check"></i>
+      <i class="icon icon-check"></i>
       Sent
     `;
 
@@ -1455,7 +1455,7 @@ async function sendMessageReply() {
           font-weight:600;
         "
       >
-        <i class="fa-solid fa-circle-exclamation"></i>
+        <i class="icon icon-warning"></i>
         ${
           escapeAdminHtml(
             err.message ||
@@ -1468,7 +1468,7 @@ async function sendMessageReply() {
     button.disabled = false;
 
     button.innerHTML = `
-      <i class="fa-solid fa-paper-plane"></i>
+      <i class="icon icon-send"></i>
       Send Reply
     `;
   }

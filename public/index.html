@@ -6,9 +6,9 @@
   <title>US Courier | Global Logistics & Verified Tracking Portal</title>
   <meta name="description" content="Official US Courier portal for live parcel tracking, express freight delivery, and verified shipment waybill receipts.">
   
-  <!-- CSS & FontAwesome -->
+  <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/icons.css">
   
   <!-- QR Libraries -->
   
@@ -32,7 +32,7 @@
   <!-- Navigation -->
   <header>
     <a onclick="showSection('home')" class="logo-brand">
-      <i class="fa-solid fa-truck-fast"></i>
+      <span class="icon icon-truck"></span>
       <span>US COURIER</span>
     </a>
     <nav>
@@ -59,9 +59,9 @@
           <form onsubmit="handleTrackSubmit(event, 'home-tracking-input')">
             <div class="search-input-group">
               <input type="text" id="home-tracking-input" class="form-control" placeholder="Enter Tracking Waybill Number..." value="" required>
-              <button type="submit" class="btn-gold"><i class="fa-solid fa-magnifying-glass"></i> Track</button>
+              <button type="submit" class="btn-gold"><span class="icon icon-search"></span> Track</button>
               <button type="button" onclick="openQrScannerModal()" class="btn-outline" style="border-color: var(--accent-gold); color: var(--accent-gold);">
-                <i class="fa-solid fa-qrcode"></i> Scan QR
+                <span class="icon icon-qr"></span> Scan QR
               </button>
             </div>
           </form>
@@ -93,17 +93,17 @@
 
         <div class="grid-3">
           <div class="card">
-            <i class="fa-solid fa-plane-departure" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <span class="icon icon-plane" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></span>
             <h3>Priority Air Cargo</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Scheduled express air freight connecting North America, Asia-Pacific, and European transit hubs.</p>
           </div>
           <div class="card">
-            <i class="fa-solid fa-qrcode" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <span class="icon icon-qr" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></span>
             <h3>QR Code Verification</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Scan package waybill QR codes instantly using your mobile or desktop camera for instant status reports.</p>
           </div>
           <div class="card">
-            <i class="fa-solid fa-file-invoice" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
+            <span class="icon icon-invoice" style="font-size: 2rem; color: var(--accent-gold); margin-bottom: 1rem;"></span>
             <h3>Official Certified Waybills</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Print verified official tracking receipts complete with dynamic QR validation and official company seals.</p>
           </div>
@@ -159,7 +159,7 @@
               <label style="font-size: 0.8rem; color: var(--text-muted);">Message</label>
               <textarea id="cnt-message" class="form-control" rows="5" placeholder="Please provide details..." required></textarea>
             </div>
-            <button type="submit" class="btn-gold"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
+            <button type="submit" class="btn-gold"><span class="icon icon-send"></span> Send Message</button>
           </form>
         </div>
       </div>
@@ -172,16 +172,16 @@
           <form onsubmit="handleTrackSubmit(event, 'page-tracking-input')">
             <div class="search-input-group">
               <input type="text" id="page-tracking-input" class="form-control" placeholder="Enter Tracking Waybill Number..." required>
-              <button type="submit" class="btn-gold"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+              <button type="submit" class="btn-gold"><span class="icon icon-search"></span> Search</button>
               <button type="button" onclick="openQrScannerModal()" class="btn-outline" style="border-color: var(--accent-gold); color: var(--accent-gold);">
-                <i class="fa-solid fa-qrcode"></i> Scan QR
+                <span class="icon icon-qr"></span> Scan QR
               </button>
             </div>
           </form>
         </div>
 
         <div id="tracking-loading" class="card" style="display: none; text-align: center;">
-          <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--accent-gold);"></i>
+          <span class="icon icon-spinner" style="font-size: 2rem; color: var(--accent-gold);"></span>
           <p style="margin-top: 0.5rem; color: var(--text-muted);">Fetching logistics telemetry & verifying signature...</p>
         </div>
 
@@ -190,7 +190,7 @@
         <div id="tracking-results" style="display: none;">
           <div class="card">
             <div class="console-header">
-              <h3><i class="fa-solid fa-map-location-dot" style="color: var(--accent-gold);"></i> Operations Map & Live Telemetry</h3>
+              <h3><span class="icon icon-map" style="color: var(--accent-gold);"></span> Operations Map & Live Telemetry</h3>
               <span id="trk-status-badge" class="badge badge-transit">In Transit</span>
             </div>
             
@@ -223,7 +223,7 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3>Waybill Overview</h3>
                 <button onclick="triggerPrintOfficialReceipt()" class="btn-gold" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
-                  <i class="fa-solid fa-print"></i> Print Official Receipt
+                  <span class="icon icon-print"></span> Print Official Receipt
                 </button>
               </div>
               <table style="width:100%;">
@@ -279,7 +279,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
           <h2>Logistics Operations Console</h2>
           <div>
-            <button onclick="showModal('modal-create-shipment')" class="btn-gold"><i class="fa-solid fa-plus"></i> New Parcel</button>
+            <button onclick="showModal('modal-create-shipment')" class="btn-gold"><span class="icon icon-plus"></span> New Parcel</button>
             <button onclick="handleAdminLogout()" class="btn-outline" style="margin-left:0.5rem;">Logout</button>
           </div>
         </div>
@@ -305,7 +305,7 @@
 
         <!-- Admin Messages Table -->
         <div class="card" style="margin-bottom: 1.5rem;">
-          <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-envelope" style="color: var(--accent-gold);"></i> Operations Dispatch Messages</h3>
+          <h3 style="margin-bottom: 1rem;"><span class="icon icon-envelope" style="color: var(--accent-gold);"></span> Operations Dispatch Messages</h3>
           <div class="table-responsive">
             <table>
               <thead>
@@ -326,7 +326,7 @@
 
         <!-- Admin Shipments Table -->
         <div class="card">
-          <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-boxes-packing" style="color: var(--accent-gold);"></i> Active Waybills & Parcels</h3>
+          <h3 style="margin-bottom: 1rem;"><span class="icon icon-boxes" style="color: var(--accent-gold);"></span> Active Waybills & Parcels</h3>
           <div class="table-responsive">
             <table>
               <thead>
@@ -352,7 +352,7 @@
   <div id="modal-qr-scanner" class="modal-overlay">
     <div class="card" style="max-width: 500px; width: 90%;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h3><i class="fa-solid fa-qrcode" style="color: var(--accent-gold);"></i> Scan Parcel QR Code</h3>
+        <h3><span class="icon icon-qr" style="color: var(--accent-gold);"></span> Scan Parcel QR Code</h3>
         <button onclick="closeQrScannerModal()" class="btn-outline" style="padding: 0.2rem 0.6rem;">&times;</button>
       </div>
       <div id="qr-reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
@@ -438,7 +438,7 @@
   <!-- Modal: Update Parcel Telemetry & Status Form -->
   <div id="modal-update-shipment" class="modal-overlay">
     <div class="card" style="max-width: 600px; width: 90%;">
-      <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-pen-to-square" style="color:var(--accent-gold);"></i> Update Parcel Telemetry & Node</h3>
+      <h3 style="margin-bottom: 1rem;"><span class="icon icon-edit" style="color:var(--accent-gold);"></span> Update Parcel Telemetry & Node</h3>
       <form onsubmit="handleUpdateShipmentSubmit(event)">
         <input type="hidden" id="us-shipment-id">
         <div style="margin-bottom: 1rem;">
@@ -488,7 +488,7 @@
     <div class="official-receipt-sheet">
       <div class="receipt-header">
         <div>
-          <h1 style="font-size:1.8rem; color:#111; margin-bottom:0.2rem;"><i class="fa-solid fa-truck-fast"></i> US COURIER</h1>
+          <h1 style="font-size:1.8rem; color:#111; margin-bottom:0.2rem;"><span class="icon icon-truck"></span> US COURIER</h1>
           <p style="font-size:0.8rem; color:#555;">ENTERPRISE LOGISTICS & GLOBAL FREIGHT SERVICES</p>
         </div>
         <div style="text-align:right;">

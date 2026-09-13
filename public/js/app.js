@@ -184,7 +184,7 @@ async function handleTrackSubmit(e, inputId) {
 
   } catch (err) {
     loadingDiv.style.display = 'none';
-    errorDiv.innerText = "Unable to retrieve tracking data. Please check server connection.";
+    console.error("[TRACKING] Frontend error:", err); errorDiv.innerText = "Tracking data was received, but the tracking display could not be rendered. Check the browser console.";
     errorDiv.style.display = 'block';
   }
 }
@@ -339,51 +339,70 @@ function initMapCanvas(origin, current, destination, status) {
   if (!canvas) return;
 
   const container = canvas.parentElement;
-  canvas.width = container.clientWidth;
-  canvas.height = container.clientHeight;
+  if (!container) return;
+
+  // Stop any previous animation
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+
+  const width = Math.max(320, container.clientWidth || 600);
+  const height = Math.max(220, container.clientHeight || 280);
+  canvas.width = width;
+  canvas.height = height;
 
   const ctx = canvas.getContext('2d');
-  let progress = 0.5;
-
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  let progress = 0;
 
   function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, width, height);
 
-    ctx.strokeStyle = '#1d1714';
+    // subtle grid
+    ctx.strokeStyle = 'rgba(29, 23, 20, 0.25)';
     ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += 30) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    for (let x = 0; x < width; x += 30) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
     }
-    for (let y = 0; y < canvas.height; y += 30) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    for (let y = 0; y < height; y += 30) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
     }
 
-    const p1 = { x: canvas.width * 0.15, y: canvas.height * 0.65 };
-    const pCurrent = { x: canvas.width * 0.50, y: canvas.height * 0.35 };
-    const p2 = { x: canvas.width * 0.85, y: canvas.height * 0.65 };
+    // route points
+    const p1 = { x: width * 0.12, y: height * 0.68 };
+    const p2 = { x: width * 0.88, y: height * 0.68 };
+    const pCurrent = { x: width * 0.50, y: height * 0.32 };
 
+    // curved route
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
-    ctx.quadraticCurveTo(pCurrent.x, pCurrent.y - 30, p2.x, p2.y);
+    ctx.quadraticCurveTo(pCurrent.x, pCurrent.y - 40, p2.x, p2.y);
     ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 6]);
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([8, 6]);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    drawNode(ctx, p1.x, p1.y, '#a19a95', `Origin: ${origin}`);
-    drawNode(ctx, p2.x, p2.y, '#2ecc71', `Destination: ${destination}`);
+    // origin / destination nodes
+    drawNode(ctx, p1.x, p1.y, '#a19a95', `Origin: ${origin || '—'}`);
+    drawNode(ctx, p2.x, p2.y, '#2ecc71', `Destination: ${destination || '—'}`);
 
-    progress = (progress + 0.015) % Math.PI;
-    const pulseRadius = 8 + Math.sin(progress) * 5;
+    // pulsing active marker
+    progress = (progress + 0.045) % (Math.PI * 2);
+    const pulse = 7 + Math.sin(progress) * 4;
 
     ctx.beginPath();
-    ctx.arc(pCurrent.x, pCurrent.y - 15, pulseRadius + 6, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(52, 152, 219, 0.2)';
+    ctx.arc(pCurrent.x, pCurrent.y - 12, pulse + 8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(52, 152, 219, 0.18)';
     ctx.fill();
 
-    drawNode(ctx, pCurrent.x, pCurrent.y - 15, '#3498db', `Active: ${current}`, true);
+    drawNode(ctx, pCurrent.x, pCurrent.y - 12, '#3498db', `Active: ${current || 'In Transit'}`, true);
 
     animationFrameId = requestAnimationFrame(draw);
   }

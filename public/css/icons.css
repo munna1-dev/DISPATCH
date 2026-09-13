@@ -1,0 +1,43 @@
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.icon::before {
+  display: inline-block;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.icon-truck::before { content: "🚚"; }
+.icon-search::before { content: "⌕"; }
+.icon-qr::before { content: "▦"; }
+.icon-plane::before { content: "✈"; }
+.icon-invoice::before { content: "▤"; }
+.icon-send::before { content: "➤"; }
+.icon-spinner::before { content: "◌"; }
+.icon-map::before { content: "⌖"; }
+.icon-print::before { content: "▣"; }
+.icon-plus::before { content: "+"; }
+.icon-envelope::before { content: "✉"; }
+.icon-boxes::before { content: "▦"; }
+.icon-edit::before { content: "✎"; }
+.icon-inbox::before { content: "▣"; }
+.icon-reply::before { content: "↩"; }
+.icon-trash::before { content: "♲"; }
+.icon-close::before { content: "×"; }
+.icon-check::before { content: "✓"; }
+.icon-warning::before { content: "⚠"; }
+
+.icon-spin {
+  animation: icon-spin 0.9s linear infinite;
+}
+
+@keyframes icon-spin {
+  to { transform: rotate(360deg); }
+}
