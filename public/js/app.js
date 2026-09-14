@@ -1,447 +1,742 @@
-let animationFrameId = null;
-let html5QrScanner = null;
-let currentLoadedShipmentData = null;
+// ============================================================
+// US COURIER — GEOGRAPHIC ROUTE MAP
+// ============================================================
 
-function loadQrCodeLibrary() {
-  if (typeof QRCode === "function") return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
-    script.onload = resolve;
-    script.onerror = () => reject(new Error("QR code library failed to load."));
-    document.head.appendChild(script);
-  });
-}
+const COURIER_GEO = {
+  // Common US locations
+  "new york": [40.7128, -74.0060],
+  "new york, ny": [40.7128, -74.0060],
+  "chicago": [41.8781, -87.6298],
+  "chicago, il": [41.8781, -87.6298],
+  "los angeles": [34.0522, -118.2437],
+  "los angeles, ca": [34.0522, -118.2437],
+  "san francisco": [37.7749, -122.4194],
+  "san francisco, ca": [37.7749, -122.4194],
+  "houston": [29.7604, -95.3698],
+  "houston, tx": [29.7604, -95.3698],
+  "dallas": [32.7767, -96.7970],
+  "dallas, tx": [32.7767, -96.7970],
+  "miami": [25.7617, -80.1918],
+  "miami, fl": [25.7617, -80.1918],
+  "atlanta": [33.7490, -84.3880],
+  "atlanta, ga": [33.7490, -84.3880],
+  "washington": [38.9072, -77.0369],
+  "washington, dc": [38.9072, -77.0369],
+  "boston": [42.3601, -71.0589],
+  "boston, ma": [42.3601, -71.0589],
+  "seattle": [47.6062, -122.3321],
+  "seattle, wa": [47.6062, -122.3321],
+  "denver": [39.7392, -104.9903],
+  "denver, co": [39.7392, -104.9903],
+  "phoenix": [33.4484, -112.0740],
+  "phoenix, az": [33.4484, -112.0740],
+  "detroit": [42.3314, -83.0458],
+  "detroit, mi": [42.3314, -83.0458],
+  "las vegas": [36.1699, -115.1398],
+  "las vegas, nv": [36.1699, -115.1398],
+  "philadelphia": [39.9526, -75.1652],
+  "philadelphia, pa": [39.9526, -75.1652],
 
-// View Navigation Router
-function showSection(sectionId) {
-  const sections = ['home', 'tracking', 'services', 'contact', 'admin-login', 'admin-dashboard'];
-  sections.forEach(s => {
-    const el = document.getElementById(`view-${s}`);
-    if (el) el.style.display = (s === sectionId) ? 'block' : 'none';
-    const nav = document.getElementById(`nav-${s}`);
-    if (nav) nav.classList.toggle('active', s === sectionId);
-  });
+  // International locations commonly used by US COURIER
+  "lagos": [6.5244, 3.3792],
+  "lagos, nigeria": [6.5244, 3.3792],
+  "london": [51.5074, -0.1278],
+  "london, uk": [51.5074, -0.1278],
+  "toronto": [43.6532, -79.3832],
+  "toronto, canada": [43.6532, -79.3832],
+  "vancouver": [49.2827, -123.1207],
+  "vancouver, canada": [49.2827, -123.1207],
+  "taipei": [25.0330, 121.5654],
+  "taipei, taiwan": [25.0330, 121.5654],
+  "tokyo": [35.6762, 139.6503],
+  "tokyo, japan": [35.6762, 139.6503]
+};
 
-  if (sectionId === 'tracking') {
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 100);
-  }
-}
+function resolveGeoLocation(location) {
+  if (!location) return null;
 
-// Camera QR Scanner Modal
-function openQrScannerModal() {
-  showModal('modal-qr-scanner');
-  if (typeof Html5Qrcode === "undefined") {
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js";
-    script.onload = () => openQrScannerModal();
-    script.onerror = () => {
-      console.error("QR scanner library failed to load.");
-      hideModal("modal-qr-scanner");
-      alert("QR scanner could not be loaded.");
+  if (
+    typeof location === "object" &&
+    Number.isFinite(Number(location.lat)) &&
+    Number.isFinite(Number(location.lon))
+  ) {
+    return {
+      lat: Number(location.lat),
+      lon: Number(location.lon),
+      label: location.label || "Current Location"
     };
-    document.head.appendChild(script);
-    return;
   }
-  if (!html5QrScanner) {
-    html5QrScanner = new Html5Qrcode("qr-reader");
+
+  const value = String(location)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+  // Exact match
+  if (COURIER_GEO[value]) {
+    return {
+      lat: COURIER_GEO[value][0],
+      lon: COURIER_GEO[value][1],
+      label: location
+    };
   }
-  
-  html5QrScanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    (decodedText) => {
-      // On QR scanned
-      closeQrScannerModal();
-      const trkNum = parseTrackingFromQr(decodedText);
-      const inputEl = document.getElementById('home-tracking-input') || document.getElementById('page-tracking-input');
-      if (inputEl) inputEl.value = trkNum; else return;
-      handleTrackSubmit(null, inputEl.id);
-    },
-    (errorMessage) => { /* scanning... */ }
-  ).catch(err => {
-    console.error("Camera access failed", err);
-  });
-}
 
-function closeQrScannerModal() {
-  if (html5QrScanner) {
-    html5QrScanner.stop().then(() => {
-      hideModal('modal-qr-scanner');
-    }).catch(() => {
-      hideModal('modal-qr-scanner');
-    });
-  } else {
-    hideModal('modal-qr-scanner');
-  }
-}
-
-function parseTrackingFromQr(text) {
-  const value = String(text || "").trim();
-  if (!value) return "";
-
-  try {
-    const url = new URL(value, window.location.origin);
-    const queryTracking = url.searchParams.get("trk");
-    if (queryTracking) return queryTracking.trim();
-
-    const parts = url.pathname.split("/").filter(Boolean);
-    const trackingIndex = parts.indexOf("tracking");
-
-    if (trackingIndex !== -1 && parts[trackingIndex + 1]) {
-      return decodeURIComponent(parts[trackingIndex + 1]).trim();
+  // Partial match
+  for (const key of Object.keys(COURIER_GEO)) {
+    if (value.includes(key) || key.includes(value)) {
+      return {
+        lat: COURIER_GEO[key][0],
+        lon: COURIER_GEO[key][1],
+        label: location
+      };
     }
-
-    if (parts.length) {
-      return decodeURIComponent(parts[parts.length - 1]).trim();
-    }
-  } catch (err) {
-    console.warn("QR tracking URL parsing failed:", err);
   }
 
-  return value;
+  return null;
 }
 
-// Public Contact Form Submission
-async function handleContactSubmit(e) {
-  e.preventDefault();
-  const alertEl = document.getElementById('contact-alert');
-  const payload = {
-    sender_name: document.getElementById('cnt-name').value,
-    email: document.getElementById('cnt-email').value,
-    subject: document.getElementById('cnt-subject').value,
-    message: document.getElementById('cnt-message').value
-  };
+function projectGeo(lat, lon, bounds, width, height, padding = 45) {
+  const x =
+    padding +
+    ((lon - bounds.minLon) / (bounds.maxLon - bounds.minLon)) *
+      (width - padding * 2);
 
-  try {
-    const res = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
+  const y =
+    height -
+    padding -
+    ((lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) *
+      (height - padding * 2);
 
-    if (res.ok) {
-      alertEl.style.display = 'block';
-      alertEl.style.background = 'rgba(46,204,113,0.15)';
-      alertEl.style.color = '#2ecc71';
-      alertEl.style.border = '1px solid #2ecc71';
-      alertEl.innerText = data.message;
-      document.getElementById('cnt-name').value = '';
-      document.getElementById('cnt-email').value = '';
-      document.getElementById('cnt-subject').value = '';
-      document.getElementById('cnt-message').value = '';
+  return { x, y };
+}
+
+function drawRouteLine(ctx, points) {
+  if (points.length < 2) return;
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+
+  for (let i = 1; i < points.length; i++) {
+    const previous = points[i - 1];
+    const current = points[i];
+
+    const midX = (previous.x + current.x) / 2;
+    const midY = (previous.y + current.y) / 2;
+
+    ctx.quadraticCurveTo(
+      midX,
+      midY - Math.min(55, Math.abs(current.x - previous.x) * 0.10),
+      current.x,
+      current.y
+    );
+  }
+
+  ctx.strokeStyle = "rgba(232, 168, 124, 0.25)";
+  ctx.lineWidth = 7;
+  ctx.lineCap = "round";
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+
+  for (let i = 1; i < points.length; i++) {
+    const previous = points[i - 1];
+    const current = points[i];
+
+    const midX = (previous.x + current.x) / 2;
+    const midY = (previous.y + current.y) / 2;
+
+    ctx.quadraticCurveTo(
+      midX,
+      midY - Math.min(55, Math.abs(current.x - previous.x) * 0.10),
+      current.x,
+      current.y
+    );
+  }
+
+  ctx.strokeStyle = "#e8a87c";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([9, 7]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawGeoNode(ctx, point, color, label, type = "normal") {
+  const radius = type === "current" ? 7 : 5;
+
+  // Glow for active shipment position
+  if (type === "current") {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 18, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(52, 152, 219, 0.14)";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 12, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(52, 152, 219, 0.30)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.font = "11px Inter, Arial, sans-serif";
+  ctx.fillStyle = "#f5f5f7";
+
+  const textWidth = ctx.measureText(label).width;
+
+  ctx.fillText(
+    label,
+    Math.max(8, Math.min(point.x - textWidth / 2, ctx.canvas.width - textWidth - 8)),
+    point.y + 25
+  );
+}
+
+function drawMapGrid(ctx, width, height, bounds) {
+  ctx.strokeStyle = "rgba(255,255,255,0.055)";
+  ctx.lineWidth = 1;
+
+  // Longitude grid
+  for (
+    let lon = Math.ceil(bounds.minLon / 10) * 10;
+    lon <= bounds.maxLon;
+    lon += 10
+  ) {
+    const p1 = projectGeo(bounds.minLat, lon, bounds, width, height);
+    const p2 = projectGeo(bounds.maxLat, lon, bounds, width, height);
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+
+  // Latitude grid
+  for (
+    let lat = Math.ceil(bounds.minLat / 10) * 10;
+    lat <= bounds.maxLat;
+    lat += 10
+  ) {
+    const p1 = projectGeo(lat, bounds.minLon, bounds, width, height);
+    const p2 = projectGeo(lat, bounds.maxLon, bounds, width, height);
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+}
+
+function drawGeoLandmass(ctx, width, height, bounds) {
+  /*
+   * Stylized North American land silhouette.
+   * This is deliberately lightweight so the existing canvas
+   * remains fast and does not require an external map library.
+   */
+
+  const usa = [
+    [49.0, -124.7],
+    [48.2, -123.0],
+    [46.0, -124.0],
+    [43.0, -124.2],
+    [40.0, -124.0],
+    [37.0, -122.0],
+    [34.0, -118.5],
+    [32.0, -117.0],
+    [31.0, -111.0],
+    [29.5, -103.0],
+    [26.0, -97.5],
+    [28.5, -96.0],
+    [30.0, -90.0],
+    [29.0, -85.0],
+    [30.0, -82.0],
+    [27.0, -80.0],
+    [30.0, -79.0],
+    [34.0, -78.0],
+    [36.5, -75.0],
+    [39.0, -74.0],
+    [41.0, -70.0],
+    [44.0, -68.0],
+    [47.0, -67.0],
+    [49.0, -95.0],
+    [49.0, -110.0],
+    [49.0, -124.7]
+  ];
+
+  ctx.beginPath();
+
+  usa.forEach(([lat, lon], index) => {
+    const p = projectGeo(lat, lon, bounds, width, height);
+
+    if (index === 0) {
+      ctx.moveTo(p.x, p.y);
     } else {
-      throw new Error(data.error);
+      ctx.lineTo(p.x, p.y);
     }
-  } catch (err) {
-    alertEl.style.display = 'block';
-    alertEl.style.background = 'rgba(231,76,60,0.15)';
-    alertEl.style.color = '#e74c3c';
-    alertEl.style.border = '1px solid #e74c3c';
-    alertEl.innerText = err.message || 'Error sending message.';
-  }
-}
-
-// Tracking Submission Handler
-async function handleTrackSubmit(e, inputId) {
-  if (e) e.preventDefault();
-  const inputEl = document.getElementById(inputId);
-  const trackingNumber = inputEl ? inputEl.value.trim() : '';
-
-  if (!trackingNumber) return alert('Please enter a tracking number.');
-
-  const pInput = document.getElementById('page-tracking-input');
-  if (pInput) pInput.value = trackingNumber;
-
-  showSection('tracking');
-
-  const loadingDiv = document.getElementById('tracking-loading');
-  const errorDiv = document.getElementById('tracking-error');
-  const resultsDiv = document.getElementById('tracking-results');
-
-  loadingDiv.style.display = 'block';
-  errorDiv.style.display = 'none';
-  resultsDiv.style.display = 'none';
-
-  try {
-    const res = await fetch(`/api/tracking/${encodeURIComponent(trackingNumber)}`);
-    const data = await res.json();
-
-    loadingDiv.style.display = 'none';
-
-    if (!res.ok) {
-      errorDiv.innerText = data.error || 'Tracking details not found.';
-      errorDiv.style.display = 'block';
-      return;
-    }
-
-    currentLoadedShipmentData = data;
-    renderTrackingDashboard(data);
-    resultsDiv.style.display = 'block';
-
-  } catch (err) {
-    loadingDiv.style.display = 'none';
-    console.error("[TRACKING] Frontend error:", err); errorDiv.innerText = "Tracking data was received, but the tracking display could not be rendered. Check the browser console.";
-    errorDiv.style.display = 'block';
-  }
-}
-
-// Render Tracking View
-function renderTrackingDashboard(data) {
-  const s = data.shipment;
-
-  document.getElementById('trk-number-val').innerText = s.tracking_number;
-  document.getElementById('trk-service-val').innerText = s.service_type || 'Express Cargo';
-  document.getElementById('trk-sender-val').innerText = `${s.sender_name || 'Sender'} (${s.sender_country || s.origin})`;
-  document.getElementById('trk-recipient-val').innerText = `${s.recipient_name || 'Recipient'} (${s.recipient_country || s.destination})`;
-  document.getElementById('trk-pkg-val').innerText = `${s.package_count || 1} Pkg / ${s.weight || '1.0'} kg`;
-  document.getElementById('trk-val-val').innerText = `${s.currency || 'USD'} ${s.declared_value || '0.00'}`;
-  document.getElementById('trk-desc-val').innerText = s.description || 'Logistics Consignment';
-
-  document.getElementById('tel-origin').innerText = s.origin;
-  document.getElementById('tel-current').innerText = s.current_location;
-  document.getElementById('tel-destination').innerText = s.destination;
-  document.getElementById('tel-eta').innerText = s.estimated_delivery || 'In Transit';
-
-  const badge = document.getElementById('trk-status-badge');
-  badge.innerText = s.status;
-  const statusKey = s.status.toLowerCase().replace(/\s+/g, '');
-  badge.className = `badge badge-${statusKey}`;
-
-  // Timeline
-  const timeline = document.getElementById('timeline-container');
-  timeline.innerHTML = '';
-
-  if (data.events && data.events.length > 0) {
-    data.events.forEach((ev, idx) => {
-      const isLatest = idx === data.events.length - 1;
-      const item = document.createElement('div');
-
-      item.className = 'timeline-item';
-      item.innerHTML = `
-        <div class="timeline-dot ${isLatest ? 'active' : ''}"></div>
-        <div style="font-weight:700;">${ev.status} - <span style="color:var(--accent-gold);">${ev.location}</span></div>
-        <div style="font-size:0.88rem; color:var(--text-main); margin-top:2px;">${ev.description}</div>
-        <div class="timeline-time">${new Date(ev.event_time).toLocaleString()}</div>
-      `;
-
-      timeline.appendChild(item);
-    });
-  }
-
-  // Generate Waybill QR Code
-  const qrContainer = document.getElementById('public-parcel-qrcode');
-  qrContainer.innerHTML = '';
-
-  loadQrCodeLibrary().then(() => {
-    new QRCode(qrContainer, {
-      text: window.location.origin + '/?trk=' + s.tracking_number,
-      width: 128,
-      height: 128,
-      colorDark: "#000000",
-      colorLight: "#ffffff"
-    });
-  }).catch(err => {
-    console.error("Tracking QR generation failed:", err);
   });
 
-  // Update Dynamic Schema.org JSON-LD for Search Engines
-  const schemaScript = document.getElementById('schema-jsonld');
-  if (schemaScript) {
-    schemaScript.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "ParcelDelivery",
-      "deliveryStatus": `https://schema.org/${s.status === 'Delivered' ? 'DeliveredDutyPaid' : 'InTransit'}`,
-      "trackingNumber": s.tracking_number,
-      "provider": {
-        "@type": "Organization",
-        "name": "US Courier Enterprise Logistics",
-        "url": window.location.origin
-      },
-      "originAddress": { "@type": "PostalAddress", "addressLocality": s.origin },
-      "deliveryAddress": { "@type": "PostalAddress", "addressLocality": s.destination }
-    });
-  }
+  ctx.closePath();
 
-  initMapCanvas(s.origin, s.current_location, s.destination, s.status);
+  ctx.fillStyle = "rgba(255,255,255,0.025)";
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(232,168,124,0.12)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
 }
 
-// Print Official Waybill Receipt
-async function triggerPrintOfficialReceipt() {
-  if (!currentLoadedShipmentData) return;
 
-  const s = currentLoadedShipmentData.shipment;
+// ============================================================
+// MAIN GEOGRAPHIC MAP
+// ============================================================
 
-  document.getElementById('prt-date').innerText =
-    "Date: " + new Date().toLocaleDateString();
-
-  document.getElementById('prt-tracking').innerText =
-    s.tracking_number;
-
-  document.getElementById('prt-service').innerText =
-    s.service_type || 'Express Cargo';
-
-  document.getElementById('prt-status').innerText =
-    s.status;
-
-  document.getElementById('prt-sender-name').innerHTML =
-    `<strong>Name:</strong> ${s.sender_name || 'N/A'}`;
-
-  document.getElementById('prt-sender-origin').innerHTML =
-    `<strong>Origin:</strong> ${s.sender_country || s.origin}`;
-
-  document.getElementById('prt-recipient-name').innerHTML =
-    `<strong>Name:</strong> ${s.recipient_name || 'N/A'}`;
-
-  document.getElementById('prt-recipient-dest').innerHTML =
-    `<strong>Destination:</strong> ${s.recipient_country || s.destination}`;
-
-  document.getElementById('prt-desc').innerHTML =
-    `<strong>Cargo Manifest:</strong> ${s.description || 'N/A'}`;
-
-  document.getElementById('prt-pkg').innerHTML =
-    `<strong>Package Count / Weight:</strong> ${s.package_count || 1} Pkg (${s.weight || '1.0'} kg)`;
-
-  document.getElementById('prt-value').innerHTML =
-    `<strong>Declared Value:</strong> ${s.currency || 'USD'} ${s.declared_value || '0.00'}`;
-
-  const qrBox = document.getElementById('prt-qrcode-box');
-  qrBox.innerHTML = '';
-
-  try {
-    await loadQrCodeLibrary();
-
-    new QRCode(qrBox, {
-      text: window.location.origin + '/?trk=' + s.tracking_number,
-      width: 100,
-      height: 100
-    });
-  } catch (err) {
-    console.error('Print QR generation failed:', err);
-  }
-
-  const printArea =
-    document.getElementById('printable-receipt-container');
-
-  printArea.style.display = 'block';
-
-  window.print();
-
-  printArea.style.display = 'none';
-}
-
-// Dynamic Map Visualizer
 function initMapCanvas(origin, current, destination, status) {
-  const canvas = document.getElementById('liveMapCanvas');
+  const canvas = document.getElementById("liveMapCanvas");
   if (!canvas) return;
 
   const container = canvas.parentElement;
   if (!container) return;
 
-  // Stop any previous animation
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
   }
 
   const width = Math.max(320, container.clientWidth || 600);
-  const height = Math.max(220, container.clientHeight || 280);
-  canvas.width = width;
-  canvas.height = height;
+  const height = Math.max(220, container.clientHeight || 300);
 
-  const ctx = canvas.getContext('2d');
-  let progress = 0;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
+  const ctx = canvas.getContext("2d");
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const originGeo = resolveGeoLocation(origin);
+  const currentGeo = resolveGeoLocation(current);
+  const destinationGeo = resolveGeoLocation(destination);
+
+  /*
+   * Default geographic view.
+   * Covers most of North America while still allowing
+   * international destinations such as Lagos to appear.
+   */
+  const locations = [
+    originGeo,
+    currentGeo,
+    destinationGeo
+  ].filter(Boolean);
+
+  let bounds;
+
+  if (locations.length) {
+    const lats = locations.map(p => p.lat);
+    const lons = locations.map(p => p.lon);
+
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+
+    const latPadding = Math.max(4, (maxLat - minLat) * 0.25);
+    const lonPadding = Math.max(6, (maxLon - minLon) * 0.18);
+
+    bounds = {
+      minLat: minLat - latPadding,
+      maxLat: maxLat + latPadding,
+      minLon: minLon - lonPadding,
+      maxLon: maxLon + lonPadding
+    };
+  } else {
+    bounds = {
+      minLat: 20,
+      maxLat: 55,
+      minLon: -130,
+      maxLon: -65
+    };
+  }
+
+  // Prevent a zero-size projection.
+  if (bounds.maxLat === bounds.minLat) {
+    bounds.maxLat += 1;
+    bounds.minLat -= 1;
+  }
+
+  if (bounds.maxLon === bounds.minLon) {
+    bounds.maxLon += 1;
+    bounds.minLon -= 1;
+  }
+
+  const originPoint = originGeo
+    ? projectGeo(originGeo.lat, originGeo.lon, bounds, width, height)
+    : null;
+
+  const currentPoint = currentGeo
+    ? projectGeo(currentGeo.lat, currentGeo.lon, bounds, width, height)
+    : null;
+
+  const destinationPoint = destinationGeo
+    ? projectGeo(
+        destinationGeo.lat,
+        destinationGeo.lon,
+        bounds,
+        width,
+        height
+      )
+    : null;
+
+  const routePoints = [
+    originPoint,
+    currentPoint,
+    destinationPoint
+  ].filter(Boolean);
+
+  let animation = 0;
 
   function draw() {
     ctx.clearRect(0, 0, width, height);
 
-    // subtle grid
-    ctx.strokeStyle = 'rgba(29, 23, 20, 0.25)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < width; x += 30) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
+    // Map background
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+
+    gradient.addColorStop(0, "#160e0a");
+    gradient.addColorStop(0.5, "#24160f");
+    gradient.addColorStop(1, "#1a100c");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Geographic grid
+    drawMapGrid(ctx, width, height, bounds);
+
+    // Stylized landmass when viewing North America
+    if (
+      bounds.minLon < -60 &&
+      bounds.maxLon > -130 &&
+      bounds.maxLat > 35
+    ) {
+      drawGeoLandmass(ctx, width, height, bounds);
     }
-    for (let y = 0; y < height; y += 30) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
+
+    // Route
+    drawRouteLine(ctx, routePoints);
+
+    // Origin
+    if (originPoint) {
+      drawGeoNode(
+        ctx,
+        originPoint,
+        "#a19a95",
+        `Origin · ${origin || "—"}`,
+        "origin"
+      );
     }
 
-    // route points
-    const p1 = { x: width * 0.12, y: height * 0.68 };
-    const p2 = { x: width * 0.88, y: height * 0.68 };
-    const pCurrent = { x: width * 0.50, y: height * 0.32 };
+    // Destination
+    if (destinationPoint) {
+      drawGeoNode(
+        ctx,
+        destinationPoint,
+        "#2ecc71",
+        `Destination · ${destination || "—"}`,
+        "destination"
+      );
+    }
 
-    // curved route
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.quadraticCurveTo(pCurrent.x, pCurrent.y - 40, p2.x, p2.y);
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2.5;
-    ctx.setLineDash([8, 6]);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    // Current shipment position
+    if (currentPoint) {
+      animation += 0.045;
 
-    // origin / destination nodes
-    drawNode(ctx, p1.x, p1.y, '#a19a95', `Origin: ${origin || '—'}`);
-    drawNode(ctx, p2.x, p2.y, '#2ecc71', `Destination: ${destination || '—'}`);
+      const pulse = 7 + Math.sin(animation) * 3;
 
-    // pulsing active marker
-    progress = (progress + 0.045) % (Math.PI * 2);
-    const pulse = 7 + Math.sin(progress) * 4;
+      ctx.beginPath();
+      ctx.arc(
+        currentPoint.x,
+        currentPoint.y,
+        15 + pulse,
+        0,
+        Math.PI * 2
+      );
 
-    ctx.beginPath();
-    ctx.arc(pCurrent.x, pCurrent.y - 12, pulse + 8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(52, 152, 219, 0.18)';
-    ctx.fill();
+      ctx.fillStyle = "rgba(52,152,219,0.10)";
+      ctx.fill();
 
-    drawNode(ctx, pCurrent.x, pCurrent.y - 12, '#3498db', `Active: ${current || 'In Transit'}`, true);
+      drawGeoNode(
+        ctx,
+        currentPoint,
+        "#3498db",
+        `Current · ${current || "Tracking"}`,
+        "current"
+      );
+    }
 
-    animationFrameId = requestAnimationFrame(draw);
+    // Map status label
+    ctx.font = "10px Inter, Arial, sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.48)";
+    ctx.fillText(
+      `LIVE ROUTE · ${(status || "TRACKING").toUpperCase()}`,
+      16,
+      20
+    );
+
+    // Coordinate information
+    if (currentGeo) {
+      const coordText =
+        `${currentGeo.lat.toFixed(4)}°, ${currentGeo.lon.toFixed(4)}°`;
+
+      ctx.fillStyle = "rgba(255,255,255,0.38)";
+      ctx.fillText(coordText, 16, height - 16);
+    }
+
+    if (!document.hidden) animationFrameId = requestAnimationFrame(draw);
   }
 
   draw();
 }
+/* ============================================================
+   US COURIER — TRACKING API + GPS MAP CONNECTION
+   ============================================================ */
 
-function drawNode(ctx, x, y, color, label, isActive = false) {
-  ctx.beginPath();
-  ctx.arc(x, y, isActive ? 8 : 6, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#ffffff';
-  ctx.stroke();
-
-  ctx.fillStyle = '#f5f5f7';
-  ctx.font = '12px Inter, sans-serif';
-  ctx.fillText(label, x - 40, y + 22);
+function setTrackingText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value ?? "—";
 }
 
-function showModal(id) { document.getElementById(id).style.display = 'flex'; }
-function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+function formatTrackingDate(value) {
+  if (!value) return "—";
 
-// Auto-check URL Parameters for ?trk=
-window.addEventListener('DOMContentLoaded', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const trk = urlParams.get('trk');
-  if (trk) {
-    const input = document.getElementById('home-tracking-input');
-    if (input) input.value = trk;
-    handleTrackSubmit(null, 'home-tracking-input');
-  }
-});
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
 
-window.addEventListener('resize', () => {
-  const canvas = document.getElementById('liveMapCanvas');
-  if (canvas && canvas.parentElement && document.getElementById('view-tracking').style.display !== 'none') {
-    canvas.width = canvas.parentElement.clientWidth;
-    canvas.height = canvas.parentElement.clientHeight;
+  return date.toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function getLatestGpsEvent(events) {
+  if (!Array.isArray(events)) return null;
+
+  const gpsEvents = events
+    .filter(e =>
+      e &&
+      e.latitude !== null &&
+      e.latitude !== undefined &&
+      e.longitude !== null &&
+      e.longitude !== undefined
+    )
+    .sort((a, b) =>
+      new Date(b.event_time || b.created_at || 0) -
+      new Date(a.event_time || a.created_at || 0)
+    );
+
+  return gpsEvents[0] || null;
+}
+
+function updateTrackingTimeline(events) {
+  const container = document.getElementById("timeline-container");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!Array.isArray(events) || events.length === 0) {
+    container.innerHTML =
+      '<div class="timeline-item"><strong>No tracking events recorded.</strong></div>';
+    return;
   }
-});
+
+  [...events]
+    .sort((a, b) =>
+      new Date(a.event_time || a.created_at || 0) -
+      new Date(b.event_time || b.created_at || 0)
+    )
+    .forEach((event, index, list) => {
+      const item = document.createElement("div");
+      item.className = "timeline-item";
+
+      const location = event.location || "Location unavailable";
+      const description = event.description || "";
+      const date = formatTrackingDate(event.event_time || event.created_at);
+
+      item.innerHTML = `
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong>${event.status || "Shipment Update"}</strong>
+          <div style="color:var(--text-muted);font-size:.82rem;margin:.25rem 0;">
+            ${location}
+          </div>
+          ${description ? `<div style="font-size:.85rem;">${description}</div>` : ""}
+          <small style="color:var(--text-muted);">${date}</small>
+        </div>
+      `;
+
+      container.appendChild(item);
+    });
+}
+
+async function handleTrackSubmit(event, inputId) {
+  if (event) event.preventDefault();
+
+  const input = document.getElementById(inputId);
+  const trackingNumber = input ? input.value.trim() : "";
+
+  if (!trackingNumber) return;
+
+  const loading = document.getElementById("tracking-loading");
+  const error = document.getElementById("tracking-error");
+  const results = document.getElementById("tracking-results");
+
+  if (loading) loading.style.display = "block";
+  if (error) {
+    error.style.display = "none";
+    error.textContent = "";
+  }
+  if (results) results.style.display = "none";
+
+  try {
+    const response = await fetch(
+      `/api/tracking/${encodeURIComponent(trackingNumber)}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success || !data.shipment) {
+      throw new Error(data.message || "Shipment not found.");
+    }
+
+    const shipment = data.shipment;
+    const events = Array.isArray(data.events) ? data.events : [];
+
+    const latestGps = getLatestGpsEvent(events);
+
+    /*
+     * Prefer the latest real GPS event.
+     * If no GPS event exists, initMapCanvas will use
+     * the existing city/location coordinate resolver.
+     */
+    const isDelivered = String(shipment.status || "").toLowerCase().includes("delivered");
+
+    const mapCurrent = isDelivered
+      ? shipment.current_location
+      : latestGps
+        ? {
+            label: latestGps.location || shipment.current_location,
+            lat: Number(latestGps.latitude),
+            lon: Number(latestGps.longitude)
+          }
+        : shipment.current_location;
+
+    setTrackingText("tel-origin", shipment.origin);
+    setTrackingText("tel-current", shipment.current_location);
+    setTrackingText("tel-destination", shipment.destination);
+    setTrackingText(
+      "tel-eta",
+      formatTrackingDate(shipment.estimated_delivery)
+    );
+
+    setTrackingText("trk-number-val", shipment.tracking_number);
+    setTrackingText("trk-service-val", shipment.service_type);
+    setTrackingText("trk-sender-val", shipment.sender_name);
+    setTrackingText("trk-recipient-val", shipment.recipient_name);
+
+    setTrackingText(
+      "trk-pkg-val",
+      `${shipment.package_count || 1} / ${
+        shipment.weight_kg ? shipment.weight_kg + " kg" : "—"
+      }`
+    );
+
+    setTrackingText(
+      "trk-val-val",
+      shipment.declared_value !== null &&
+      shipment.declared_value !== undefined
+        ? `${shipment.currency || ""} ${shipment.declared_value}`
+        : "—"
+    );
+
+    setTrackingText("trk-desc-val", shipment.description || "—");
+
+    const badge = document.getElementById("trk-status-badge");
+    if (badge) {
+      badge.textContent = shipment.status || "Tracking";
+      badge.className = "badge badge-transit";
+
+      const status = String(shipment.status || "").toLowerCase();
+
+      if (status.includes("delivered")) {
+        badge.className = "badge badge-delivered";
+      } else if (
+        status.includes("delay") ||
+        status.includes("exception")
+      ) {
+        badge.className = "badge badge-delayed";
+      }
+    }
+
+    updateTrackingTimeline(events);
+
+    if (results) results.style.display = "block";
+    if (loading) loading.style.display = "none";
+
+    /*
+     * Initialize the geographic route map.
+     */
+    requestAnimationFrame(() => {
+      if (latestGps) {
+        initMapCanvasWithGps(
+          shipment.origin,
+          mapCurrent,
+          shipment.destination,
+          shipment.status
+        );
+      } else {
+        initMapCanvas(
+          shipment.origin,
+          shipment.current_location,
+          shipment.destination,
+          shipment.status
+        );
+      }
+    });
+
+    // Keep tracking number available to the URL.
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("trk", shipment.tracking_number);
+      window.history.replaceState({}, "", url);
+    } catch (_) {}
+
+  } catch (err) {
+    console.error("[TRACKING]", err);
+
+    if (loading) loading.style.display = "none";
+
+    if (error) {
+      error.textContent = err.message || "Unable to retrieve shipment.";
+      error.style.display = "block";
+    }
+  }
+}
+
+
+/* ============================================================
+   GPS-AWARE MAP WRAPPER
+   ============================================================ */
+
+function initMapCanvasWithGps(origin, current, destination, status) {
+  initMapCanvas(origin, current, destination, status);
+}

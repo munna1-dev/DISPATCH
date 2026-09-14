@@ -13,6 +13,8 @@ const helmet = require("helmet");
 const cors = require("cors");
 const path = require("path");
 
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -26,7 +28,8 @@ if (!JWT_SECRET) {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-  max: 10,
+  max: 2,
+  min: 1,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
 });
@@ -123,7 +126,7 @@ app.get("/api/tracking/:trackingNumber", async (req, res) => {
         [trackingNumber]
       ),
       queryWithRetry(
-        `SELECT te.* FROM tracking_events te
+        `SELECT te.* FROM shipment_events te
          JOIN shipments s ON s.id = te.shipment_id
          WHERE s.tracking_number = $1
          ORDER BY te.event_time ASC`,
@@ -213,7 +216,7 @@ app.get("/api/admin/dashboard", authMiddleware, async (req, res) => {
         (SELECT COUNT(*) FROM shipments) AS total,
         (SELECT COUNT(*) FROM shipments WHERE status ILIKE '%transit%') AS in_transit,
         (SELECT COUNT(*) FROM shipments WHERE status ILIKE '%delivered%') AS delivered,
-        (SELECT COUNT(*) FROM messages) AS messages
+        (SELECT COUNT(*) FROM contact_messages) AS messages
     `);
     return res.json({ success: true, counts: counts.rows[0] });
   } catch (err) {
@@ -232,14 +235,82 @@ app.get("/api/admin/shipments", authMiddleware, async (req, res) => {
   }
 });
 
+
+app.post("/api/admin/shipments",authMiddleware,async(req,res)=>{
+ const b=req.body||{};
+ if(["sender_name","recipient_name","origin","destination","service_type"].some(k=>!b[k]))
+  return res.status(400).json({success:false,error:"Required shipment fields are missing."});
+ const c=await pool.connect();
+ try{
+  await c.query("BEGIN");
+  const n="USC-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,10).toUpperCase();
+  const q=await c.query(`INSERT INTO shipments
+  (tracking_number,origin,destination,service_type,status,current_location,estimated_delivery,weight_kg,package_count,description,sender_name,sender_country,recipient_name,recipient_country,currency,declared_value)
+  VALUES($1,$2,$3,$4,'Shipment Created',$2,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+  [n,b.origin,b.destination,b.service_type,b.estimated_delivery||null,b.weight||null,b.package_count||1,b.description||null,b.sender_name,b.sender_country||null,b.recipient_name,b.recipient_country||null,b.currency||null,b.declared_value||null]);
+  const x=q.rows[0];
+  await c.query("INSERT INTO shipment_events(shipment_id,status,location,description) VALUES($1,$2,$3,$4)",[x.id,x.status,x.current_location,"Shipment created"]);
+  await c.query("COMMIT");
+  res.status(201).json({success:true,tracking_number:x.tracking_number,shipment:x});
+ }catch(e){
+  await c.query("ROLLBACK"); console.error("[CREATE SHIPMENT]",e.message);
+  res.status(500).json({success:false,error:"Failed to create shipment."});
+ }finally{c.release();}
+});
+
+app.put("/api/admin/shipments/:id",authMiddleware,async(req,res)=>{
+ const b=req.body||{},c=await pool.connect();
+ try{
+  await c.query("BEGIN");
+  const q=await c.query("UPDATE shipments SET status=$1,current_location=$2,estimated_delivery=$3,updated_at=NOW() WHERE id=$4 RETURNING *",[b.status,b.current_location,b.estimated_delivery||null,req.params.id]);
+  if(!q.rowCount){await c.query("ROLLBACK");return res.status(404).json({success:false,error:"Shipment not found."});}
+  const x=q.rows[0];
+  await c.query("INSERT INTO shipment_events(shipment_id,status,location,description,event_time) VALUES($1,$2,$3,$4,COALESCE($5,NOW()))",[x.id,x.status,x.current_location,b.event_description||("Shipment status updated to "+x.status),b.event_time||null]);
+  await c.query("COMMIT");
+  res.json({success:true,shipment:x});
+ }catch(e){
+  await c.query("ROLLBACK"); console.error("[UPDATE SHIPMENT]",e.message);
+  res.status(500).json({success:false,error:"Failed to update shipment."});
+ }finally{c.release();}
+});
 app.get("/api/admin/messages", authMiddleware, async (req, res) => {
   try {
-    const result = await queryWithRetry("SELECT * FROM messages ORDER BY created_at DESC LIMIT 100");
+    const result = await queryWithRetry("SELECT * FROM contact_messages ORDER BY created_at DESC LIMIT 100");
     return res.json({ success: true, messages: result.rows });
   } catch (err) {
     console.error("[ADMIN MESSAGES]", err.message);
     return res.status(500).json({ error: "Failed to load messages" });
   }
+});
+
+app.post("/api/contact", async (req, res) => {
+    const { name, email, subject, message } = req.body;
+    const emailSubject = subject || `New Customer Inquiry from ${name}`;
+    
+    if (!name || !email || !message) {
+        return res.status(400).json({ success: false, error: "Name, email, and message are required fields." });
+    }
+    
+    try {
+        await pool.query(
+            "INSERT INTO contact_messages (name, email, subject, message) VALUES ($1, $2, $3, $4)",
+            [name, email, emailSubject, message]
+        );
+
+        const { data, error } = await resend.emails.send({
+            from: `US Courier Support <${process.env.MAIL_FROM || 'contact@uscourier.app'}>`,
+            to: [process.env.CONTACT_RECIPIENT || 'contact@uscourier.app'],
+            replyTo: email,
+            subject: emailSubject,
+            html: contactEmailTemplate(name, email, emailSubject, message)
+        });
+        
+        if (error) console.warn("[Resend Warning]:", error.message);
+        
+        return res.status(200).json({ success: true, message: "Message dispatched and saved successfully." });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 app.get("*", (req, res) => {
