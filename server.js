@@ -245,7 +245,7 @@ app.post("/api/admin/shipments",authMiddleware,async(req,res)=>{
   await c.query("BEGIN");
   const n="USC-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,10).toUpperCase();
   const q=await c.query(`INSERT INTO shipments
-  (tracking_number,origin,destination,service_type,status,current_location,estimated_delivery,weight_kg,package_count,description,sender_name,sender_country,recipient_name,recipient_country,currency,declared_value)
+  (tracking_number,origin,destination,service_type,status,current_location,estimated_delivery,weight,package_count,description,sender_name,sender_country,recipient_name,recipient_country,currency,declared_value)
   VALUES($1,$2,$3,$4,'Shipment Created',$2,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
   [n,b.origin,b.destination,b.service_type,b.estimated_delivery||null,b.weight||null,b.package_count||1,b.description||null,b.sender_name,b.sender_country||null,b.recipient_name,b.recipient_country||null,b.currency||null,b.declared_value||null]);
   const x=q.rows[0];
