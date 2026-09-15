@@ -12,6 +12,7 @@ const jwt = require("jsonwebtoken");
 const helmet = require("helmet");
 const cors = require("cors");
 const path = require("path");
+const { contactEmailTemplate } = require("./utils/emailTemplate");
 
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);

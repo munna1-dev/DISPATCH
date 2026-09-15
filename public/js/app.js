@@ -761,3 +761,46 @@ function showSection(section) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+
+async function handleContactSubmit(event) {
+  event.preventDefault();
+
+  const alertBox = document.getElementById("contact-alert");
+
+  const payload = {
+    name: document.getElementById("cnt-name").value.trim(),
+    email: document.getElementById("cnt-email").value.trim(),
+    subject: document.getElementById("cnt-subject").value.trim(),
+    message: document.getElementById("cnt-message").value.trim()
+  };
+
+  try {
+    const response = await fetch("/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to send message.");
+    }
+
+    alertBox.textContent = "Your message has been sent successfully.";
+    alertBox.style.display = "block";
+
+    document.querySelector("#view-contact form").reset();
+
+  } catch (error) {
+    console.error("Contact form error:", error);
+
+    alertBox.textContent =
+      error.message || "Unable to send your message.";
+
+    alertBox.style.display = "block";
+  }
+}
+
