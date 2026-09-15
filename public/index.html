@@ -435,15 +435,99 @@
     </div>
   </div>
 
-  <!-- Modal: Update Parcel Telemetry & Status Form -->
+  <!-- Modal: Edit Parcel -->
   <div id="modal-update-shipment" class="modal-overlay">
-    <div class="card" style="max-width: 600px; width: 90%;">
-      <h3 style="margin-bottom: 1rem;"><span class="icon icon-edit" style="color:var(--accent-gold);"></span> Update Parcel Telemetry & Node</h3>
+    <div class="card" style="max-width: 900px; width: 94%; max-height: 90vh; overflow-y: auto;">
+      <h3 style="margin-bottom: 1rem;">
+        <span class="icon icon-edit" style="color:var(--accent-gold);"></span>
+        Edit Parcel
+      </h3>
+
       <form onsubmit="handleUpdateShipmentSubmit(event)">
         <input type="hidden" id="us-shipment-id">
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div>
+            <label>Tracking Number</label>
+            <input type="text" id="us-tracking-number" class="form-control" required>
+          </div>
+
+          <div>
+            <label>Reference</label>
+            <input type="text" id="us-reference" class="form-control">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div>
+            <label>Sender Name</label>
+            <input type="text" id="us-sender-name" class="form-control">
+          </div>
+
+          <div>
+            <label>Sender Country</label>
+            <input type="text" id="us-sender-country" class="form-control">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div>
+            <label>Recipient Name</label>
+            <input type="text" id="us-recipient-name" class="form-control">
+          </div>
+
+          <div>
+            <label>Recipient Country</label>
+            <input type="text" id="us-recipient-country" class="form-control">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div>
+            <label>Origin</label>
+            <input type="text" id="us-origin" class="form-control">
+          </div>
+
+          <div>
+            <label>Destination</label>
+            <input type="text" id="us-destination" class="form-control">
+          </div>
+        </div>
+
         <div style="margin-bottom: 1rem;">
-          <label style="font-size:0.8rem; color:var(--text-muted);">Select Status Option or Enter Custom</label>
-          <select id="us-status-select" class="form-control" onchange="toggleCustomStatusInput(this)">
+          <label>Current Location</label>
+          <input
+            type="text"
+            id="us-location"
+            class="form-control"
+            placeholder="Current facility or transit location"
+          >
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div>
+            <label>Service Type</label>
+            <input type="text" id="us-service-type" class="form-control">
+          </div>
+
+          <div>
+            <label>Priority</label>
+            <select id="us-priority" class="form-control">
+              <option value="Standard">Standard</option>
+              <option value="Express">Express</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label>Status</label>
+          <select
+            id="us-status-select"
+            class="form-control"
+            onchange="toggleCustomStatusInput(this)"
+          >
+            <option value="Shipment Created">Shipment Created</option>
             <option value="In Transit">In Transit</option>
             <option value="Out for Delivery">Out for Delivery</option>
             <option value="Delivered">Delivered</option>
@@ -451,33 +535,102 @@
             <option value="Delayed">Delayed</option>
             <option value="CUSTOM">-- Enter Custom Status --</option>
           </select>
-          <input type="text" id="us-status-custom" class="form-control" placeholder="Type custom status..." style="display:none; margin-top:0.5rem;">
-        </div>
 
-        <div style="margin-bottom: 1rem;">
-          <label style="font-size:0.8rem; color:var(--text-muted);">Current Facility / Node Location</label>
-          <input type="text" id="us-location" class="form-control" required placeholder="Transit Gateway - Los Angeles, CA">
+          <input
+            type="text"
+            id="us-status-custom"
+            class="form-control"
+            placeholder="Enter custom status"
+            style="display:none; margin-top:0.5rem;"
+          >
         </div>
 
         <div class="grid-2" style="margin-bottom: 1rem;">
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Event Timestamp Date & Time</label>
-            <input type="datetime-local" id="us-timestamp" class="form-control" required>
-          </div>
-          <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Updated Est. Delivery Date</label>
+            <label>Estimated Delivery</label>
             <input type="date" id="us-eta" class="form-control">
           </div>
+
+          <div>
+            <label>Package Count</label>
+            <input
+              type="number"
+              id="us-package-count"
+              class="form-control"
+              min="1"
+              step="1"
+              value="1"
+            >
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1rem;">
+          <div>
+            <label>Weight</label>
+            <input
+              type="number"
+              id="us-weight"
+              class="form-control"
+              min="0"
+              step="0.01"
+            >
+          </div>
+
+          <div>
+            <label>Currency</label>
+            <input
+              type="text"
+              id="us-currency"
+              class="form-control"
+              maxlength="10"
+              placeholder="USD"
+            >
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label>Declared Value</label>
+          <input
+            type="number"
+            id="us-declared-value"
+            class="form-control"
+            min="0"
+            step="0.01"
+          >
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label>Parcel Description</label>
+          <textarea
+            id="us-description"
+            class="form-control"
+            rows="3"
+            placeholder="Package contents or shipment description"
+          ></textarea>
         </div>
 
         <div style="margin-bottom: 1.5rem;">
-          <label style="font-size:0.8rem; color:var(--text-muted);">Event Audit Log Description</label>
-          <input type="text" id="us-description" class="form-control" placeholder="Inspected at customs authority and released for flight clearance">
+          <label>Event / Audit Description</label>
+          <input
+            type="text"
+            id="us-event-description"
+            class="form-control"
+            placeholder="Describe the reason for this parcel update"
+          >
         </div>
 
         <div style="text-align: right;">
-          <button type="button" onclick="hideModal('modal-update-shipment')" class="btn-outline">Cancel</button>
-          <button type="submit" class="btn-gold">Update Telemetry</button>
+          <button
+            type="button"
+            onclick="hideModal('modal-update-shipment')"
+            class="btn-outline"
+          >
+            Cancel
+          </button>
+
+          <button type="submit" class="btn-gold">
+            Save Parcel Changes
+          </button>
         </div>
       </form>
     </div>
