@@ -1201,6 +1201,34 @@ async function handleTrackSubmit(
       shipment.service_type || "—"
     );
 
+    // Public route/status information
+    setTrackingText(
+      "trk-detail-status-val",
+      shipment.status || "—"
+    );
+
+    setTrackingText(
+      "trk-origin-val",
+      shipment.origin || "—"
+    );
+
+    setTrackingText(
+      "trk-current-val",
+      shipment.current_location || "—"
+    );
+
+    setTrackingText(
+      "trk-destination-val",
+      shipment.destination || "—"
+    );
+
+    setTrackingText(
+      "trk-eta-val",
+      formatTrackingDate(
+        shipment.estimated_delivery
+      )
+    );
+
     /*
      * The public tracking API intentionally does not expose
      * private sender/recipient information.
