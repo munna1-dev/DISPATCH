@@ -11,7 +11,11 @@
   <link rel="stylesheet" href="/css/icons.css">
   
   <!-- QR Libraries -->
+  <!-- QRCode.js generates the public verification QR -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- html5-qrcode provides camera-based QR scanning -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   
   <!-- Dynamic Schema.org JSON-LD structured data for Google Web Search -->
   <script id="schema-jsonld" type="application/ld+json">
@@ -228,13 +232,90 @@
                 </button>
               </div>
               <table style="width:100%;">
-                <tr><td><strong>Tracking Number:</strong></td> <td id="trk-number-val" style="font-family: monospace; color: var(--accent-gold);">-</td></tr>
-                <tr><td><strong>Service Level:</strong></td> <td id="trk-service-val">-</td></tr>
-                <tr><td><strong>Shipper Name:</strong></td> <td id="trk-sender-val">-</td></tr>
-                <tr><td><strong>Consignee Name:</strong></td> <td id="trk-recipient-val">-</td></tr>
-                <tr><td><strong>Package Count / Wt:</strong></td> <td id="trk-pkg-val">-</td></tr>
-                <tr><td><strong>Declared Value:</strong></td> <td id="trk-val-val">-</td></tr>
-                <tr><td><strong>Cargo Manifest:</strong></td> <td id="trk-desc-val">-</td></tr>
+                <tr>
+                  <td><strong>Tracking Number:</strong></td>
+                  <td id="trk-number-val" style="font-family:monospace; color:var(--accent-gold);">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Reference:</strong></td>
+                  <td id="trk-reference-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Service Level:</strong></td>
+                  <td id="trk-service-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Priority:</strong></td>
+                  <td id="trk-priority-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Status:</strong></td>
+                  <td id="trk-detail-status-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Shipper Name:</strong></td>
+                  <td id="trk-sender-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Shipper Country:</strong></td>
+                  <td id="trk-sender-country-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Consignee Name:</strong></td>
+                  <td id="trk-recipient-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Consignee Country:</strong></td>
+                  <td id="trk-recipient-country-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Origin Gateway:</strong></td>
+                  <td id="trk-origin-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Current Location:</strong></td>
+                  <td id="trk-current-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Destination Gateway:</strong></td>
+                  <td id="trk-destination-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Estimated Delivery:</strong></td>
+                  <td id="trk-eta-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Package Count / Weight:</strong></td>
+                  <td id="trk-pkg-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Currency:</strong></td>
+                  <td id="trk-currency-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Declared Value:</strong></td>
+                  <td id="trk-val-val">-</td>
+                </tr>
+
+                <tr>
+                  <td><strong>Cargo Manifest:</strong></td>
+                  <td id="trk-desc-val">-</td>
+                </tr>
               </table>
 
               <!-- QR Code Render Container -->

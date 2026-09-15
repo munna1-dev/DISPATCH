@@ -769,18 +769,52 @@ async function loadAdminDashboard() {
               </td>
 
               <td>
-                <button
-                  type="button"
-                  class="btn-gold"
+                <div
                   style="
-                    padding:0.2rem 0.6rem;
-                    font-size:0.75rem;
+                    display:flex;
+                    flex-wrap:wrap;
+                    gap:0.35rem;
                   "
-                  data-shipment-update-id="${shipmentId}"
                 >
-                  <i class="icon icon-edit"></i>
-                  Edit Parcel
-                </button>
+                  <button
+                    type="button"
+                    class="btn-gold"
+                    style="
+                      padding:0.2rem 0.6rem;
+                      font-size:0.75rem;
+                    "
+                    data-shipment-update-id="${shipmentId}"
+                  >
+                    <i class="icon icon-edit"></i>
+                    Update
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-outline"
+                    style="
+                      padding:0.2rem 0.6rem;
+                      font-size:0.75rem;
+                    "
+                    data-shipment-track-id="${shipmentId}"
+                  >
+                    <i class="icon icon-map"></i>
+                    View Tracking
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-outline"
+                    style="
+                      padding:0.2rem 0.6rem;
+                      font-size:0.75rem;
+                    "
+                    data-shipment-print-id="${shipmentId}"
+                  >
+                    <i class="icon icon-print"></i>
+                    Print Tracking
+                  </button>
+                </div>
               </td>
             `;
 
@@ -790,12 +824,40 @@ async function loadAdminDashboard() {
                 '[data-shipment-update-id]'
               );
 
+            const trackingButton =
+              tr.querySelector(
+                '[data-shipment-track-id]'
+              );
+
+            const printButton =
+              tr.querySelector(
+                '[data-shipment-print-id]'
+              );
+
 
             if (updateButton) {
 
               updateButton.addEventListener(
                 'click',
                 () => openUpdateShipmentModal(s)
+              );
+            }
+
+
+            if (trackingButton) {
+
+              trackingButton.addEventListener(
+                'click',
+                () => viewShipmentTracking(s)
+              );
+            }
+
+
+            if (printButton) {
+
+              printButton.addEventListener(
+                'click',
+                () => printShipmentTracking(s)
               );
             }
 
@@ -820,6 +882,123 @@ async function loadAdminDashboard() {
       'Unable to load admin dashboard.'
     );
   }
+}
+
+
+/* =========================================================
+   VIEW SHIPMENT TRACKING
+========================================================= */
+
+function viewShipmentTracking(shipment) {
+
+  const trackingNumber =
+    shipment?.tracking_number ||
+    '';
+
+  if (!trackingNumber) {
+
+    alert(
+      'This shipment does not have a tracking number.'
+    );
+
+    return;
+  }
+
+
+  const trackingInput =
+    document.getElementById(
+      'page-tracking-input'
+    );
+
+
+  if (!trackingInput) {
+
+    alert(
+      'The public tracking interface was not found.'
+    );
+
+    return;
+  }
+
+
+  trackingInput.value =
+    trackingNumber;
+
+
+  /*
+   * Reuse the existing public tracking flow.
+   * Do not duplicate the tracking API logic here.
+   */
+
+  showSection(
+    'tracking'
+  );
+
+
+  if (
+    typeof handleTrackSubmit ===
+    'function'
+  ) {
+
+    handleTrackSubmit(
+      {
+        preventDefault() {}
+      },
+      'page-tracking-input'
+    );
+
+  } else {
+
+    alert(
+      'Tracking service is unavailable.'
+    );
+  }
+}
+
+
+/* =========================================================
+   PRINT SHIPMENT TRACKING
+========================================================= */
+
+function printShipmentTracking(shipment) {
+
+  const trackingNumber =
+    shipment?.tracking_number ||
+    '';
+
+
+  if (!trackingNumber) {
+
+    alert(
+      'This shipment does not have a tracking number.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * Reuse the existing official receipt generator.
+   * This keeps the existing print design and QR system.
+   */
+
+  const generated =
+    generateShipmentReceipt(
+      shipment
+    );
+
+
+  if (!generated) {
+
+    alert(
+      'Unable to prepare the tracking receipt.'
+    );
+
+    return;
+  }
+
+
+  printShipmentReceipt();
 }
 
 
