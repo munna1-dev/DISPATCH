@@ -5,6 +5,26 @@
 
 
 /* =========================================================
+   CREATE PARCEL BUTTON
+========================================================= */
+
+function bindCreateParcelButton() {
+  const button = document.getElementById('open-create-shipment-btn');
+
+  if (!button) {
+    return;
+  }
+
+  button.addEventListener('click', function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    showModal('modal-create-shipment');
+  });
+}
+
+
+/* =========================================================
    ADMIN LOGIN
 ========================================================= */
 
@@ -2707,4 +2727,14 @@ function formatAdminDate(
   return escapeAdminHtml(
     date.toLocaleString()
   );
+}
+
+/* =========================================================
+   BIND ADMIN BUTTONS
+========================================================= */
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindCreateParcelButton);
+} else {
+  bindCreateParcelButton();
 }
