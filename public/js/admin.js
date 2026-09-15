@@ -544,11 +544,6 @@ async function loadAdminDashboard() {
             `;
 
 
-            /*
-             * Message button handlers are attached directly
-             * rather than placing customer data into inline JS.
-             */
-
             const replyButton =
               tr.querySelector(
                 '[data-message-action="reply"]'
@@ -725,13 +720,6 @@ async function loadAdminDashboard() {
               );
 
 
-            const estimatedDelivery =
-              String(
-                s.estimated_delivery ||
-                ''
-              );
-
-
             tr.innerHTML = `
               <td>
                 <strong
@@ -827,16 +815,332 @@ async function loadAdminDashboard() {
       err
     );
 
-    /*
-     * Do not expose internal backend errors
-     * to the administrator.
-     */
-
     alert(
       err.message ||
       'Unable to load admin dashboard.'
     );
   }
+}
+
+
+/* =========================================================
+   GENERATE OFFICIAL SHIPMENT RECEIPT
+========================================================= */
+
+function generateShipmentReceipt(
+  shipment,
+  fallback = {}
+) {
+
+  const trackingNumber =
+    shipment?.tracking_number ||
+    fallback.tracking_number ||
+    '';
+
+  if (!trackingNumber) {
+
+    console.error(
+      '[RECEIPT] Tracking number is missing.'
+    );
+
+    return false;
+  }
+
+
+  const setText =
+    (id, value) => {
+
+      const element =
+        document.getElementById(id);
+
+      if (element) {
+
+        element.textContent =
+          value || '-';
+      }
+    };
+
+
+  setText(
+    'prt-date',
+    'Date: ' +
+    new Date().toLocaleString()
+  );
+
+  setText(
+    'prt-tracking',
+    trackingNumber
+  );
+
+  setText(
+    'prt-service',
+    shipment.service_type ||
+    fallback.service_type ||
+    '-'
+  );
+
+  setText(
+    'prt-status',
+    shipment.status ||
+    'Shipment Created'
+  );
+
+  setText(
+    'prt-sender-name',
+    'Name: ' +
+    (
+      shipment.sender_name ||
+      fallback.sender_name ||
+      '-'
+    )
+  );
+
+  setText(
+    'prt-sender-origin',
+    'Origin: ' +
+    (
+      shipment.origin ||
+      fallback.origin ||
+      '-'
+    )
+  );
+
+  setText(
+    'prt-recipient-name',
+    'Name: ' +
+    (
+      shipment.recipient_name ||
+      fallback.recipient_name ||
+      '-'
+    )
+  );
+
+  setText(
+    'prt-recipient-dest',
+    'Destination: ' +
+    (
+      shipment.destination ||
+      fallback.destination ||
+      '-'
+    )
+  );
+
+  setText(
+    'prt-desc',
+    'Cargo Manifest: ' +
+    (
+      shipment.description ||
+      fallback.description ||
+      '-'
+    )
+  );
+
+
+  const packageCount =
+    shipment.package_count ||
+    fallback.package_count ||
+    1;
+
+
+  const weight =
+    shipment.weight !== undefined &&
+    shipment.weight !== null &&
+    shipment.weight !== ''
+      ? shipment.weight + ' kg'
+      : '-';
+
+
+  setText(
+    'prt-pkg',
+    'Package Count / Weight: ' +
+    packageCount +
+    ' / ' +
+    weight
+  );
+
+
+  const declaredValue =
+    shipment.declared_value ??
+    fallback.declared_value ??
+    '';
+
+
+  const currency =
+    shipment.currency ||
+    fallback.currency ||
+    '';
+
+
+  const valueText =
+    declaredValue !== ''
+      ? (
+          currency
+            ? currency + ' '
+            : ''
+        ) + declaredValue
+      : '-';
+
+
+  setText(
+    'prt-value',
+    'Declared Value: ' +
+    valueText
+  );
+
+
+  /* -------------------------------------------------------
+     GENERATE QR CODE
+  ------------------------------------------------------- */
+
+  const qrBox =
+    document.getElementById(
+      'prt-qrcode-box'
+    );
+
+
+  if (qrBox) {
+
+    qrBox.innerHTML = '';
+
+
+    if (
+      typeof QRCode !==
+      'undefined'
+    ) {
+
+      try {
+
+        const trackingUrl =
+          new URL(
+            window.location.href
+          );
+
+
+        trackingUrl.searchParams.set(
+          'trk',
+          trackingNumber
+        );
+
+
+        new QRCode(
+          qrBox,
+          {
+            text:
+              trackingUrl.toString(),
+
+            width:
+              150,
+
+            height:
+              150,
+
+            correctLevel:
+              QRCode.CorrectLevel.M
+          }
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          '[RECEIPT] QR generation failed:',
+          error
+        );
+      }
+
+
+    } else {
+
+      console.warn(
+        '[RECEIPT] QRCode library is unavailable.'
+      );
+    }
+  }
+
+
+  /* -------------------------------------------------------
+     SHOW RECEIPT
+  ------------------------------------------------------- */
+
+  const receipt =
+    document.getElementById(
+      'printable-receipt-container'
+    );
+
+
+  if (receipt) {
+
+    receipt.style.display =
+      'block';
+  }
+
+
+  return true;
+}
+
+
+/* =========================================================
+   PRINT OFFICIAL SHIPMENT RECEIPT
+========================================================= */
+
+function printShipmentReceipt() {
+
+  const receipt =
+    document.getElementById(
+      'printable-receipt-container'
+    );
+
+
+  if (!receipt) {
+
+    alert(
+      'Official receipt template was not found.'
+    );
+
+    return;
+  }
+
+
+  receipt.style.display =
+    'block';
+
+
+  window.setTimeout(
+    () => {
+
+      window.print();
+
+    },
+    250
+  );
+}
+
+
+/* =========================================================
+   HIDE RECEIPT AFTER PRINT
+========================================================= */
+
+if (
+  typeof window !== 'undefined'
+) {
+
+  window.addEventListener(
+    'afterprint',
+    () => {
+
+      const receipt =
+        document.getElementById(
+          'printable-receipt-container'
+        );
+
+
+      if (receipt) {
+
+        receipt.style.display =
+          'none';
+      }
+    }
+  );
 }
 
 
@@ -930,9 +1234,9 @@ async function handleCreateShipmentSubmit(e) {
   };
 
 
-  /*
-   * Basic frontend validation.
-   */
+  /* -------------------------------------------------------
+     BASIC VALIDATION
+  ------------------------------------------------------- */
 
   if (
     !payload.sender_name ||
@@ -981,13 +1285,12 @@ async function handleCreateShipmentSubmit(e) {
     } catch {
 
       data = {};
-
     }
 
 
-    /*
-     * Authentication failure.
-     */
+    /* -----------------------------------------------------
+       AUTHENTICATION FAILURE
+    ----------------------------------------------------- */
 
     if (
       res.status === 401 ||
@@ -1000,6 +1303,10 @@ async function handleCreateShipmentSubmit(e) {
     }
 
 
+    /* -----------------------------------------------------
+       BACKEND ERROR
+    ----------------------------------------------------- */
+
     if (!res.ok) {
 
       alert(
@@ -1011,53 +1318,132 @@ async function handleCreateShipmentSubmit(e) {
     }
 
 
-    /*
-     * Successful shipment creation.
-     */
+    /* -----------------------------------------------------
+       SUCCESSFUL SHIPMENT CREATION
+    ----------------------------------------------------- */
 
-    alert(
-      `Waybill Created Successfully!\n\nTracking Number: ${
-        data.tracking_number ||
-        data.shipment?.tracking_number ||
-        'Created'
-      }`
-    );
+    const createdShipment =
+      data.shipment ||
+      data ||
+      {};
 
+
+    const trackingNumber =
+      data.tracking_number ||
+      createdShipment.tracking_number ||
+      '';
+
+
+    if (!trackingNumber) {
+
+      console.error(
+        '[CREATE PARCEL] Backend did not return a tracking number.',
+        data
+      );
+
+
+      alert(
+        'Parcel was created, but the tracking number was not returned by the server.'
+      );
+
+
+      await loadAdminDashboard();
+
+      return;
+    }
+
+
+    /* -----------------------------------------------------
+       GENERATE OFFICIAL RECEIPT
+    ----------------------------------------------------- */
+
+    const receiptReady =
+      generateShipmentReceipt(
+        {
+          ...createdShipment,
+
+          tracking_number:
+            trackingNumber
+        },
+
+        payload
+      );
+
+
+    /* -----------------------------------------------------
+       CLOSE CREATE SHIPMENT MODAL
+    ----------------------------------------------------- */
 
     hideModal(
       'modal-create-shipment'
     );
 
 
-    /*
-     * Reset form if it exists.
-     */
+    /* -----------------------------------------------------
+       RESET CREATE FORM
+    ----------------------------------------------------- */
 
     const form =
       document.getElementById(
         'form-create-shipment'
       );
 
+
     if (form) {
+
       form.reset();
     }
 
-
-    /*
-     * Some HTML versions may use a different form ID.
-     */
 
     const createForm =
       document.querySelector(
         '#modal-create-shipment form'
       );
 
-    if (createForm) {
+
+    if (
+      createForm &&
+      createForm !== form
+    ) {
+
       createForm.reset();
     }
 
 
+    /* -----------------------------------------------------
+       REFRESH ADMIN DASHBOARD
+    ----------------------------------------------------- */
+
     await loadAdminDashboard();
+
+
+    /* -----------------------------------------------------
+       SUCCESS MESSAGE
+    ----------------------------------------------------- */
+
+    alert(
+      `Waybill Created Successfully!\n\nTracking Number: ${trackingNumber}`
+    );
+
+
+    /* -----------------------------------------------------
+       OFFER TO PRINT OFFICIAL RECEIPT
+    ----------------------------------------------------- */
+
+    if (receiptReady) {
+
+      const shouldPrint =
+        window.confirm(
+          'Official waybill receipt generated successfully.\n\nWould you like to print the receipt now?'
+        );
+
+
+      if (shouldPrint) {
+
+        printShipmentReceipt();
+      }
+    }
+
 
   } catch (err) {
 
@@ -1065,6 +1451,7 @@ async function handleCreateShipmentSubmit(e) {
       'Create shipment error:',
       err
     );
+
 
     alert(
       'Failed to connect to backend server.'
@@ -1078,36 +1465,90 @@ async function handleCreateShipmentSubmit(e) {
 ========================================================= */
 
 function openUpdateShipmentModal(shipment) {
+
   const get = (id) =>
     document.getElementById(id);
 
+
   if (!shipment || !shipment.id) {
-    console.error('Invalid shipment supplied to edit form.');
-    alert('Unable to open shipment editor.');
+
+    console.error(
+      'Invalid shipment supplied to edit form.'
+    );
+
+
+    alert(
+      'Unable to open shipment editor.'
+    );
+
+
     return;
   }
 
-  const shipmentIdEl = get('us-shipment-id');
-  const trackingEl = get('us-tracking-number');
-  const referenceEl = get('us-reference');
-  const senderNameEl = get('us-sender-name');
-  const senderCountryEl = get('us-sender-country');
-  const recipientNameEl = get('us-recipient-name');
-  const recipientCountryEl = get('us-recipient-country');
-  const originEl = get('us-origin');
-  const destinationEl = get('us-destination');
-  const locationEl = get('us-location');
-  const serviceTypeEl = get('us-service-type');
-  const priorityEl = get('us-priority');
-  const statusEl = get('us-status-select');
-  const customStatusEl = get('us-status-custom');
-  const etaEl = get('us-eta');
-  const packageCountEl = get('us-package-count');
-  const weightEl = get('us-weight');
-  const currencyEl = get('us-currency');
-  const declaredValueEl = get('us-declared-value');
-  const descriptionEl = get('us-description');
-  const eventDescriptionEl = get('us-event-description');
+
+  const shipmentIdEl =
+    get('us-shipment-id');
+
+  const trackingEl =
+    get('us-tracking-number');
+
+  const referenceEl =
+    get('us-reference');
+
+  const senderNameEl =
+    get('us-sender-name');
+
+  const senderCountryEl =
+    get('us-sender-country');
+
+  const recipientNameEl =
+    get('us-recipient-name');
+
+  const recipientCountryEl =
+    get('us-recipient-country');
+
+  const originEl =
+    get('us-origin');
+
+  const destinationEl =
+    get('us-destination');
+
+  const locationEl =
+    get('us-location');
+
+  const serviceTypeEl =
+    get('us-service-type');
+
+  const priorityEl =
+    get('us-priority');
+
+  const statusEl =
+    get('us-status-select');
+
+  const customStatusEl =
+    get('us-status-custom');
+
+  const etaEl =
+    get('us-eta');
+
+  const packageCountEl =
+    get('us-package-count');
+
+  const weightEl =
+    get('us-weight');
+
+  const currencyEl =
+    get('us-currency');
+
+  const declaredValueEl =
+    get('us-declared-value');
+
+  const descriptionEl =
+    get('us-description');
+
+  const eventDescriptionEl =
+    get('us-event-description');
+
 
   const requiredElements = [
     shipmentIdEl,
@@ -1133,75 +1574,129 @@ function openUpdateShipmentModal(shipment) {
     eventDescriptionEl
   ];
 
-  if (requiredElements.some((el) => !el)) {
-    console.error('Edit Parcel form elements are missing.');
-    alert('Unable to open shipment editor.');
+
+  if (
+    requiredElements.some(
+      (el) => !el
+    )
+  ) {
+
+    console.error(
+      'Edit Parcel form elements are missing.'
+    );
+
+
+    alert(
+      'Unable to open shipment editor.'
+    );
+
+
     return;
   }
+
 
   shipmentIdEl.value =
     shipment.id ?? '';
 
+
   trackingEl.value =
     shipment.tracking_number ?? '';
+
 
   referenceEl.value =
     shipment.reference ?? '';
 
+
   senderNameEl.value =
     shipment.sender_name ?? '';
+
 
   senderCountryEl.value =
     shipment.sender_country ?? '';
 
+
   recipientNameEl.value =
     shipment.recipient_name ?? '';
+
 
   recipientCountryEl.value =
     shipment.recipient_country ?? '';
 
+
   originEl.value =
     shipment.origin ?? '';
+
 
   destinationEl.value =
     shipment.destination ?? '';
 
+
   locationEl.value =
     shipment.current_location ?? '';
+
 
   serviceTypeEl.value =
     shipment.service_type ?? '';
 
+
   priorityEl.value =
-    shipment.priority || 'Standard';
+    shipment.priority ||
+    'Standard';
+
 
   etaEl.value =
     shipment.estimated_delivery
-      ? String(shipment.estimated_delivery).slice(0, 10)
+      ? String(
+          shipment.estimated_delivery
+        ).slice(
+          0,
+          10
+        )
       : '';
 
+
   packageCountEl.value =
-    Number.isInteger(Number(shipment.package_count)) &&
-    Number(shipment.package_count) > 0
-      ? Number(shipment.package_count)
+    Number.isInteger(
+      Number(
+        shipment.package_count
+      )
+    ) &&
+    Number(
+      shipment.package_count
+    ) > 0
+      ? Number(
+          shipment.package_count
+        )
       : 1;
+
 
   weightEl.value =
     shipment.weight ?? '';
 
+
   currencyEl.value =
-    shipment.currency || 'USD';
+    shipment.currency ||
+    'USD';
+
 
   declaredValueEl.value =
     shipment.declared_value ?? '';
 
+
   descriptionEl.value =
     shipment.description ?? '';
 
-  eventDescriptionEl.value = '';
+
+  eventDescriptionEl.value =
+    '';
+
 
   const currentStatus =
-    String(shipment.status || 'Shipment Created');
+    String(
+      shipment.status ||
+      'Shipment Created'
+    );
+
 
   const allowedStatuses = [
     'Shipment Created',
@@ -1213,18 +1708,48 @@ function openUpdateShipmentModal(shipment) {
     'CUSTOM'
   ];
 
-  if (allowedStatuses.includes(currentStatus)) {
-    statusEl.value = currentStatus;
-    customStatusEl.value = '';
-    customStatusEl.style.display = 'none';
+
+  if (
+    allowedStatuses.includes(
+      currentStatus
+    )
+  ) {
+
+    statusEl.value =
+      currentStatus;
+
+
+    customStatusEl.value =
+      '';
+
+
+    customStatusEl.style.display =
+      'none';
+
   } else {
-    statusEl.value = 'CUSTOM';
-    customStatusEl.value = currentStatus;
-    customStatusEl.style.display = 'block';
+
+    statusEl.value =
+      'CUSTOM';
+
+
+    customStatusEl.value =
+      currentStatus;
+
+
+    customStatusEl.style.display =
+      'block';
   }
 
-  showModal('modal-update-shipment');
+
+  showModal(
+    'modal-update-shipment'
+  );
 }
+
+
+/* =========================================================
+   CUSTOM STATUS TOGGLE
+========================================================= */
 
 function toggleCustomStatusInput(
   selectEl
@@ -1269,126 +1794,314 @@ function toggleCustomStatusInput(
 ========================================================= */
 
 async function handleUpdateShipmentSubmit(e) {
+
   e.preventDefault();
 
-  const get = (id) => document.getElementById(id);
 
-  const shipmentIdEl = get('us-shipment-id');
-  const trackingEl = get('us-tracking-number');
-  const referenceEl = get('us-reference');
-  const senderNameEl = get('us-sender-name');
-  const senderCountryEl = get('us-sender-country');
-  const recipientNameEl = get('us-recipient-name');
-  const recipientCountryEl = get('us-recipient-country');
-  const originEl = get('us-origin');
-  const destinationEl = get('us-destination');
-  const locationEl = get('us-location');
-  const serviceTypeEl = get('us-service-type');
-  const priorityEl = get('us-priority');
-  const statusEl = get('us-status-select');
-  const customStatusEl = get('us-status-custom');
-  const etaEl = get('us-eta');
-  const packageCountEl = get('us-package-count');
-  const weightEl = get('us-weight');
-  const currencyEl = get('us-currency');
-  const declaredValueEl = get('us-declared-value');
-  const descriptionEl = get('us-description');
-  const eventDescriptionEl = get('us-event-description');
+  const get =
+    (id) =>
+      document.getElementById(id);
+
+
+  const shipmentIdEl =
+    get('us-shipment-id');
+
+  const trackingEl =
+    get('us-tracking-number');
+
+  const referenceEl =
+    get('us-reference');
+
+  const senderNameEl =
+    get('us-sender-name');
+
+  const senderCountryEl =
+    get('us-sender-country');
+
+  const recipientNameEl =
+    get('us-recipient-name');
+
+  const recipientCountryEl =
+    get('us-recipient-country');
+
+  const originEl =
+    get('us-origin');
+
+  const destinationEl =
+    get('us-destination');
+
+  const locationEl =
+    get('us-location');
+
+  const serviceTypeEl =
+    get('us-service-type');
+
+  const priorityEl =
+    get('us-priority');
+
+  const statusEl =
+    get('us-status-select');
+
+  const customStatusEl =
+    get('us-status-custom');
+
+  const etaEl =
+    get('us-eta');
+
+  const packageCountEl =
+    get('us-package-count');
+
+  const weightEl =
+    get('us-weight');
+
+  const currencyEl =
+    get('us-currency');
+
+  const declaredValueEl =
+    get('us-declared-value');
+
+  const descriptionEl =
+    get('us-description');
+
+  const eventDescriptionEl =
+    get('us-event-description');
+
 
   const elements = [
-    shipmentIdEl, trackingEl, referenceEl,
-    senderNameEl, senderCountryEl,
-    recipientNameEl, recipientCountryEl,
-    originEl, destinationEl, locationEl,
-    serviceTypeEl, priorityEl, statusEl,
-    customStatusEl, etaEl, packageCountEl,
-    weightEl, currencyEl, declaredValueEl,
-    descriptionEl, eventDescriptionEl
+    shipmentIdEl,
+    trackingEl,
+    referenceEl,
+    senderNameEl,
+    senderCountryEl,
+    recipientNameEl,
+    recipientCountryEl,
+    originEl,
+    destinationEl,
+    locationEl,
+    serviceTypeEl,
+    priorityEl,
+    statusEl,
+    customStatusEl,
+    etaEl,
+    packageCountEl,
+    weightEl,
+    currencyEl,
+    declaredValueEl,
+    descriptionEl,
+    eventDescriptionEl
   ];
 
-  if (elements.some((el) => !el)) {
-    alert('Edit Parcel form is incomplete.');
+
+  if (
+    elements.some(
+      (el) => !el
+    )
+  ) {
+
+    alert(
+      'Edit Parcel form is incomplete.'
+    );
+
+
     return;
   }
 
-  const id = shipmentIdEl.value.trim();
-  const trackingNumber = trackingEl.value.trim();
+
+  const id =
+    shipmentIdEl.value.trim();
+
+
+  const trackingNumber =
+    trackingEl.value.trim();
+
 
   if (!id) {
-    alert('Shipment ID is missing.');
+
+    alert(
+      'Shipment ID is missing.'
+    );
+
+
     return;
   }
 
+
   if (!trackingNumber) {
-    alert('Tracking number is required.');
+
+    alert(
+      'Tracking number is required.'
+    );
+
+
     trackingEl.focus();
+
+
     return;
   }
+
 
   const status =
     statusEl.value === 'CUSTOM'
       ? customStatusEl.value.trim()
       : statusEl.value;
 
+
   if (!status) {
-    alert('Please select or enter a shipment status.');
+
+    alert(
+      'Please select or enter a shipment status.'
+    );
+
+
     return;
   }
 
-  const packageCount = Number(packageCountEl.value);
 
-  if (!Number.isInteger(packageCount) || packageCount < 1) {
-    alert('Package count must be a whole number of at least 1.');
+  const packageCount =
+    Number(
+      packageCountEl.value
+    );
+
+
+  if (
+    !Number.isInteger(
+      packageCount
+    ) ||
+    packageCount < 1
+  ) {
+
+    alert(
+      'Package count must be a whole number of at least 1.'
+    );
+
+
     packageCountEl.focus();
+
+
     return;
   }
+
 
   const weight =
     weightEl.value.trim() === ''
       ? null
-      : Number(weightEl.value);
+      : Number(
+          weightEl.value
+        );
 
-  if (weight !== null && (!Number.isFinite(weight) || weight < 0)) {
-    alert('Please enter a valid weight.');
+
+  if (
+    weight !== null &&
+    (
+      !Number.isFinite(
+        weight
+      ) ||
+      weight < 0
+    )
+  ) {
+
+    alert(
+      'Please enter a valid weight.'
+    );
+
+
     weightEl.focus();
+
+
     return;
   }
+
 
   const declaredValue =
     declaredValueEl.value.trim() === ''
       ? null
-      : Number(declaredValueEl.value);
+      : Number(
+          declaredValueEl.value
+        );
+
 
   if (
     declaredValue !== null &&
-    (!Number.isFinite(declaredValue) || declaredValue < 0)
+    (
+      !Number.isFinite(
+        declaredValue
+      ) ||
+      declaredValue < 0
+    )
   ) {
-    alert('Please enter a valid declared value.');
+
+    alert(
+      'Please enter a valid declared value.'
+    );
+
+
     declaredValueEl.focus();
+
+
     return;
   }
 
+
   const payload = {
-    tracking_number: trackingNumber,
-    reference: referenceEl.value.trim(),
-    sender_name: senderNameEl.value.trim(),
-    sender_country: senderCountryEl.value.trim(),
-    recipient_name: recipientNameEl.value.trim(),
-    recipient_country: recipientCountryEl.value.trim(),
-    origin: originEl.value.trim(),
-    destination: destinationEl.value.trim(),
-    current_location: locationEl.value.trim(),
-    service_type: serviceTypeEl.value.trim(),
-    priority: priorityEl.value.trim(),
+
+    tracking_number:
+      trackingNumber,
+
+    reference:
+      referenceEl.value.trim(),
+
+    sender_name:
+      senderNameEl.value.trim(),
+
+    sender_country:
+      senderCountryEl.value.trim(),
+
+    recipient_name:
+      recipientNameEl.value.trim(),
+
+    recipient_country:
+      recipientCountryEl.value.trim(),
+
+    origin:
+      originEl.value.trim(),
+
+    destination:
+      destinationEl.value.trim(),
+
+    current_location:
+      locationEl.value.trim(),
+
+    service_type:
+      serviceTypeEl.value.trim(),
+
+    priority:
+      priorityEl.value.trim(),
+
     status,
-    estimated_delivery: etaEl.value || null,
-    package_count: packageCount,
+
+    estimated_delivery:
+      etaEl.value ||
+      null,
+
+    package_count:
+      packageCount,
+
     weight,
-    currency: currencyEl.value.trim() || 'USD',
-    declared_value: declaredValue,
-    description: descriptionEl.value.trim(),
-    event_description: eventDescriptionEl.value.trim()
+
+    currency:
+      currencyEl.value.trim() ||
+      'USD',
+
+    declared_value:
+      declaredValue,
+
+    description:
+      descriptionEl.value.trim(),
+
+    event_description:
+      eventDescriptionEl.value.trim()
   };
+
 
   const saveButton =
     e.submitter ||
@@ -1396,66 +2109,140 @@ async function handleUpdateShipmentSubmit(e) {
       '#modal-update-shipment button[type="submit"]'
     );
 
+
   const originalText =
-    saveButton ? saveButton.textContent : '';
+    saveButton
+      ? saveButton.textContent
+      : '';
+
 
   try {
+
     if (saveButton) {
-      saveButton.disabled = true;
-      saveButton.textContent = 'Saving...';
+
+      saveButton.disabled =
+        true;
+
+
+      saveButton.textContent =
+        'Saving...';
     }
 
-    const response = await fetch(
-      '/api/admin/shipments/' + encodeURIComponent(id),
-      {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      }
-    );
 
-    const data = await response.json().catch(() => ({}));
+    const response =
+      await fetch(
+        '/api/admin/shipments/' +
+        encodeURIComponent(
+          id
+        ),
+        {
+          method: 'PUT',
 
-    if (response.status === 401 || response.status === 403) {
+          credentials: 'include',
+
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify(
+              payload
+            )
+        }
+      );
+
+
+    const data =
+      await response
+        .json()
+        .catch(
+          () => ({})
+        );
+
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+
       handleAdminSessionExpired();
+
       return;
     }
 
-    if (!response.ok || data.success !== true) {
+
+    if (
+      !response.ok ||
+      data.success !== true
+    ) {
+
       throw new Error(
-        data.error || 'Failed to update parcel.'
+        data.error ||
+        'Failed to update parcel.'
       );
     }
 
-    hideModal('modal-update-shipment');
 
-    alert('Parcel updated successfully.');
-
-    if (typeof loadShipments === 'function') {
-      await loadShipments();
-    } else if (typeof loadAdminShipments === 'function') {
-      await loadAdminShipments();
-    } else {
-      window.location.reload();
-    }
-
-  } catch (error) {
-    console.error('[EDIT PARCEL]', error);
-
-    alert(
-      error.message || 'Failed to update parcel.'
+    hideModal(
+      'modal-update-shipment'
     );
 
+
+    alert(
+      'Parcel updated successfully.'
+    );
+
+
+    if (
+      typeof loadShipments ===
+      'function'
+    ) {
+
+      await loadShipments();
+
+    } else if (
+      typeof loadAdminShipments ===
+      'function'
+    ) {
+
+      await loadAdminShipments();
+
+    } else {
+
+      await loadAdminDashboard();
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      '[EDIT PARCEL]',
+      error
+    );
+
+
+    alert(
+      error.message ||
+      'Failed to update parcel.'
+    );
+
+
   } finally {
+
     if (saveButton) {
-      saveButton.disabled = false;
-      saveButton.textContent = originalText;
+
+      saveButton.disabled =
+        false;
+
+
+      saveButton.textContent =
+        originalText;
     }
   }
 }
+
+
 /* =========================================================
    CUSTOMER MESSAGE REPLY
 ========================================================= */
@@ -1518,7 +2305,9 @@ async function openMessageReply(id) {
 
 
     const messages =
-      Array.isArray(payload)
+      Array.isArray(
+        payload
+      )
         ? payload
         : Array.isArray(
             payload.messages
@@ -1691,10 +2480,6 @@ async function openMessageReply(id) {
 ========================================================= */
 
 function createReplyModal() {
-
-  /*
-   * Prevent duplicate modal.
-   */
 
   if (
     document.getElementById(
@@ -1983,10 +2768,6 @@ function createReplyModal() {
   );
 
 
-  /*
-   * Close when clicking outside.
-   */
-
   modal.addEventListener(
     'click',
     (event) => {
@@ -2000,10 +2781,6 @@ function createReplyModal() {
     }
   );
 
-
-  /*
-   * Escape key.
-   */
 
   document.addEventListener(
     'keydown',
@@ -2659,12 +3436,22 @@ function formatAdminDate(
   );
 }
 
+
 /* =========================================================
    BIND ADMIN BUTTONS
 ========================================================= */
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bindCreateParcelButton);
+if (
+  document.readyState ===
+  'loading'
+) {
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    bindCreateParcelButton
+  );
+
 } else {
+
   bindCreateParcelButton();
 }
