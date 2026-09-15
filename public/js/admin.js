@@ -891,68 +891,574 @@ async function loadAdminDashboard() {
 
 function viewShipmentTracking(shipment) {
 
-  const trackingNumber =
-    shipment?.tracking_number ||
-    '';
-
-  if (!trackingNumber) {
-
-    alert(
-      'This shipment does not have a tracking number.'
-    );
-
+  if (!shipment || !shipment.id) {
+    alert('Unable to open tracking details.');
     return;
   }
 
+  const titleEl =
+    document.getElementById('tracking-events-title');
 
-  const trackingInput =
-    document.getElementById(
-      'page-tracking-input'
-    );
+  if (titleEl) {
+    titleEl.textContent =
+      'Tracking: ' +
+      (shipment.tracking_number || 'Unknown');
+  }
 
+  const tbody =
+    document.getElementById('tracking-events-tbody');
 
-  if (!trackingInput) {
+  const loadingEl =
+    document.getElementById('tracking-events-loading');
 
-    alert(
-      'The public tracking interface was not found.'
-    );
+  const errorEl =
+    document.getElementById('tracking-events-error');
 
+  const emptyEl =
+    document.getElementById('tracking-events-empty');
+
+  const tableWrap =
+    document.getElementById('tracking-events-table-wrap');
+
+  if (!tbody || !loadingEl || !errorEl || !emptyEl || !tableWrap) {
+    alert('Tracking details interface is unavailable.');
     return;
   }
 
+  tbody.innerHTML = '';
 
-  trackingInput.value =
-    trackingNumber;
+  loadingEl.style.display = 'block';
+  errorEl.style.display = 'none';
+  emptyEl.style.display = 'none';
+  tableWrap.style.display = 'none';
+
+  window.__adminTrackingShipmentId = shipment.id;
+
+  showModal('modal-tracking-events');
+
+  loadAdminShipmentEvents(shipment.id);
+}
 
 
-  /*
-   * Reuse the existing public tracking flow.
-   * Do not duplicate the tracking API logic here.
-   */
+/* =========================================================
+   ADMIN TRACKING EVENTS
+========================================================= */
 
-  showSection(
-    'tracking'
-  );
+async function loadAdminShipmentEvents(shipmentId) {
 
+  const tbody =
+    document.getElementById('tracking-events-tbody');
+
+  const loadingEl =
+    document.getElementById('tracking-events-loading');
+
+  const errorEl =
+    document.getElementById('tracking-events-error');
+
+  const emptyEl =
+    document.getElementById('tracking-events-empty');
+
+  const tableWrap =
+    document.getElementById('tracking-events-table-wrap');
+
+  if (!tbody || !loadingEl || !errorEl || !emptyEl || !tableWrap) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        '/api/admin/shipments/' +
+        encodeURIComponent(shipmentId) +
+        '/events',
+        {
+          method: 'GET',
+          credentials: 'include'
+        }
+      );
+
+    const data =
+      await response
+        .json()
+        .catch(() => ({}));
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      handleAdminSessionExpired();
+      return;
+    }
+
+    if (!response.ok || data.success !== true) {
+      throw new Error(
+        data.error ||
+        'Failed to load tracking updates.'
+      );
+    }
+
+    const events =
+      Array.isArray(data.events)
+        ? data.events
+        : [];
+
+    tbody.innerHTML = '';
+
+    loadingEl.style.display = 'none';
+
+    if (events.length === 0) {
+      emptyEl.style.display = 'block';
+      tableWrap.style.display = 'none';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    tableWrap.style.display = 'block';
+
+    events.forEach((event) => {
+
+      const tr =
+        document.createElement('tr');
+
+      tr.style.borderTop =
+        '1px solid rgba(0,0,0,0.08)';
+
+      const status =
+        event.status || '—';
+
+      const location =
+        event.location || '—';
+
+      const description =
+        event.description || '—';
+
+      const eventTime =
+        formatAdminEventDate(event.event_time);
+
+      tr.innerHTML = `
+        <td style="padding:0.75rem; font-weight:600;">
+          ${escapeAdminHtml(status)}
+        </td>
+
+        <td style="padding:0.75rem;">
+          ${escapeAdminHtml(location)}
+        </td>
+
+        <td style="padding:0.75rem;">
+          ${escapeAdminHtml(description)}
+        </td>
+
+        <td style="padding:0.75rem; white-space:nowrap;">
+          ${escapeAdminHtml(eventTime)}
+        </td>
+
+        <td style="padding:0.75rem; text-align:right;">
+          <button
+            type="button"
+            class="btn-outline"
+            data-edit-event-id="${event.id}"
+          >
+            <i class="icon icon-edit"></i>
+            Edit
+          </button>
+        </td>
+      `;
+
+      const editButton =
+        tr.querySelector(
+          '[data-edit-event-id]'
+        );
+
+      if (editButton) {
+        editButton.addEventListener(
+          'click',
+          () => openEditTrackingEventModal(event)
+        );
+      }
+
+      tbody.appendChild(tr);
+    });
+
+  } catch (error) {
+
+    console.error(
+      'Load tracking events error:',
+      error
+    );
+
+    loadingEl.style.display = 'none';
+    tableWrap.style.display = 'none';
+    emptyEl.style.display = 'none';
+
+    errorEl.textContent =
+      error.message ||
+      'Failed to load tracking updates.';
+
+    errorEl.style.display = 'block';
+  }
+}
+
+
+/* =========================================================
+   OPEN TRACKING EVENT EDITOR
+========================================================= */
+
+function openEditTrackingEventModal(event) {
+
+  if (!event || !event.id) {
+    alert('Invalid tracking update.');
+    return;
+  }
+
+  const idEl =
+    document.getElementById('edit-event-id');
+
+  const statusEl =
+    document.getElementById('edit-event-status');
+
+  const locationEl =
+    document.getElementById('edit-event-location');
+
+  const descriptionEl =
+    document.getElementById('edit-event-description');
+
+  const timeEl =
+    document.getElementById('edit-event-time');
+
+  const referenceEl =
+    document.getElementById('edit-event-reference');
 
   if (
-    typeof handleTrackSubmit ===
-    'function'
+    !idEl ||
+    !statusEl ||
+    !locationEl ||
+    !descriptionEl ||
+    !timeEl ||
+    !referenceEl
   ) {
+    alert('Tracking update editor is unavailable.');
+    return;
+  }
 
-    handleTrackSubmit(
-      {
-        preventDefault() {}
-      },
-      'page-tracking-input'
+  idEl.value =
+    event.id;
+
+  statusEl.value =
+    event.status || '';
+
+  locationEl.value =
+    event.location || '';
+
+  descriptionEl.value =
+    event.description || '';
+
+  timeEl.value =
+    toAdminDateTimeLocal(event.event_time);
+
+  referenceEl.textContent =
+    'Update #' +
+    event.id;
+
+  showModal(
+    'modal-edit-tracking-event'
+  );
+}
+
+
+/* =========================================================
+   SAVE TRACKING EVENT CORRECTION
+========================================================= */
+
+async function handleTrackingEventEditSubmit(e) {
+
+  e.preventDefault();
+
+  const id =
+    document.getElementById(
+      'edit-event-id'
+    )?.value;
+
+  const status =
+    document.getElementById(
+      'edit-event-status'
+    )?.value.trim();
+
+  const location =
+    document.getElementById(
+      'edit-event-location'
+    )?.value.trim();
+
+  const description =
+    document.getElementById(
+      'edit-event-description'
+    )?.value.trim();
+
+  const eventTime =
+    document.getElementById(
+      'edit-event-time'
+    )?.value;
+
+  const saveButton =
+    document.getElementById(
+      'save-tracking-event-btn'
     );
 
-  } else {
+  if (!id) {
+    alert('Invalid tracking update.');
+    return;
+  }
+
+  if (!status) {
+    alert('Status is required.');
+    return;
+  }
+
+  const originalText =
+    saveButton
+      ? saveButton.textContent
+      : '';
+
+  try {
+
+    if (saveButton) {
+      saveButton.disabled = true;
+      saveButton.textContent = 'Saving...';
+    }
+
+    const response =
+      await fetch(
+        '/api/admin/shipment-events/' +
+        encodeURIComponent(id),
+        {
+          method: 'PUT',
+
+          credentials: 'include',
+
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body: JSON.stringify({
+            status,
+            location,
+            description,
+            event_time:
+              eventTime
+                ? new Date(eventTime).toISOString()
+                : null
+          })
+        }
+      );
+
+    const data =
+      await response
+        .json()
+        .catch(() => ({}));
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      handleAdminSessionExpired();
+      return;
+    }
+
+    if (!response.ok || data.success !== true) {
+      throw new Error(
+        data.error ||
+        'Failed to save tracking correction.'
+      );
+    }
+
+    hideModal(
+      'modal-edit-tracking-event'
+    );
 
     alert(
-      'Tracking service is unavailable.'
+      'Tracking update corrected successfully.'
     );
+
+    /*
+     * Reload the event list so the admin immediately
+     * sees the corrected route/update.
+     */
+    const title =
+      document.getElementById(
+        'tracking-events-title'
+      )?.textContent || '';
+
+    const trackingNumber =
+      title.replace(
+        /^Tracking:\s*/i,
+        ''
+      ).trim();
+
+    /*
+     * Find the shipment currently represented by the
+     * tracking details modal and reload its events.
+     */
+    const rows =
+      document.querySelectorAll(
+        '#admin-shipments-tbody tr'
+      );
+
+    let shipmentId = null;
+
+    rows.forEach((row) => {
+      const text =
+        row.textContent || '';
+
+      if (
+        !shipmentId &&
+        trackingNumber &&
+        text.includes(trackingNumber)
+      ) {
+        shipmentId =
+          row.dataset.shipmentId || null;
+      }
+    });
+
+    /*
+     * The event API response is authoritative for the
+     * current modal. If a shipment ID is available from
+     * the stored admin tracking state, use it.
+     */
+    if (
+      window.__adminTrackingShipmentId
+    ) {
+      shipmentId =
+        window.__adminTrackingShipmentId;
+    }
+
+    if (shipmentId) {
+      await loadAdminShipmentEvents(
+        shipmentId
+      );
+    }
+
+    /*
+     * Refresh the shipment table as well.
+     */
+    if (
+      typeof loadShipments === 'function'
+    ) {
+      await loadShipments();
+    } else if (
+      typeof loadAdminShipments === 'function'
+    ) {
+      await loadAdminShipments();
+    }
+
+  } catch (error) {
+
+    console.error(
+      'Save tracking event error:',
+      error
+    );
+
+    alert(
+      error.message ||
+      'Failed to save tracking correction.'
+    );
+
+  } finally {
+
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent =
+        originalText ||
+        'Save Correction';
+    }
   }
+}
+
+
+/* =========================================================
+   TRACKING EVENT HELPERS
+========================================================= */
+
+function formatAdminEventDate(value) {
+
+  if (!value) {
+    return '—';
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return String(value);
+  }
+
+  return date.toLocaleString();
+}
+
+
+function toAdminDateTimeLocal(value) {
+
+  if (!value) {
+    return '';
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return '';
+  }
+
+  const pad =
+    (n) => String(n).padStart(2, '0');
+
+  return (
+    date.getFullYear() +
+    '-' +
+    pad(date.getMonth() + 1) +
+    '-' +
+    pad(date.getDate()) +
+    'T' +
+    pad(date.getHours()) +
+    ':' +
+    pad(date.getMinutes())
+  );
+}
+
+
+function escapeAdminHtml(value) {
+
+  return String(
+    value ?? ''
+  )
+    .replace(
+      /&/g,
+      '&amp;'
+    )
+    .replace(
+      /</g,
+      '&lt;'
+    )
+    .replace(
+      />/g,
+      '&gt;'
+    )
+    .replace(
+      /"/g,
+      '&quot;'
+    )
+    .replace(
+      /'/g,
+      '&#039;'
+    );
 }
 
 
@@ -1261,6 +1767,64 @@ function generateShipmentReceipt(
 /* =========================================================
    PRINT OFFICIAL SHIPMENT RECEIPT
 ========================================================= */
+
+/* =========================================================
+   PUBLIC OFFICIAL RECEIPT BUTTON
+========================================================= */
+
+function triggerPrintOfficialReceipt() {
+
+  const trackingNumber =
+    document.getElementById('trk-number-val')?.textContent?.trim();
+
+  if (
+    !trackingNumber ||
+    trackingNumber === '-' ||
+    trackingNumber === '—'
+  ) {
+    alert(
+      'Please track a shipment before printing the official receipt.'
+    );
+
+    return;
+  }
+
+  const shipment = {
+    tracking_number: trackingNumber,
+
+    service_type:
+      document.getElementById('trk-service-val')?.textContent?.trim() || '',
+
+    status:
+      document.getElementById('trk-detail-status-val')?.textContent?.trim() || '',
+
+    origin:
+      document.getElementById('trk-origin-val')?.textContent?.trim() || '',
+
+    current_location:
+      document.getElementById('trk-current-val')?.textContent?.trim() || '',
+
+    destination:
+      document.getElementById('trk-destination-val')?.textContent?.trim() || '',
+
+    package_count:
+      document.getElementById('trk-pkg-val')?.textContent?.trim() || ''
+  };
+
+  const generated =
+    generateShipmentReceipt(shipment);
+
+  if (!generated) {
+    alert(
+      'Unable to prepare the official receipt.'
+    );
+
+    return;
+  }
+
+  printShipmentReceipt();
+}
+
 
 function printShipmentReceipt() {
 

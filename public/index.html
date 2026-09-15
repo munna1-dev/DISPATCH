@@ -786,5 +786,168 @@
 
   <script src="/js/app.js"></script>
   <script src="/js/admin.js"></script>
+
+  <!-- Modal: Admin Tracking Details / Route History -->
+  <div id="modal-tracking-events" class="modal-overlay">
+    <div class="card" style="max-width: 1100px; width: 94%; max-height: 90vh; overflow-y: auto;">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem;">
+        <div>
+          <h3 style="margin-bottom:0.25rem;">
+            <span class="icon icon-map" style="color:var(--accent-gold);"></span>
+            Tracking Details
+          </h3>
+
+          <div
+            id="tracking-events-title"
+            style="font-weight:600; opacity:0.8;"
+          >
+            Shipment
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onclick="hideModal('modal-tracking-events')"
+          class="btn-outline"
+          style="padding:0.3rem 0.75rem;"
+        >
+          &times;
+        </button>
+      </div>
+
+      <div
+        id="tracking-events-loading"
+        style="padding:1.5rem; text-align:center; display:none;"
+      >
+        Loading tracking updates...
+      </div>
+
+      <div
+        id="tracking-events-error"
+        style="padding:1rem; text-align:center; display:none;"
+      ></div>
+
+      <div
+        id="tracking-events-empty"
+        style="padding:1.5rem; text-align:center; display:none;"
+      >
+        No tracking updates were found.
+      </div>
+
+      <div
+        id="tracking-events-table-wrap"
+        style="overflow-x:auto;"
+      >
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:0.75rem;">Status</th>
+              <th style="text-align:left; padding:0.75rem;">Route / Location</th>
+              <th style="text-align:left; padding:0.75rem;">Description</th>
+              <th style="text-align:left; padding:0.75rem;">Date / Time</th>
+              <th style="text-align:right; padding:0.75rem;">Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="tracking-events-tbody"></tbody>
+        </table>
+      </div>
+
+      <div style="text-align:right; margin-top:1.25rem;">
+        <button
+          type="button"
+          onclick="hideModal('modal-tracking-events')"
+          class="btn-outline"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Correct Tracking Update -->
+  <div id="modal-edit-tracking-event" class="modal-overlay">
+    <div class="card" style="max-width:650px; width:94%; max-height:90vh; overflow-y:auto;">
+
+      <h3 style="margin-bottom:1rem;">
+        <span class="icon icon-edit" style="color:var(--accent-gold);"></span>
+        Correct Tracking Update
+      </h3>
+
+      <div
+        id="edit-event-reference"
+        style="margin-bottom:1rem; font-weight:600; opacity:0.8;"
+      ></div>
+
+      <form onsubmit="handleTrackingEventEditSubmit(event)">
+
+        <input type="hidden" id="edit-event-id">
+
+        <div style="margin-bottom:1rem;">
+          <label>Status</label>
+          <input
+            type="text"
+            id="edit-event-status"
+            class="form-control"
+            maxlength="100"
+            required
+          >
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label>Route / Location</label>
+          <input
+            type="text"
+            id="edit-event-location"
+            class="form-control"
+            maxlength="300"
+            placeholder="Facility, city, country or route location"
+          >
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <label>Update Description</label>
+          <textarea
+            id="edit-event-description"
+            class="form-control"
+            rows="4"
+            maxlength="2000"
+            placeholder="Describe this tracking update"
+          ></textarea>
+        </div>
+
+        <div style="margin-bottom:1.5rem;">
+          <label>Date / Time</label>
+          <input
+            type="datetime-local"
+            id="edit-event-time"
+            class="form-control"
+          >
+        </div>
+
+        <div style="text-align:right;">
+          <button
+            type="button"
+            onclick="hideModal('modal-edit-tracking-event')"
+            class="btn-outline"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            id="save-tracking-event-btn"
+            class="btn-gold"
+          >
+            Save Correction
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>

@@ -1229,18 +1229,34 @@ async function handleTrackSubmit(
       )
     );
 
-    /*
-     * The public tracking API intentionally does not expose
-     * private sender/recipient information.
-     */
+    setTrackingText(
+      "trk-reference-val",
+      shipment.reference || "—"
+    );
+
+    setTrackingText(
+      "trk-priority-val",
+      shipment.priority || "—"
+    );
+
     setTrackingText(
       "trk-sender-val",
-      "Protected"
+      shipment.sender_name || "—"
+    );
+
+    setTrackingText(
+      "trk-sender-country-val",
+      shipment.sender_country || "—"
     );
 
     setTrackingText(
       "trk-recipient-val",
-      "Protected"
+      shipment.recipient_name || "—"
+    );
+
+    setTrackingText(
+      "trk-recipient-country-val",
+      shipment.recipient_country || "—"
     );
 
     const packageCount =
@@ -1258,18 +1274,23 @@ async function handleTrackSubmit(
       `${packageCount} / ${weight}`
     );
 
-    /*
-     * These fields are intentionally not returned by the
-     * public tracking API.
-     */
+    setTrackingText(
+      "trk-currency-val",
+      shipment.currency || "—"
+    );
+
     setTrackingText(
       "trk-val-val",
-      "—"
+      shipment.declared_value !== null &&
+      shipment.declared_value !== undefined &&
+      shipment.declared_value !== ""
+        ? shipment.declared_value
+        : "—"
     );
 
     setTrackingText(
       "trk-desc-val",
-      "Protected"
+      shipment.description || "—"
     );
 
     // ========================================================
@@ -1809,3 +1830,52 @@ document.addEventListener(
     }
   }
 );
+
+// ============================================================
+// AUTO-TRACK FROM PUBLIC QR URL
+// ============================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const trackingNumber = (params.get("trk") || "").trim();
+
+    if (!trackingNumber) {
+      return;
+    }
+
+    const input =
+      document.getElementById("home-tracking-input") ||
+      document.getElementById("page-tracking-input");
+
+    if (!input) {
+      console.warn(
+        "[QR] Tracking input not found."
+      );
+      return;
+    }
+
+    input.value = trackingNumber;
+
+    const form = input.closest("form");
+
+    if (form) {
+      handleTrackSubmit(
+        {
+          preventDefault() {}
+        },
+        input.id
+      );
+    } else {
+      console.warn(
+        "[QR] Tracking form not found."
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "[QR] Automatic tracking failed:",
+      error
+    );
+  }
+});
+

@@ -405,14 +405,23 @@ app.get(
         `
         SELECT
           tracking_number,
+          reference,
           status,
           service_type,
-          package_count,
-          weight AS weight_kg,
+          priority,
+          sender_name,
+          sender_country,
+          recipient_name,
+          recipient_country,
           origin,
           current_location,
           destination,
-          estimated_delivery
+          estimated_delivery,
+          package_count,
+          weight AS weight_kg,
+          currency,
+          declared_value,
+          description
         FROM shipments
         WHERE tracking_number = $1
         LIMIT 1
@@ -1054,6 +1063,242 @@ app.post(
       return res.status(500).json({
         success: false,
         error: "Failed to create shipment."
+      });
+    } finally {
+      c.release();
+    }
+  }
+);
+
+
+// ============================================================
+// ADMIN SHIPMENT EVENTS - VIEW
+// ============================================================
+
+app.get(
+  "/api/admin/shipments/:id/events",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    const shipmentId = Number(req.params.id);
+
+    if (
+      !Number.isInteger(shipmentId) ||
+      shipmentId < 1
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid shipment ID."
+      });
+    }
+
+    try {
+      const result = await queryWithRetry(
+        `
+        SELECT
+          id,
+          shipment_id,
+          status,
+          location,
+          description,
+          event_time,
+          latitude,
+          longitude,
+          created_at
+        FROM shipment_events
+        WHERE shipment_id = $1
+        ORDER BY event_time ASC, id ASC
+        `,
+        [shipmentId]
+      );
+
+      return res.json({
+        success: true,
+        events: result.rows
+      });
+    } catch (err) {
+      console.error(
+        "[ADMIN SHIPMENT EVENTS]",
+        err.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to load shipment events."
+      });
+    }
+  }
+);
+
+// ============================================================
+// ADMIN SHIPMENT EVENTS - EDIT
+// ============================================================
+
+app.put(
+  "/api/admin/shipment-events/:id",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    const b = req.body || {};
+    const eventId = Number(req.params.id);
+
+    if (
+      !Number.isInteger(eventId) ||
+      eventId < 1
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid event ID."
+      });
+    }
+
+    const status =
+      cleanString(b.status, 100);
+
+    const location =
+      cleanString(b.location, 300);
+
+    const description =
+      cleanString(b.description, 2000) || null;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        error: "Event status is required."
+      });
+    }
+
+    let eventTime = null;
+
+    if (
+      b.event_time !== undefined &&
+      b.event_time !== null &&
+      b.event_time !== ""
+    ) {
+      eventTime = new Date(b.event_time);
+
+      if (Number.isNaN(eventTime.getTime())) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid event date/time."
+        });
+      }
+    }
+
+    const c = await pool.connect();
+
+    try {
+      await c.query("BEGIN");
+
+      const existing = await c.query(
+        `
+        SELECT
+          id,
+          shipment_id
+        FROM shipment_events
+        WHERE id = $1
+        FOR UPDATE
+        `,
+        [eventId]
+      );
+
+      if (!existing.rowCount) {
+        await c.query("ROLLBACK");
+
+        return res.status(404).json({
+          success: false,
+          error: "Tracking event not found."
+        });
+      }
+
+      const shipmentId =
+        existing.rows[0].shipment_id;
+
+      const updated = await c.query(
+        `
+        UPDATE shipment_events
+        SET
+          status = $1,
+          location = $2,
+          description = $3,
+          event_time = COALESCE($4::timestamptz, event_time)
+        WHERE id = $5
+        RETURNING
+          id,
+          shipment_id,
+          status,
+          location,
+          description,
+          event_time,
+          latitude,
+          longitude,
+          created_at
+        `,
+        [
+          status,
+          location || null,
+          description,
+          eventTime
+            ? eventTime.toISOString()
+            : null,
+          eventId
+        ]
+      );
+
+      /*
+       * Keep the shipment's current status/location synchronized
+       * with its most recent tracking event.
+       */
+      const latestEvent = await c.query(
+        `
+        SELECT
+          status,
+          location
+        FROM shipment_events
+        WHERE shipment_id = $1
+        ORDER BY event_time DESC NULLS LAST, id DESC
+        LIMIT 1
+        `,
+        [shipmentId]
+      );
+
+      if (latestEvent.rowCount) {
+        await c.query(
+          `
+          UPDATE shipments
+          SET
+            status = $1,
+            current_location = $2,
+            updated_at = NOW()
+          WHERE id = $3
+          `,
+          [
+            latestEvent.rows[0].status,
+            latestEvent.rows[0].location || null,
+            shipmentId
+          ]
+        );
+      }
+
+      await c.query("COMMIT");
+
+      return res.json({
+        success: true,
+        event: updated.rows[0]
+      });
+
+    } catch (err) {
+      await c.query("ROLLBACK");
+
+      console.error(
+        "[ADMIN EVENT UPDATE]",
+        err.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to update tracking event."
       });
     } finally {
       c.release();
