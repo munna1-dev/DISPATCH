@@ -1515,6 +1515,117 @@ function generateTrackingQr(trackingNumber) {
 
 
 // ============================================================
+// DOWNLOAD PUBLIC TRACKING QR
+// ============================================================
+
+function downloadPublicTrackingQr() {
+  const container =
+    document.getElementById(
+      "public-parcel-qrcode"
+    );
+
+  const trackingNumber =
+    document
+      .getElementById(
+        "trk-number-val"
+      )
+      ?.textContent
+      ?.trim();
+
+  const status =
+    document.getElementById(
+      "public-qr-status"
+    );
+
+  if (!container) {
+    alert(
+      "QR code container was not found."
+    );
+    return;
+  }
+
+  if (
+    !trackingNumber ||
+    trackingNumber === "-" ||
+    trackingNumber === "—"
+  ) {
+    alert(
+      "Please track a shipment before downloading the QR code."
+    );
+    return;
+  }
+
+  let dataUrl = "";
+
+  const canvas =
+    container.querySelector(
+      "canvas"
+    );
+
+  if (canvas) {
+    try {
+      dataUrl =
+        canvas.toDataURL(
+          "image/png"
+        );
+    } catch (error) {
+      console.error(
+        "[QR] Unable to export QR canvas.",
+        error
+      );
+    }
+  }
+
+  if (!dataUrl) {
+    const image =
+      container.querySelector(
+        "img"
+      );
+
+    if (image?.src) {
+      dataUrl = image.src;
+    }
+  }
+
+  if (!dataUrl) {
+    alert(
+      "The QR code is not ready yet. Please wait a moment and try again."
+    );
+
+    if (status) {
+      status.textContent =
+        "QR code is not ready yet.";
+    }
+
+    return;
+  }
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href = dataUrl;
+
+  link.download =
+    `${trackingNumber}-verification-qr.png`;
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  link.remove();
+
+  if (status) {
+    status.textContent =
+      "QR code downloaded successfully.";
+  }
+}
+
+
+// ============================================================
 // GPS-AWARE MAP WRAPPER
 // ============================================================
 

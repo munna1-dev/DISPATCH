@@ -1,0 +1,661 @@
+============================================================
+             US COURIER PROFESSIONAL QA AUDIT
+============================================================
+Date: Tue Sep 15 17:42:44 EDT 2026
+Project: /public/Tracker
+
+============================================================
+1. PROJECT STRUCTURE
+============================================================
+./.env
+./.env.local
+./.gitignore
+./.vercel/README.txt
+./.vercel/repo.json
+./admin.js.before-cookie-auth-20260914-223810
+./admin.js.before-cookie-conversion-20260914-224054
+./database.js
+./database.sqlite
+./emailService.js
+./emailService.js.backup
+./package-lock.json
+./package.json
+./professional-audit-report.txt
+./professional_audit.sh
+./public/css/icons.css
+./public/css/styles.css
+./public/index.html
+./public/index.html.backup
+./public/index.html.before-event-editor
+./public/index.html.before-public-details
+./public/js/admin.js
+./public/js/admin.js.backup
+./public/js/admin.js.before-actions-fix
+./public/js/admin.js.before-event-editor
+./public/js/admin.js.before-receipt-fix
+./public/js/app.js
+./public/js/app.js.before-map-replacement
+./public/js/app.js.before-public-details
+./public/js/app.js.before-tracking-fix
+./server.js
+./server.js.before-admin-messages-fix-20260914-234115
+./server.js.before-api-fix
+./server.js.before-api-routes-fix
+./server.js.before-edit-parcel
+./server.js.before-event-edit
+./server.js.before-event-sync
+./server.js.before-public-details
+./server.js.before-shipment-api
+./server.js.before-speed
+./server.postgres-before-migration.js
+./server.sqlite-backup.js
+./utils/emailTemplate.js
+
+============================================================
+2. GIT STATUS
+============================================================
+ M public/index.html
+ M public/js/admin.js
+ M server.js
+?? professional-audit-report.txt
+?? professional_audit.sh
+
+============================================================
+3. PACKAGE INFORMATION
+============================================================
+{
+  "name": "us-courier-platform",
+  "version": "1.2.0",
+  "description": "US Courier - Enterprise Logistics, Shipment Management & QR Tracking Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.23.0",
+    "resend": "^6.28.0",
+    "sqlite3": "^5.1.7"
+  }
+}
+
+============================================================
+4. JAVASCRIPT SYNTAX
+============================================================
+
+Checking: server.js
+PASS: server.js
+
+Checking: public/js/app.js
+PASS: public/js/app.js
+
+Checking: public/js/admin.js
+PASS: public/js/admin.js
+
+============================================================
+5. GIT DIFF CHECK
+============================================================
+
+============================================================
+6. HTML FILES
+============================================================
+public/index.html
+
+============================================================
+7. JAVASCRIPT FILES
+============================================================
+public/js/admin.js
+public/js/app.js
+
+============================================================
+8. CSS FILES
+============================================================
+public/css/icons.css
+public/css/styles.css
+
+============================================================
+9. HTML IDs
+Checking for duplicate IDs
+============================================================
+
+FILE: public/index.html
+
+============================================================
+10. ONCLICK / HTML JAVASCRIPT HANDLERS
+============================================================
+
+============================================================
+11. JAVASCRIPT FUNCTION DEFINITIONS
+============================================================
+
+============================================================
+12. JAVASCRIPT EVENT LISTENERS
+============================================================
+
+============================================================
+13. FETCH / API CALLS
+============================================================
+
+============================================================
+14. BACKEND ROUTES
+============================================================
+341:app.get("/api/health", async (req, res) => {
+369:app.get(
+556:app.post(
+681:app.post(
+703:app.get(
+754:app.get(
+811:app.post(
+1069:app.get(
+1128:app.put(
+1304:app.put(
+1596:app.get(
+1648:app.post(
+1750:app.put(
+1811:app.delete(
+1869:app.post(
+1999:app.get("*", (req, res) => {
+
+============================================================
+15. ADMIN SECURITY MIDDLEWARE
+Checking admin endpoints
+============================================================
+191:function requireSameOrigin(req, res, next) {
+469:function authMiddleware(req, res, next) {
+503:async function adminMiddleware(req, res, next) {
+558:  requireSameOrigin,
+683:  requireSameOrigin,
+705:  authMiddleware,
+706:  adminMiddleware,
+756:  authMiddleware,
+757:  adminMiddleware,
+813:  authMiddleware,
+814:  adminMiddleware,
+815:  requireSameOrigin,
+1071:  authMiddleware,
+1072:  adminMiddleware,
+1130:  authMiddleware,
+1131:  adminMiddleware,
+1132:  requireSameOrigin,
+1306:  authMiddleware,
+1307:  adminMiddleware,
+1308:  requireSameOrigin,
+1598:  authMiddleware,
+1599:  adminMiddleware,
+1650:  authMiddleware,
+1651:  adminMiddleware,
+1652:  requireSameOrigin,
+1752:  authMiddleware,
+1753:  adminMiddleware,
+1754:  requireSameOrigin,
+1813:  authMiddleware,
+1814:  adminMiddleware,
+1815:  requireSameOrigin,
+1871:  requireSameOrigin,
+
+============================================================
+16. SQL OPERATIONS
+============================================================
+71:  const result = await pool.query("SELECT NOW() AS now");
+186:      rateLimitStore.delete(key);
+313:    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+343:    await pool.query("SELECT 1");
+392:       * Do not expose SELECT * from the public tracking endpoint.
+406:        SELECT
+416:        FROM shipments
+417:        WHERE tracking_number = $1
+432:        SELECT
+437:        FROM shipment_events
+438:        WHERE shipment_id = (
+439:          SELECT id
+440:          FROM shipments
+441:          WHERE tracking_number = $1
+518:      SELECT id, email, role
+519:      FROM users
+520:      WHERE id = $1
+587:        SELECT
+592:        FROM users
+593:        WHERE email = $1
+614:       * Prevent a missing database role from automatically
+710:        SELECT
+711:          (SELECT COUNT(*) FROM shipments) AS total,
+713:            SELECT COUNT(*)
+714:            FROM shipments
+715:            WHERE status ILIKE '%transit%'
+718:            SELECT COUNT(*)
+719:            FROM shipments
+720:            WHERE status ILIKE '%delivered%'
+723:            SELECT COUNT(*)
+724:            FROM contact_messages
+727:            SELECT COUNT(*)
+728:            FROM contact_messages
+729:            WHERE status = 'Unread'
+762:        SELECT
+783:          updated_at
+784:        FROM shipments
+952:        INSERT INTO shipments
+998:          updated_at
+1022:        INSERT INTO shipment_events
+1089:        SELECT
+1099:        FROM shipment_events
+1100:        WHERE shipment_id = $1
+1187:        SELECT
+1190:        FROM shipment_events
+1191:        WHERE id = $1
+1192:        FOR UPDATE
+1209:      const updated = await c.query(
+1211:        UPDATE shipment_events
+1217:        WHERE id = $5
+1246:        SELECT
+1249:        FROM shipment_events
+1250:        WHERE shipment_id = $1
+1260:          UPDATE shipments
+1264:            updated_at = NOW()
+1265:          WHERE id = $3
+1279:        event: updated.rows[0]
+1286:        "[ADMIN EVENT UPDATE]",
+1292:        error: "Failed to update tracking event."
+1301:// ADMIN SHIPMENTS - UPDATE
+1368:      `Shipment details updated by administrator.`;
+1459:        UPDATE shipments
+1479:          updated_at = NOW()
+1480:        WHERE id = $19
+1502:          updated_at
+1540:        INSERT INTO shipment_events
+1570:        "[UPDATE SHIPMENT]",
+1583:        error: "Failed to update shipment."
+1604:        SELECT
+1614:        FROM contact_messages
+1685:        SELECT
+1690:        FROM contact_messages
+1691:        WHERE id = $1
+1717:        UPDATE contact_messages
+1722:        WHERE id = $1
+1771:        UPDATE contact_messages
+1775:        WHERE id = $1
+1801:          "Unable to update the message."
+1809: * Permanently delete a customer message.
+1811:app.delete(
+1832:        DELETE FROM contact_messages
+1833:        WHERE id = $1
+1848:        message: "Message deleted successfully."
+1852:        "[ADMIN MESSAGE DELETE]",
+1859:          "Unable to delete the message."
+1893:      `New Customer Inquiry from ${name}`;
+1918:        INSERT INTO contact_messages
+1941:              `US Courier Support <${process.env.MAIL_FROM || "contact@uscourier.app"}>`,
+
+============================================================
+17. DANGEROUS HTML / XSS REVIEW
+============================================================
+
+============================================================
+18. DEBUG / DEMO TEXT
+============================================================
+
+============================================================
+19. CONSOLE LOGGING
+Review these manually; not all console logging is an error.
+============================================================
+
+============================================================
+20. POSSIBLE SECRETS / CREDENTIAL REFERENCES
+Values are NOT printed.
+============================================================
+
+============================================================
+21. ENVIRONMENT FILES
+============================================================
+./.env
+./.env.local
+
+============================================================
+22. PUBLIC TRACKING PRIVACY REVIEW
+============================================================
+Public tracking route references:
+370:  "/api/tracking/:trackingNumber",
+377:    const trackingNumber = cleanString(
+378:      req.params.trackingNumber,
+382:    if (!trackingNumber) {
+420:        [trackingNumber]
+446:        [trackingNumber]
+1324:    const trackingNumber =
+1390:    if (!trackingNumber) {
+1505:          trackingNumber,
+
+Potential private fields in server.js:
+11:const jwt = require("jsonwebtoken");
+26:const JWT_SECRET = process.env.JWT_SECRET;
+28:if (!JWT_SECRET) {
+29:  console.error("[AUTH] JWT_SECRET is not configured.");
+395:       * - sender_name
+396:       * - recipient_name
+397:       * - declared_value
+398:       * - currency
+470:  let token = req.cookies.us_courier_token;
+472:  if (!token) {
+476:      token = header.slice(7);
+480:  if (!token) {
+487:    const decoded = jwt.verify(token, JWT_SECRET);
+494:      error: "Invalid or expired token"
+569:      const password = String(
+570:        req.body?.password || ""
+573:      if (!email || !password) {
+575:          error: "Email and password required"
+591:          password_hash
+607:      if (!user.password_hash) {
+624:        password,
+625:        user.password_hash
+634:      const token = jwt.sign(
+640:        JWT_SECRET,
+646:      res.cookie("us_courier_token", token, {
+655:       * Token is intentionally NOT returned to JavaScript.
+685:    res.clearCookie("us_courier_token", {
+769:          sender_name,
+771:          recipient_name,
+779:          currency,
+780:          declared_value,
+820:      b.sender_name,
+825:      b.recipient_name,
+871:      validPositiveNumber(b.declared_value);
+889:      b.declared_value !== undefined &&
+890:      b.declared_value !== null &&
+891:      b.declared_value !== "" &&
+910:    const currency =
+911:      cleanString(b.currency, 10) || "USD";
+913:    if (!ALLOWED_CURRENCIES.includes(currency)) {
+916:        error: "Invalid currency."
+964:          sender_name,
+966:          recipient_name,
+968:          currency,
+969:          declared_value
+984:          sender_name,
+986:          recipient_name,
+994:          currency,
+995:          declared_value,
+1013:          currency,
+1096:          latitude,
+1097:          longitude,
+1225:          latitude,
+1226:          longitude,
+1331:      cleanString(b.sender_name, 200);
+1337:      cleanString(b.recipient_name, 200);
+1360:    const currency =
+1361:      cleanString(b.currency, 10) || "USD";
+1384:      b.declared_value === null ||
+1385:      b.declared_value === undefined ||
+1386:      b.declared_value === ""
+1388:        : Number(b.declared_value);
+1463:          sender_name = $3,
+1465:          recipient_name = $5,
+1476:          currency = $16,
+1477:          declared_value = $17,
+1488:          sender_name,
+1490:          recipient_name,
+1498:          currency,
+1499:          declared_value,
+1520:          currency,
+1606:          name AS sender_name,
+
+============================================================
+23. TRACKING EVENT SYSTEM
+============================================================
+server.js:437:        FROM shipment_events
+server.js:1022:        INSERT INTO shipment_events
+server.js:1099:        FROM shipment_events
+server.js:1190:        FROM shipment_events
+server.js:1211:        UPDATE shipment_events
+server.js:1249:        FROM shipment_events
+server.js:1540:        INSERT INTO shipment_events
+public/js/admin.js:851:                () => viewShipmentTracking(s)
+public/js/admin.js:892:function viewShipmentTracking(shipment) {
+public/js/admin.js:900:    document.getElementById('tracking-events-title');
+public/js/admin.js:909:    document.getElementById('tracking-events-tbody');
+public/js/admin.js:912:    document.getElementById('tracking-events-loading');
+public/js/admin.js:915:    document.getElementById('tracking-events-error');
+public/js/admin.js:918:    document.getElementById('tracking-events-empty');
+public/js/admin.js:921:    document.getElementById('tracking-events-table-wrap');
+public/js/admin.js:937:  showModal('modal-tracking-events');
+public/js/admin.js:939:  loadAdminShipmentEvents(shipment.id);
+public/js/admin.js:947:async function loadAdminShipmentEvents(shipmentId) {
+public/js/admin.js:950:    document.getElementById('tracking-events-tbody');
+public/js/admin.js:953:    document.getElementById('tracking-events-loading');
+public/js/admin.js:956:    document.getElementById('tracking-events-error');
+public/js/admin.js:959:    document.getElementById('tracking-events-empty');
+public/js/admin.js:962:    document.getElementById('tracking-events-table-wrap');
+public/js/admin.js:1076:          () => openEditTrackingEventModal(event)
+public/js/admin.js:1107:function openEditTrackingEventModal(event) {
+public/js/admin.js:1173:async function handleTrackingEventEditSubmit(e) {
+public/js/admin.js:1289:        'tracking-events-title'
+public/js/admin.js:1336:      await loadAdminShipmentEvents(
+public/index.html:791:  <div id="modal-tracking-events" class="modal-overlay">
+public/index.html:802:            id="tracking-events-title"
+public/index.html:811:          onclick="hideModal('modal-tracking-events')"
+public/index.html:820:        id="tracking-events-loading"
+public/index.html:827:        id="tracking-events-error"
+public/index.html:832:        id="tracking-events-empty"
+public/index.html:839:        id="tracking-events-table-wrap"
+public/index.html:853:          <tbody id="tracking-events-tbody"></tbody>
+public/index.html:860:          onclick="hideModal('modal-tracking-events')"
+public/index.html:884:      <form onsubmit="handleTrackingEventEditSubmit(event)">
+
+============================================================
+24. PRINT / RECEIPT SYSTEM
+============================================================
+public/index.html:7:  <meta name="description" content="Official US Courier portal for live parcel tracking, express freight delivery, and verified shipment waybill receipts.">
+public/index.html:14:  <!-- QRCode.js generates the public verification QR -->
+public/index.html:15:  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+public/index.html:17:  <!-- html5-qrcode provides camera-based QR scanning -->
+public/index.html:18:  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+public/index.html:113:            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Print verified official tracking receipts complete with dynamic QR validation and official company seals.</p>
+public/index.html:230:                <button onclick="triggerPrintOfficialReceipt()" class="btn-gold" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+public/index.html:231:                  <span class="icon icon-print"></span> Print Official Receipt
+public/index.html:323:                <div id="public-parcel-qrcode" style="display: inline-block;"></div>
+public/index.html:721:  <!-- Printable Official Waybill Receipt Sheet -->
+public/index.html:722:  <div id="printable-receipt-container" style="display:none;">
+public/index.html:723:    <div class="official-receipt-sheet">
+public/index.html:724:      <div class="receipt-header">
+public/index.html:730:          <h2 style="font-size:1.1rem; color:#b30000;">OFFICIAL WAYBILL RECEIPT</h2>
+public/index.html:771:        <div id="prt-qrcode-box"></div>
+public/index.html:779:      <div class="receipt-stamp">
+public/js/app.js:1441:      "public-parcel-qrcode"
+public/js/app.js:1451:    typeof QRCode === "undefined" ||
+public/js/app.js:1455:      "[QR] QRCode library unavailable or tracking number missing."
+public/js/app.js:1483:  new QRCode(
+public/js/app.js:1490:        QRCode.CorrectLevel.M
+public/js/admin.js:812:                    data-shipment-print-id="${shipmentId}"
+public/js/admin.js:814:                    <i class="icon icon-print"></i>
+public/js/admin.js:815:                    Print Tracking
+public/js/admin.js:832:            const printButton =
+public/js/admin.js:834:                '[data-shipment-print-id]'
+public/js/admin.js:856:            if (printButton) {
+public/js/admin.js:858:              printButton.addEventListener(
+public/js/admin.js:860:                () => printShipmentTracking(s)
+public/js/admin.js:1466:   PRINT SHIPMENT TRACKING
+public/js/admin.js:1469:function printShipmentTracking(shipment) {
+public/js/admin.js:1487:   * Reuse the existing official receipt generator.
+public/js/admin.js:1488:   * This keeps the existing print design and QR system.
+public/js/admin.js:1492:    generateShipmentReceipt(
+public/js/admin.js:1500:      'Unable to prepare the tracking receipt.'
+public/js/admin.js:1507:  printShipmentReceipt();
+public/js/admin.js:1512:   GENERATE OFFICIAL SHIPMENT RECEIPT
+public/js/admin.js:1515:function generateShipmentReceipt(
+public/js/admin.js:1528:      '[RECEIPT] Tracking number is missing.'
+public/js/admin.js:1682:      'prt-qrcode-box'
+public/js/admin.js:1692:      typeof QRCode !==
+public/js/admin.js:1710:        new QRCode(
+public/js/admin.js:1723:              QRCode.CorrectLevel.M
+public/js/admin.js:1731:          '[RECEIPT] QR generation failed:',
+public/js/admin.js:1740:        '[RECEIPT] QRCode library is unavailable.'
+public/js/admin.js:1747:     SHOW RECEIPT
+public/js/admin.js:1750:  const receipt =
+public/js/admin.js:1752:      'printable-receipt-container'
+public/js/admin.js:1756:  if (receipt) {
+public/js/admin.js:1758:    receipt.style.display =
+public/js/admin.js:1768:   PRINT OFFICIAL SHIPMENT RECEIPT
+public/js/admin.js:1772:   PUBLIC OFFICIAL RECEIPT BUTTON
+public/js/admin.js:1775:function triggerPrintOfficialReceipt() {
+public/js/admin.js:1786:      'Please track a shipment before printing the official receipt.'
+public/js/admin.js:1815:    generateShipmentReceipt(shipment);
+public/js/admin.js:1819:      'Unable to prepare the official receipt.'
+public/js/admin.js:1825:  printShipmentReceipt();
+public/js/admin.js:1829:function printShipmentReceipt() {
+public/js/admin.js:1831:  const receipt =
+public/js/admin.js:1833:      'printable-receipt-container'
+public/js/admin.js:1837:  if (!receipt) {
+public/js/admin.js:1840:      'Official receipt template was not found.'
+public/js/admin.js:1847:  receipt.style.display =
+public/js/admin.js:1854:      window.print();
+public/js/admin.js:1863:   HIDE RECEIPT AFTER PRINT
+public/js/admin.js:1871:    'afterprint',
+public/js/admin.js:1874:      const receipt =
+public/js/admin.js:1876:          'printable-receipt-container'
+public/js/admin.js:1880:      if (receipt) {
+public/js/admin.js:1882:        receipt.style.display =
+public/js/admin.js:2100:       GENERATE OFFICIAL RECEIPT
+public/js/admin.js:2103:    const receiptReady =
+public/js/admin.js:2104:      generateShipmentReceipt(
+public/js/admin.js:2173:       OFFER TO PRINT OFFICIAL RECEIPT
+public/js/admin.js:2176:    if (receiptReady) {
+public/js/admin.js:2178:      const shouldPrint =
+public/js/admin.js:2180:          'Official waybill receipt generated successfully.\n\nWould you like to print the receipt now?'
+public/js/admin.js:2184:      if (shouldPrint) {
+public/js/admin.js:2186:        printShipmentReceipt();
+
+============================================================
+25. FORMS
+============================================================
+
+============================================================
+26. BUTTONS
+============================================================
+
+============================================================
+27. LINKS
+============================================================
+
+============================================================
+28. MODALS
+============================================================
+
+============================================================
+29. RESPONSIVE DESIGN
+============================================================
+
+============================================================
+30. ACCESSIBILITY
+============================================================
+Images without obvious alt attributes:
+
+Buttons without obvious text/icon content:
+
+============================================================
+31. BROKEN / SUSPICIOUS REFERENCES
+============================================================
+JavaScript source references:
+
+Stylesheet references:
+
+============================================================
+32. DEPENDENCY AUDIT
+============================================================
+# npm audit report
+
+@tootallnate/once  <2.0.1
+@tootallnate/once vulnerable to Incorrect Control Flow Scoping - https://github.com/advisories/GHSA-vpq2-c234-7xj6
+fix available via `npm audit fix --force`
+Will install sqlite3@6.0.1, which is a breaking change
+node_modules/@tootallnate/once
+  http-proxy-agent  4.0.1
+  Depends on vulnerable versions of @tootallnate/once
+  node_modules/http-proxy-agent
+    make-fetch-happen  7.1.1 - 14.0.0
+    Depends on vulnerable versions of cacache
+    Depends on vulnerable versions of http-proxy-agent
+    node_modules/make-fetch-happen
+      node-gyp  <=10.3.1
+      Depends on vulnerable versions of make-fetch-happen
+      Depends on vulnerable versions of tar
+      node_modules/node-gyp
+        sqlite3  5.0.0 - 5.1.7
+        Depends on vulnerable versions of node-gyp
+        Depends on vulnerable versions of tar
+        node_modules/sqlite3
+
+qs  2.2.5 - 6.15.3
+Severity: moderate
+qs array-limit bypass via bracket-key comma parsing - https://github.com/advisories/GHSA-x5fp-wj9c-mxmx
+qs: Denial of Service via Attacker Controlled isBuffer - https://github.com/advisories/GHSA-4mjr-xmp4-gh2g
+fix available via `npm audit fix`
+node_modules/qs
+  express  4.22.2
+  Depends on vulnerable versions of qs
+  node_modules/express
+
+tar  <=7.5.20
+Severity: critical
+node-tar Vulnerable to Arbitrary File Creation/Overwrite via Hardlink Path Traversal - https://github.com/advisories/GHSA-34x7-hfp2-rc4v
+node-tar is Vulnerable to Arbitrary File Overwrite and Symlink Poisoning via Insufficient Path Sanitization - https://github.com/advisories/GHSA-8qq5-rm4j-mr97
+Arbitrary File Read/Write via Hardlink Target Escape Through Symlink Chain in node-tar Extraction - https://github.com/advisories/GHSA-83g3-92jg-28cx
+tar has Hardlink Path Traversal via Drive-Relative Linkpath - https://github.com/advisories/GHSA-qffp-2rhf-9h96
+node-tar Symlink Path Traversal via Drive-Relative Linkpath - https://github.com/advisories/GHSA-9ppj-qmqm-q256
+Race Condition in node-tar Path Reservations via Unicode Ligature Collisions on macOS APFS - https://github.com/advisories/GHSA-r6q2-hw4h-h46w
+node-tar applies PAX size override to intermediary GNU long-name/long-link headers, causing tar parser interpretation differential (file smuggling) - https://github.com/advisories/GHSA-vmf3-w455-68vh
+node-tar: Process crash via PAX numeric path type confusion - https://github.com/advisories/GHSA-w8wr-v893-vjvp
+node-tar: Decompression/parse DoS via unlimited input - https://github.com/advisories/GHSA-23hp-3jrh-7fpw
+node-tar: Negative tar entry size causes infinite loop in archive replace - https://github.com/advisories/GHSA-8x88-c5mf-7j5w
+node-tar: Uncaught Exception DoS via NUL byte in PAX path/linkpath records - https://github.com/advisories/GHSA-gvwx-54wh-qm9j
+node-tar: Uncontrolled recursion in mapHas/filesFilter allows uncatchable stack-overflow DoS via crafted long-path tar with member selection - https://github.com/advisories/GHSA-r292-9mhp-454m
+fix available via `npm audit fix --force`
+Will install sqlite3@6.0.1, which is a breaking change
+node_modules/tar
+  cacache  14.0.0 - 18.0.4
+  Depends on vulnerable versions of tar
+  node_modules/cacache
+
+9 vulnerabilities (2 low, 2 moderate, 4 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+============================================================
+33. LIVE LOCAL SERVER
+============================================================
+Testing http://localhost:3000/api/health
+curl: (7) Failed to connect to localhost port 3000 after 1 ms: Could not connect to server
+
+============================================================
+34. FINAL VALIDATION
+============================================================
+
+server.js:
+
+public/js/app.js:
+
+public/js/admin.js:
+
+git diff --check:
+
+============================================================
+AUDIT COMPLETE
+============================================================
+
+IMPORTANT:
+This automated audit identifies likely problems.
+Browser interaction, visual quality, and complete user journeys
+still require manual testing.
+
+NO FILES WERE MODIFIED BY THIS AUDIT.
+NO COMMIT WAS CREATED.
+NO PUSH WAS PERFORMED.
+
