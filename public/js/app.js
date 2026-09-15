@@ -740,3 +740,24 @@ async function handleTrackSubmit(event, inputId) {
 function initMapCanvasWithGps(origin, current, destination, status) {
   initMapCanvas(origin, current, destination, status);
 }
+
+function showSection(section) {
+  document.querySelectorAll("section[id^='view-']").forEach(el => {
+    el.style.display = "none";
+  });
+
+  const target = document.getElementById("view-" + section);
+  if (target) {
+    target.style.display = "block";
+  }
+
+  document.querySelectorAll("nav a").forEach(a => {
+    a.classList.remove("active");
+  });
+
+  const nav = document.getElementById("nav-" + section);
+  if (nav) nav.classList.add("active");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
