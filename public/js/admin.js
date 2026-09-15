@@ -1,4 +1,8 @@
-let authToken = localStorage.getItem('us_courier_token');
+/* =========================================================
+   US COURIER
+   ADMIN PORTAL JAVASCRIPT
+========================================================= */
+
 
 /* =========================================================
    ADMIN LOGIN
@@ -7,41 +11,94 @@ let authToken = localStorage.getItem('us_courier_token');
 async function handleAdminLogin(e) {
   e.preventDefault();
 
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
+  const emailEl =
+    document.getElementById('login-email');
 
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email,
-        password
-      })
-    });
+  const passwordEl =
+    document.getElementById('login-password');
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      return alert(
-        data.error || 'Invalid Operator Credentials'
-      );
-    }
-
-    authToken = data.token;
-
-    localStorage.setItem(
-      'us_courier_token',
-      authToken
+  if (!emailEl || !passwordEl) {
+    console.error(
+      'Admin login fields were not found.'
     );
 
-    loadAdminDashboard();
+    alert(
+      'Admin login form is unavailable.'
+    );
+
+    return;
+  }
+
+  const email =
+    emailEl.value.trim();
+
+  const password =
+    passwordEl.value;
+
+  if (!email || !password) {
+    alert(
+      'Please enter your email and password.'
+    );
+
+    return;
+  }
+
+  try {
+    const res =
+      await fetch(
+        '/api/auth/login',
+        {
+          method: 'POST',
+
+          credentials: 'include',
+
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              email,
+              password
+            })
+        }
+      );
+
+    let data = {};
+
+    try {
+      data =
+        await res.json();
+    } catch {
+      data = {};
+    }
+
+    if (!res.ok) {
+      alert(
+        data.error ||
+        'Invalid Operator Credentials'
+      );
+
+      return;
+    }
+
+    /*
+     * The backend sets the authentication cookie.
+     * No token is stored in localStorage.
+     */
+
+    await loadAdminDashboard();
 
   } catch (err) {
-    console.error('Admin login error:', err);
-    alert('Server Connection Error');
+    console.error(
+      'Admin login error:',
+      err
+    );
+
+    alert(
+      'Server Connection Error'
+    );
   }
 }
 
@@ -50,12 +107,32 @@ async function handleAdminLogin(e) {
    ADMIN LOGOUT
 ========================================================= */
 
-function handleAdminLogout() {
-  localStorage.removeItem('us_courier_token');
+async function handleAdminLogout() {
 
-  authToken = null;
+  try {
 
-  showSection('admin-login');
+    await fetch(
+      '/api/auth/logout',
+      {
+        method: 'POST',
+
+        credentials: 'include'
+      }
+    );
+
+  } catch (error) {
+
+    console.warn(
+      'Logout request failed:',
+      error
+    );
+
+  } finally {
+
+    showSection(
+      'admin-login'
+    );
+  }
 }
 
 
@@ -64,11 +141,10 @@ function handleAdminLogout() {
 ========================================================= */
 
 async function loadAdminDashboard() {
-  if (!authToken) {
-    return showSection('admin-login');
-  }
 
-  showSection('admin-dashboard');
+  showSection(
+    'admin-dashboard'
+  );
 
   try {
 
@@ -76,54 +152,98 @@ async function loadAdminDashboard() {
        DASHBOARD STATISTICS
     ----------------------------------------------------- */
 
-    const resStats = await fetch(
-      '/api/admin/dashboard',
-      {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      }
-    );
+    const resStats =
+      await fetch(
+        '/api/admin/dashboard',
+        {
+          method: 'GET',
 
-    if (resStats.status === 401 || resStats.status === 403) {
+          credentials: 'include'
+        }
+      );
+
+    if (
+      resStats.status === 401 ||
+      resStats.status === 403
+    ) {
+
       handleAdminSessionExpired();
+
       return;
     }
 
-    const stats = await resStats.json();
+    if (!resStats.ok) {
 
-    if (stats.counts) {
-      const totalEl =
-        document.getElementById('kpi-total');
+      throw new Error(
+        'Unable to load dashboard statistics.'
+      );
+    }
 
-      const transitEl =
-        document.getElementById('kpi-transit');
+    let stats = {};
 
-      const deliveredEl =
-        document.getElementById('kpi-delivered');
+    try {
 
-      const messagesEl =
-        document.getElementById('kpi-messages');
+      stats =
+        await resStats.json();
 
-      if (totalEl) {
-        totalEl.innerText =
-          stats.counts.total || 0;
-      }
+    } catch {
 
-      if (transitEl) {
-        transitEl.innerText =
-          stats.counts.in_transit || 0;
-      }
+      stats = {};
+    }
 
-      if (deliveredEl) {
-        deliveredEl.innerText =
-          stats.counts.delivered || 0;
-      }
 
-      if (messagesEl) {
-        messagesEl.innerText =
-          stats.unread_messages || 0;
-      }
+    const counts =
+      stats.counts || {};
+
+
+    const totalEl =
+      document.getElementById(
+        'kpi-total'
+      );
+
+    const transitEl =
+      document.getElementById(
+        'kpi-transit'
+      );
+
+    const deliveredEl =
+      document.getElementById(
+        'kpi-delivered'
+      );
+
+    const messagesEl =
+      document.getElementById(
+        'kpi-messages'
+      );
+
+
+    if (totalEl) {
+
+      totalEl.innerText =
+        counts.total ?? 0;
+    }
+
+
+    if (transitEl) {
+
+      transitEl.innerText =
+        counts.in_transit ?? 0;
+    }
+
+
+    if (deliveredEl) {
+
+      deliveredEl.innerText =
+        counts.delivered ?? 0;
+    }
+
+
+    if (messagesEl) {
+
+      messagesEl.innerText =
+        stats.unread_messages ??
+        counts.messages ??
+        0;
     }
 
 
@@ -131,34 +251,73 @@ async function loadAdminDashboard() {
        LOAD CUSTOMER MESSAGES
     ----------------------------------------------------- */
 
-    const resMessages = await fetch(
-      '/api/admin/messages',
-      {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
+    const resMessages =
+      await fetch(
+        '/api/admin/messages',
+        {
+          method: 'GET',
+
+          credentials: 'include'
         }
-      }
-    );
+      );
+
 
     if (
       resMessages.status === 401 ||
       resMessages.status === 403
     ) {
+
       handleAdminSessionExpired();
+
       return;
     }
 
-    const messages = await resMessages.json();
+
+    if (!resMessages.ok) {
+
+      throw new Error(
+        'Unable to load customer messages.'
+      );
+    }
+
+
+    let messagesPayload = {};
+
+    try {
+
+      messagesPayload =
+        await resMessages.json();
+
+    } catch {
+
+      messagesPayload = {};
+    }
+
+
+    const messages =
+      Array.isArray(
+        messagesPayload
+      )
+        ? messagesPayload
+        : Array.isArray(
+            messagesPayload.messages
+          )
+          ? messagesPayload.messages
+          : [];
+
 
     const msgTbody =
       document.getElementById(
         'admin-messages-tbody'
       );
 
+
     if (msgTbody) {
+
       msgTbody.innerHTML = '';
 
-      if (!Array.isArray(messages) || messages.length === 0) {
+
+      if (messages.length === 0) {
 
         msgTbody.innerHTML = `
           <tr>
@@ -186,144 +345,246 @@ async function loadAdminDashboard() {
 
       } else {
 
-        messages.forEach((m) => {
+        messages.forEach(
+          (m) => {
 
-          const tr =
-            document.createElement('tr');
+            const tr =
+              document.createElement(
+                'tr'
+              );
 
-          const isUnread =
-            m.status === 'Unread';
 
-          /*
-           * Escape customer-controlled content before
-           * placing it into HTML.
-           */
-          const safeName =
-            escapeAdminHtml(m.sender_name);
+            const isUnread =
+              String(
+                m.status || ''
+              ).toLowerCase() ===
+              'unread';
 
-          const safeEmail =
-            escapeAdminHtml(m.email);
 
-          const safeSubject =
-            escapeAdminHtml(m.subject);
+            const safeName =
+              escapeAdminHtml(
+                m.sender_name ||
+                m.name ||
+                'Customer'
+              );
 
-          const safeMessage =
-            escapeAdminHtml(m.message);
 
-          const safeDate =
-            new Date(
-              m.created_at
-            ).toLocaleString();
+            const safeEmail =
+              escapeAdminHtml(
+                m.email || ''
+              );
 
-          tr.innerHTML = `
-            <td>
-              <strong>
-                ${safeName}
-              </strong>
-            </td>
 
-            <td>
-              <a
-                href="mailto:${encodeURIComponent(m.email)}"
-                style="color:var(--accent-gold);"
-              >
-                ${safeEmail}
-              </a>
-            </td>
+            const safeSubject =
+              escapeAdminHtml(
+                m.subject ||
+                'No Subject'
+              );
 
-            <td>
-              ${safeSubject}
-            </td>
 
-            <td
-              style="
-                max-width:250px;
-                font-size:0.85rem;
-                color:var(--text-muted);
-              "
-            >
-              ${safeMessage}
-            </td>
+            const safeMessage =
+              escapeAdminHtml(
+                m.message || ''
+              );
 
-            <td
-              style="font-size:0.8rem;"
-            >
-              ${safeDate}
-            </td>
 
-            <td>
-              <span
-                class="badge ${
-                  isUnread
-                    ? 'badge-pending'
-                    : 'badge-delivered'
-                }"
-              >
-                ${safeStatus(m.status)}
-              </span>
-            </td>
+            const safeDate =
+              formatAdminDate(
+                m.created_at
+              );
 
-            <td>
-              <div
+
+            const messageId =
+              Number(m.id);
+
+
+            tr.innerHTML = `
+              <td>
+                <strong>
+                  ${safeName}
+                </strong>
+              </td>
+
+              <td>
+                ${
+                  m.email
+                    ? `
+                      <a
+                        href="mailto:${encodeURIComponent(
+                          String(m.email)
+                        )}"
+                        style="
+                          color:var(--accent-gold);
+                        "
+                      >
+                        ${safeEmail}
+                      </a>
+                    `
+                    : '—'
+                }
+              </td>
+
+              <td>
+                ${safeSubject}
+              </td>
+
+              <td
                 style="
-                  display:flex;
-                  flex-wrap:wrap;
-                  gap:0.4rem;
+                  max-width:250px;
+                  font-size:0.85rem;
+                  color:var(--text-muted);
                 "
               >
+                ${safeMessage}
+              </td>
 
-                <button
-                  type="button"
-                  class="btn-gold"
-                  style="
-                    padding:0.3rem 0.65rem;
-                    font-size:0.75rem;
-                  "
-                  onclick="openMessageReply(${m.id})"
+              <td
+                style="
+                  font-size:0.8rem;
+                "
+              >
+                ${safeDate}
+              </td>
+
+              <td>
+                <span
+                  class="badge ${
+                    isUnread
+                      ? 'badge-pending'
+                      : 'badge-delivered'
+                  }"
                 >
-                  <i class="icon icon-reply"></i>
-                  Reply
-                </button>
+                  ${safeStatus(
+                    m.status ||
+                    'Unknown'
+                  )}
+                </span>
+              </td>
 
-                ${
-                  isUnread
-                    ? `
-                      <button
-                        type="button"
-                        class="btn-outline"
-                        style="
-                          padding:0.3rem 0.65rem;
-                          font-size:0.75rem;
-                        "
-                        onclick="markMessageRead(${m.id})"
-                      >
-                        Mark Read
-                      </button>
-                    `
-                    : ''
-                }
-
-                <button
-                  type="button"
-                  class="btn-outline"
+              <td>
+                <div
                   style="
-                    padding:0.3rem 0.65rem;
-                    font-size:0.75rem;
-                    border-color:var(--status-delayed);
-                    color:var(--status-delayed);
+                    display:flex;
+                    flex-wrap:wrap;
+                    gap:0.4rem;
                   "
-                  onclick="deleteMessage(${m.id})"
                 >
-                  <i class="icon icon-trash"></i>
-                  Delete
-                </button>
 
-              </div>
-            </td>
-          `;
+                  <button
+                    type="button"
+                    class="btn-gold"
+                    style="
+                      padding:0.3rem 0.65rem;
+                      font-size:0.75rem;
+                    "
+                    data-message-action="reply"
+                    data-message-id="${messageId}"
+                  >
+                    <i class="icon icon-reply"></i>
+                    Reply
+                  </button>
 
-          msgTbody.appendChild(tr);
-        });
+                  ${
+                    isUnread
+                      ? `
+                        <button
+                          type="button"
+                          class="btn-outline"
+                          style="
+                            padding:0.3rem 0.65rem;
+                            font-size:0.75rem;
+                          "
+                          data-message-action="read"
+                          data-message-id="${messageId}"
+                        >
+                          Mark Read
+                        </button>
+                      `
+                      : ''
+                  }
+
+                  <button
+                    type="button"
+                    class="btn-outline"
+                    style="
+                      padding:0.3rem 0.65rem;
+                      font-size:0.75rem;
+                      border-color:var(--status-delayed);
+                      color:var(--status-delayed);
+                    "
+                    data-message-action="delete"
+                    data-message-id="${messageId}"
+                  >
+                    <i class="icon icon-trash"></i>
+                    Delete
+                  </button>
+
+                </div>
+              </td>
+            `;
+
+
+            /*
+             * Message button handlers are attached directly
+             * rather than placing customer data into inline JS.
+             */
+
+            const replyButton =
+              tr.querySelector(
+                '[data-message-action="reply"]'
+              );
+
+            if (replyButton) {
+
+              replyButton.addEventListener(
+                'click',
+                () =>
+                  openMessageReply(
+                    messageId
+                  )
+              );
+            }
+
+
+            const readButton =
+              tr.querySelector(
+                '[data-message-action="read"]'
+              );
+
+            if (readButton) {
+
+              readButton.addEventListener(
+                'click',
+                () =>
+                  markMessageRead(
+                    messageId
+                  )
+              );
+            }
+
+
+            const deleteButton =
+              tr.querySelector(
+                '[data-message-action="delete"]'
+              );
+
+            if (deleteButton) {
+
+              deleteButton.addEventListener(
+                'click',
+                () =>
+                  deleteMessage(
+                    messageId
+                  )
+              );
+            }
+
+
+            msgTbody.appendChild(
+              tr
+            );
+          }
+        );
       }
     }
 
@@ -332,39 +593,73 @@ async function loadAdminDashboard() {
        LOAD SHIPMENTS
     ----------------------------------------------------- */
 
-    const resShipments = await fetch(
-      '/api/admin/shipments',
-      {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
+    const resShipments =
+      await fetch(
+        '/api/admin/shipments',
+        {
+          method: 'GET',
+
+          credentials: 'include'
         }
-      }
-    );
+      );
+
 
     if (
       resShipments.status === 401 ||
       resShipments.status === 403
     ) {
+
       handleAdminSessionExpired();
+
       return;
     }
 
+
+    if (!resShipments.ok) {
+
+      throw new Error(
+        'Unable to load shipments.'
+      );
+    }
+
+
+    let shipmentsPayload = {};
+
+    try {
+
+      shipmentsPayload =
+        await resShipments.json();
+
+    } catch {
+
+      shipmentsPayload = {};
+    }
+
+
     const shipments =
-      await resShipments.json();
+      Array.isArray(
+        shipmentsPayload
+      )
+        ? shipmentsPayload
+        : Array.isArray(
+            shipmentsPayload.shipments
+          )
+          ? shipmentsPayload.shipments
+          : [];
+
 
     const tbody =
       document.getElementById(
         'admin-shipments-tbody'
       );
 
+
     if (tbody) {
 
       tbody.innerHTML = '';
 
-      if (
-        !Array.isArray(shipments) ||
-        shipments.length === 0
-      ) {
+
+      if (shipments.length === 0) {
 
         tbody.innerHTML = `
           <tr>
@@ -383,77 +678,131 @@ async function loadAdminDashboard() {
 
       } else {
 
-        shipments.forEach((s) => {
+        shipments.forEach(
+          (s) => {
 
-          const tr =
-            document.createElement('tr');
+            const tr =
+              document.createElement(
+                'tr'
+              );
 
-          tr.innerHTML = `
-            <td>
-              <strong
-                style="color:var(--accent-gold);"
-              >
+
+            const shipmentId =
+              Number(s.id);
+
+
+            const status =
+              String(
+                s.status ||
+                'Pending'
+              );
+
+
+            const currentLocation =
+              String(
+                s.current_location ||
+                ''
+              );
+
+
+            const estimatedDelivery =
+              String(
+                s.estimated_delivery ||
+                ''
+              );
+
+
+            tr.innerHTML = `
+              <td>
+                <strong
+                  style="
+                    color:var(--accent-gold);
+                  "
+                >
+                  ${escapeAdminHtml(
+                    s.tracking_number
+                  )}
+                </strong>
+              </td>
+
+              <td>
                 ${escapeAdminHtml(
-                  s.tracking_number
+                  s.origin ||
+                  ''
                 )}
-              </strong>
-            </td>
-
-            <td>
-              ${escapeAdminHtml(
-                s.origin
-              )}
-              ➔
-              ${escapeAdminHtml(
-                s.destination
-              )}
-            </td>
-
-            <td>
-              ${escapeAdminHtml(
-                s.current_location
-              )}
-            </td>
-
-            <td>
-              ${escapeAdminHtml(
-                s.service_type ||
-                'Express'
-              )}
-            </td>
-
-            <td>
-              <span class="badge badge-transit">
+                ➔
                 ${escapeAdminHtml(
-                  s.status
+                  s.destination ||
+                  ''
                 )}
-              </span>
-            </td>
+              </td>
 
-            <td>
-              <button
-                class="btn-gold"
-                style="
-                  padding:0.2rem 0.6rem;
-                  font-size:0.75rem;
-                "
-                onclick="openUpdateShipmentModal(
-                  ${s.id},
-                  '${escapeJsString(s.status)}',
-                  '${escapeJsString(s.current_location)}',
-                  '${escapeJsString(
-                    s.estimated_delivery || ''
-                  )}'
-                )"
-              >
-                <i class="icon icon-edit"></i>
-                Update Node
-              </button>
-            </td>
-          `;
+              <td>
+                ${escapeAdminHtml(
+                  currentLocation
+                )}
+              </td>
 
-          tbody.appendChild(tr);
-        });
+              <td>
+                ${escapeAdminHtml(
+                  s.service_type ||
+                  'Express'
+                )}
+              </td>
+
+              <td>
+                <span
+                  class="badge badge-transit"
+                >
+                  ${safeStatus(
+                    status
+                  )}
+                </span>
+              </td>
+
+              <td>
+                <button
+                  type="button"
+                  class="btn-gold"
+                  style="
+                    padding:0.2rem 0.6rem;
+                    font-size:0.75rem;
+                  "
+                  data-shipment-update-id="${shipmentId}"
+                >
+                  <i class="icon icon-edit"></i>
+                  Update Node
+                </button>
+              </td>
+            `;
+
+
+            const updateButton =
+              tr.querySelector(
+                '[data-shipment-update-id]'
+              );
+
+
+            if (updateButton) {
+
+              updateButton.addEventListener(
+                'click',
+                () =>
+                  openUpdateShipmentModal(
+                    shipmentId,
+                    status,
+                    currentLocation,
+                    estimatedDelivery
+                  )
+              );
+            }
+
+
+            tbody.appendChild(
+              tr
+            );
+          }
+        );
       }
     }
 
@@ -464,6 +813,15 @@ async function loadAdminDashboard() {
       err
     );
 
+    /*
+     * Do not expose internal backend errors
+     * to the administrator.
+     */
+
+    alert(
+      err.message ||
+      'Unable to load admin dashboard.'
+    );
   }
 }
 
@@ -473,114 +831,219 @@ async function loadAdminDashboard() {
 ========================================================= */
 
 async function handleCreateShipmentSubmit(e) {
+
   e.preventDefault();
 
+
+  const getValue =
+    (id) => {
+
+      const element =
+        document.getElementById(id);
+
+      return element
+        ? element.value.trim()
+        : '';
+    };
+
+
   const payload = {
+
     sender_name:
-      document.getElementById(
+      getValue(
         'cs-sender-name'
-      ).value,
+      ),
 
     sender_country:
-      document.getElementById(
+      getValue(
         'cs-sender-country'
-      ).value,
+      ),
 
     recipient_name:
-      document.getElementById(
+      getValue(
         'cs-recipient-name'
-      ).value,
+      ),
 
     recipient_country:
-      document.getElementById(
+      getValue(
         'cs-recipient-country'
-      ).value,
+      ),
 
     origin:
-      document.getElementById(
+      getValue(
         'cs-origin'
-      ).value,
+      ),
 
     destination:
-      document.getElementById(
+      getValue(
         'cs-destination'
-      ).value,
+      ),
 
     service_type:
-      document.getElementById(
+      getValue(
         'cs-service'
-      ).value,
+      ),
 
     estimated_delivery:
-      document.getElementById(
+      getValue(
         'cs-eta'
-      ).value,
+      ),
 
     package_count:
-      document.getElementById(
+      getValue(
         'cs-pkg-count'
-      ).value,
+      ),
 
     weight:
-      document.getElementById(
+      getValue(
         'cs-weight'
-      ).value,
+      ),
 
     currency:
-      document.getElementById(
+      getValue(
         'cs-currency'
-      ).value,
+      ),
 
     declared_value:
-      document.getElementById(
+      getValue(
         'cs-value'
-      ).value,
+      ),
 
     description:
-      document.getElementById(
+      getValue(
         'cs-desc'
-      ).value
+      )
   };
+
+
+  /*
+   * Basic frontend validation.
+   */
+
+  if (
+    !payload.sender_name ||
+    !payload.recipient_name ||
+    !payload.origin ||
+    !payload.destination ||
+    !payload.service_type
+  ) {
+
+    alert(
+      'Please complete all required shipment fields.'
+    );
+
+    return;
+  }
+
 
   try {
 
-    const res = await fetch(
-      '/api/admin/shipments',
-      {
-        method: 'POST',
+    const res =
+      await fetch(
+        '/api/admin/shipments',
+        {
+          method: 'POST',
 
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization':
-            `Bearer ${authToken}`
-        },
+          credentials: 'include',
 
-        body: JSON.stringify(payload)
-      }
-    );
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
 
-    const data =
-      await res.json();
-
-    if (res.ok) {
-
-      alert(
-        `Waybill Created Successfully!\n\nTracking Number: ${data.tracking_number}`
+          body:
+            JSON.stringify(payload)
+        }
       );
 
-      hideModal(
-        'modal-create-shipment'
-      );
 
-      loadAdminDashboard();
+    let data = {};
 
-    } else {
+    try {
+
+      data =
+        await res.json();
+
+    } catch {
+
+      data = {};
+
+    }
+
+
+    /*
+     * Authentication failure.
+     */
+
+    if (
+      res.status === 401 ||
+      res.status === 403
+    ) {
+
+      handleAdminSessionExpired();
+
+      return;
+    }
+
+
+    if (!res.ok) {
 
       alert(
         data.error ||
-        'Failed to generate shipment'
+        'Failed to generate shipment.'
       );
+
+      return;
     }
+
+
+    /*
+     * Successful shipment creation.
+     */
+
+    alert(
+      `Waybill Created Successfully!\n\nTracking Number: ${
+        data.tracking_number ||
+        data.shipment?.tracking_number ||
+        'Created'
+      }`
+    );
+
+
+    hideModal(
+      'modal-create-shipment'
+    );
+
+
+    /*
+     * Reset form if it exists.
+     */
+
+    const form =
+      document.getElementById(
+        'form-create-shipment'
+      );
+
+    if (form) {
+      form.reset();
+    }
+
+
+    /*
+     * Some HTML versions may use a different form ID.
+     */
+
+    const createForm =
+      document.querySelector(
+        '#modal-create-shipment form'
+      );
+
+    if (createForm) {
+      createForm.reset();
+    }
+
+
+    await loadAdminDashboard();
 
   } catch (err) {
 
@@ -590,7 +1053,7 @@ async function handleCreateShipmentSubmit(e) {
     );
 
     alert(
-      'Failed to connect to backend server'
+      'Failed to connect to backend server.'
     );
   }
 }
@@ -607,29 +1070,25 @@ function openUpdateShipmentModal(
   eta
 ) {
 
-  document.getElementById(
-    'us-shipment-id'
-  ).value = id;
+  const shipmentIdEl =
+    document.getElementById(
+      'us-shipment-id'
+    );
 
-  document.getElementById(
-    'us-location'
-  ).value = currentLoc;
+  const locationEl =
+    document.getElementById(
+      'us-location'
+    );
 
-  document.getElementById(
-    'us-eta'
-  ).value = eta;
+  const etaEl =
+    document.getElementById(
+      'us-eta'
+    );
 
-  const now = new Date();
-
-  now.setMinutes(
-    now.getMinutes() -
-    now.getTimezoneOffset()
-  );
-
-  document.getElementById(
-    'us-timestamp'
-  ).value =
-    now.toISOString().slice(0, 16);
+  const timestampEl =
+    document.getElementById(
+      'us-timestamp'
+    );
 
   const selectEl =
     document.getElementById(
@@ -641,13 +1100,73 @@ function openUpdateShipmentModal(
       'us-status-custom'
     );
 
+
+  if (
+    !shipmentIdEl ||
+    !locationEl ||
+    !etaEl ||
+    !timestampEl ||
+    !selectEl ||
+    !customEl
+  ) {
+
+    console.error(
+      'Update shipment form elements are missing.'
+    );
+
+    alert(
+      'Unable to open shipment update form.'
+    );
+
+    return;
+  }
+
+
+  shipmentIdEl.value =
+    id || '';
+
+
+  locationEl.value =
+    currentLoc || '';
+
+
+  etaEl.value =
+    eta || '';
+
+
+  /*
+   * Use the current local date/time as the default
+   * event time.
+   */
+
+  const now =
+    new Date();
+
+
+  now.setMinutes(
+    now.getMinutes() -
+    now.getTimezoneOffset()
+  );
+
+
+  timestampEl.value =
+    now.toISOString()
+      .slice(0, 16);
+
+
+  /*
+   * Standard statuses.
+   */
+
   const standardStatuses = [
+    'Shipment Created',
     'In Transit',
     'Out for Delivery',
     'Delivered',
     'Customs Hold',
     'Delayed'
   ];
+
 
   if (
     standardStatuses.includes(
@@ -658,6 +1177,11 @@ function openUpdateShipmentModal(
     selectEl.value =
       currentStatus;
 
+
+    customEl.value =
+      '';
+
+
     customEl.style.display =
       'none';
 
@@ -666,12 +1190,32 @@ function openUpdateShipmentModal(
     selectEl.value =
       'CUSTOM';
 
-    customEl.style.display =
-      'block';
 
     customEl.value =
-      currentStatus;
+      currentStatus || '';
+
+
+    customEl.style.display =
+      'block';
   }
+
+
+  /*
+   * Clear old description.
+   */
+
+  const descriptionEl =
+    document.getElementById(
+      'us-description'
+    );
+
+
+  if (descriptionEl) {
+
+    descriptionEl.value =
+      '';
+  }
+
 
   showModal(
     'modal-update-shipment'
@@ -683,17 +1227,41 @@ function openUpdateShipmentModal(
    CUSTOM STATUS
 ========================================================= */
 
-function toggleCustomStatusInput(selectEl) {
+function toggleCustomStatusInput(
+  selectEl
+) {
 
   const customEl =
     document.getElementById(
       'us-status-custom'
     );
 
-  customEl.style.display =
+
+  if (!customEl) {
+    return;
+  }
+
+
+  if (
+    selectEl &&
     selectEl.value === 'CUSTOM'
-      ? 'block'
-      : 'none';
+  ) {
+
+    customEl.style.display =
+      'block';
+
+
+    customEl.focus();
+
+  } else {
+
+    customEl.style.display =
+      'none';
+
+
+    customEl.value =
+      '';
+  }
 }
 
 
@@ -702,24 +1270,135 @@ function toggleCustomStatusInput(selectEl) {
 ========================================================= */
 
 async function handleUpdateShipmentSubmit(e) {
+
   e.preventDefault();
 
-  const id =
+
+  const shipmentIdEl =
     document.getElementById(
       'us-shipment-id'
-    ).value;
+    );
 
-  const selectVal =
+  const selectEl =
     document.getElementById(
       'us-status-select'
-    ).value;
+    );
+
+  const customEl =
+    document.getElementById(
+      'us-status-custom'
+    );
+
+  const locationEl =
+    document.getElementById(
+      'us-location'
+    );
+
+  const timestampEl =
+    document.getElementById(
+      'us-timestamp'
+    );
+
+  const etaEl =
+    document.getElementById(
+      'us-eta'
+    );
+
+  const descriptionEl =
+    document.getElementById(
+      'us-description'
+    );
+
+
+  if (
+    !shipmentIdEl ||
+    !selectEl ||
+    !customEl ||
+    !locationEl ||
+    !timestampEl ||
+    !etaEl ||
+    !descriptionEl
+  ) {
+
+    alert(
+      'Shipment update form is incomplete.'
+    );
+
+    return;
+  }
+
+
+  const id =
+    shipmentIdEl.value.trim();
+
+
+  const selectVal =
+    selectEl.value;
+
+
+  const customStatus =
+    customEl.value.trim();
+
 
   const finalStatus =
     selectVal === 'CUSTOM'
-      ? document.getElementById(
-          'us-status-custom'
-        ).value
+      ? customStatus
       : selectVal;
+
+
+  const currentLocation =
+    locationEl.value.trim();
+
+
+  const eventTime =
+    timestampEl.value;
+
+
+  const estimatedDelivery =
+    etaEl.value;
+
+
+  const description =
+    descriptionEl.value.trim();
+
+
+  /*
+   * Validate required fields.
+   */
+
+  if (!id) {
+
+    alert(
+      'Shipment ID is missing.'
+    );
+
+    return;
+  }
+
+
+  if (!finalStatus) {
+
+    alert(
+      'Please select or enter a shipment status.'
+    );
+
+    return;
+  }
+
+
+  if (!currentLocation) {
+
+    alert(
+      'Please enter the current shipment location.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * Build API payload.
+   */
 
   const payload = {
 
@@ -727,65 +1406,90 @@ async function handleUpdateShipmentSubmit(e) {
       finalStatus,
 
     current_location:
-      document.getElementById(
-        'us-location'
-      ).value,
+      currentLocation,
 
     event_time:
-      document.getElementById(
-        'us-timestamp'
-      ).value,
+      eventTime,
 
     estimated_delivery:
-      document.getElementById(
-        'us-eta'
-      ).value,
+      estimatedDelivery,
 
     event_description:
-      document.getElementById(
-        'us-description'
-      ).value ||
+      description ||
       `Shipment status updated to ${finalStatus}`
   };
 
+
   try {
 
-    const res = await fetch(
-      `/api/admin/shipments/${id}`,
-      {
-        method: 'PUT',
+    const res =
+      await fetch(
+        `/api/admin/shipments/${encodeURIComponent(id)}`,
+        {
+          method: 'PUT',
 
-        headers: {
-          'Content-Type':
-            'application/json',
+          credentials: 'include',
 
-          'Authorization':
-            `Bearer ${authToken}`
-        },
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
 
-        body:
-          JSON.stringify(payload)
-      }
-    );
-
-    if (res.ok) {
-
-      hideModal(
-        'modal-update-shipment'
+          body:
+            JSON.stringify(payload)
+        }
       );
 
-      loadAdminDashboard();
 
-    } else {
+    let data = {};
 
-      const data =
+    try {
+
+      data =
         await res.json();
 
-      alert(
+    } catch {
+
+      data = {};
+
+    }
+
+
+    /*
+     * Authentication failure.
+     */
+
+    if (
+      res.status === 401 ||
+      res.status === 403
+    ) {
+
+      handleAdminSessionExpired();
+
+      return;
+    }
+
+
+    if (!res.ok) {
+
+      throw new Error(
         data.error ||
-        'Failed to update shipment'
+        'Failed to update shipment.'
       );
     }
+
+
+    hideModal(
+      'modal-update-shipment'
+    );
+
+
+    alert(
+      'Shipment updated successfully.'
+    );
+
+
+    await loadAdminDashboard();
 
   } catch (err) {
 
@@ -795,6 +1499,7 @@ async function handleUpdateShipmentSubmit(e) {
     );
 
     alert(
+      err.message ||
       'Error connecting to server.'
     );
   }
@@ -805,19 +1510,17 @@ async function handleUpdateShipmentSubmit(e) {
    CUSTOMER MESSAGE REPLY
 ========================================================= */
 
-/*
- * Open the reply composer.
- *
- * We fetch the current message from the admin API instead
- * of putting customer-controlled content directly into
- * an onclick attribute.
- */
-
 async function openMessageReply(id) {
 
-  if (!authToken) {
-    return handleAdminSessionExpired();
+  if (!id) {
+
+    alert(
+      'Customer message ID is missing.'
+    );
+
+    return;
   }
+
 
   try {
 
@@ -825,87 +1528,198 @@ async function openMessageReply(id) {
       await fetch(
         '/api/admin/messages',
         {
-          headers: {
-            'Authorization':
-              `Bearer ${authToken}`
-          }
+          method: 'GET',
+
+          credentials: 'include'
         }
       );
+
 
     if (
       res.status === 401 ||
       res.status === 403
     ) {
-      return handleAdminSessionExpired();
+
+      handleAdminSessionExpired();
+
+      return;
     }
 
+
     if (!res.ok) {
+
       throw new Error(
-        'Unable to load customer message.'
+        'Unable to load customer messages.'
       );
     }
 
+
+    let payload = {};
+
+    try {
+
+      payload =
+        await res.json();
+
+    } catch {
+
+      payload = {};
+    }
+
+
     const messages =
-      await res.json();
+      Array.isArray(payload)
+        ? payload
+        : Array.isArray(
+            payload.messages
+          )
+          ? payload.messages
+          : [];
+
 
     const customerMessage =
       messages.find(
-        (m) => Number(m.id) === Number(id)
+        (m) =>
+          Number(m.id) ===
+          Number(id)
       );
 
+
     if (!customerMessage) {
-      return alert(
+
+      alert(
         'Customer message could not be found.'
       );
+
+      return;
     }
+
 
     createReplyModal();
 
-    document.getElementById(
-      'reply-message-id'
-    ).value =
-      customerMessage.id;
 
-    document.getElementById(
-      'reply-recipient-name'
-    ).value =
-      customerMessage.sender_name || '';
+    const messageIdEl =
+      document.getElementById(
+        'reply-message-id'
+      );
 
-    document.getElementById(
-      'reply-recipient-email'
-    ).value =
-      customerMessage.email || '';
+    const recipientNameEl =
+      document.getElementById(
+        'reply-recipient-name'
+      );
 
-    document.getElementById(
-      'reply-subject'
-    ).value =
-      `Re: ${
-        customerMessage.subject ||
-        'US COURIER Support'
-      }`;
+    const recipientEmailEl =
+      document.getElementById(
+        'reply-recipient-email'
+      );
 
-    document.getElementById(
-      'reply-body'
-    ).value = '';
+    const subjectEl =
+      document.getElementById(
+        'reply-subject'
+      );
 
-    document.getElementById(
-      'reply-status'
-    ).innerHTML = '';
+    const bodyEl =
+      document.getElementById(
+        'reply-body'
+      );
 
-    document.getElementById(
-      'modal-message-reply'
-    ).style.display = 'flex';
+    const statusEl =
+      document.getElementById(
+        'reply-status'
+      );
 
-    setTimeout(() => {
-      const textarea =
-        document.getElementById(
-          'reply-body'
-        );
 
-      if (textarea) {
-        textarea.focus();
-      }
-    }, 100);
+    if (messageIdEl) {
+
+      messageIdEl.value =
+        customerMessage.id;
+    }
+
+
+    if (recipientNameEl) {
+
+      recipientNameEl.value =
+        customerMessage.sender_name ||
+        customerMessage.name ||
+        '';
+    }
+
+
+    if (recipientEmailEl) {
+
+      recipientEmailEl.value =
+        customerMessage.email ||
+        '';
+    }
+
+
+    if (subjectEl) {
+
+      subjectEl.value =
+        `Re: ${
+          customerMessage.subject ||
+          'US COURIER Support'
+        }`;
+    }
+
+
+    if (bodyEl) {
+
+      bodyEl.value =
+        '';
+    }
+
+
+    if (statusEl) {
+
+      statusEl.innerHTML =
+        '';
+    }
+
+
+    const sendButton =
+      document.getElementById(
+        'send-reply-button'
+      );
+
+
+    if (sendButton) {
+
+      sendButton.disabled =
+        false;
+
+      sendButton.innerHTML = `
+        <i class="icon icon-send"></i>
+        Send Reply
+      `;
+    }
+
+
+    const modal =
+      document.getElementById(
+        'modal-message-reply'
+      );
+
+
+    if (modal) {
+
+      modal.style.display =
+        'flex';
+    }
+
+
+    setTimeout(
+      () => {
+
+        if (bodyEl) {
+
+          bodyEl.focus();
+        }
+
+      },
+      100
+    );
+
 
   } catch (err) {
 
@@ -915,6 +1729,7 @@ async function openMessageReply(id) {
     );
 
     alert(
+      err.message ||
       'Unable to open customer reply.'
     );
   }
@@ -927,19 +1742,29 @@ async function openMessageReply(id) {
 
 function createReplyModal() {
 
+  /*
+   * Prevent duplicate modal.
+   */
+
   if (
     document.getElementById(
       'modal-message-reply'
     )
   ) {
+
     return;
   }
 
+
   const modal =
-    document.createElement('div');
+    document.createElement(
+      'div'
+    );
+
 
   modal.id =
     'modal-message-reply';
+
 
   modal.style.cssText = `
     position:fixed;
@@ -952,6 +1777,7 @@ function createReplyModal() {
     background:rgba(0,0,0,0.78);
     backdrop-filter:blur(8px);
   `;
+
 
   modal.innerHTML = `
 
@@ -1002,6 +1828,7 @@ function createReplyModal() {
           </h2>
 
         </div>
+
 
         <button
           type="button"
@@ -1094,7 +1921,9 @@ function createReplyModal() {
 
 
       <div
-        style="margin-bottom:1rem;"
+        style="
+          margin-bottom:1rem;
+        "
       >
 
         <label
@@ -1122,7 +1951,9 @@ function createReplyModal() {
 
 
       <div
-        style="margin-bottom:1rem;"
+        style="
+          margin-bottom:1rem;
+        "
       >
 
         <label
@@ -1180,6 +2011,7 @@ function createReplyModal() {
           Cancel
         </button>
 
+
         <button
           type="button"
           id="send-reply-button"
@@ -1195,27 +2027,32 @@ function createReplyModal() {
     </div>
   `;
 
-  document.body.appendChild(modal);
+
+  document.body.appendChild(
+    modal
+  );
 
 
   /*
-   * Close when clicking outside the modal card.
+   * Close when clicking outside.
    */
 
   modal.addEventListener(
     'click',
     (event) => {
 
-      if (event.target === modal) {
+      if (
+        event.target === modal
+      ) {
+
         closeMessageReply();
       }
-
     }
   );
 
 
   /*
-   * Escape key closes the composer.
+   * Escape key.
    */
 
   document.addEventListener(
@@ -1236,29 +2073,57 @@ function closeMessageReply() {
       'modal-message-reply'
     );
 
+
   if (!modal) {
     return;
   }
 
+
   modal.style.display =
     'none';
+
 
   const textarea =
     document.getElementById(
       'reply-body'
     );
 
+
   if (textarea) {
-    textarea.value = '';
+
+    textarea.value =
+      '';
   }
+
 
   const status =
     document.getElementById(
       'reply-status'
     );
 
+
   if (status) {
-    status.innerHTML = '';
+
+    status.innerHTML =
+      '';
+  }
+
+
+  const button =
+    document.getElementById(
+      'send-reply-button'
+    );
+
+
+  if (button) {
+
+    button.disabled =
+      false;
+
+    button.innerHTML = `
+      <i class="icon icon-send"></i>
+      Send Reply
+    `;
   }
 }
 
@@ -1267,24 +2132,30 @@ function closeMessageReply() {
    ESCAPE KEY
 ========================================================= */
 
-function handleReplyEscapeKey(event) {
+function handleReplyEscapeKey(
+  event
+) {
 
   if (
-    event.key === 'Escape'
+    event.key !== 'Escape'
   ) {
 
-    const modal =
-      document.getElementById(
-        'modal-message-reply'
-      );
+    return;
+  }
 
-    if (
-      modal &&
-      modal.style.display === 'flex'
-    ) {
-      closeMessageReply();
-    }
 
+  const modal =
+    document.getElementById(
+      'modal-message-reply'
+    );
+
+
+  if (
+    modal &&
+    modal.style.display === 'flex'
+  ) {
+
+    closeMessageReply();
   }
 }
 
@@ -1295,15 +2166,15 @@ function handleReplyEscapeKey(event) {
 
 async function sendMessageReply() {
 
-  const messageId =
+  const messageIdEl =
     document.getElementById(
       'reply-message-id'
-    ).value;
+    );
 
-  const message =
+  const messageEl =
     document.getElementById(
       'reply-body'
-    ).value.trim();
+    );
 
   const button =
     document.getElementById(
@@ -1316,11 +2187,36 @@ async function sendMessageReply() {
     );
 
 
+  if (
+    !messageIdEl ||
+    !messageEl ||
+    !button ||
+    !status
+  ) {
+
+    alert(
+      'Reply form is unavailable.'
+    );
+
+    return;
+  }
+
+
+  const messageId =
+    messageIdEl.value.trim();
+
+
+  const message =
+    messageEl.value.trim();
+
+
   if (!message) {
 
     status.innerHTML = `
       <span
-        style="color:#ffb4a2;"
+        style="
+          color:#ffb4a2;
+        "
       >
         Please enter a reply message.
       </span>
@@ -1334,7 +2230,9 @@ async function sendMessageReply() {
 
     status.innerHTML = `
       <span
-        style="color:#ffb4a2;"
+        style="
+          color:#ffb4a2;
+        "
       >
         Customer message ID is missing.
       </span>
@@ -1344,16 +2242,21 @@ async function sendMessageReply() {
   }
 
 
-  button.disabled = true;
+  button.disabled =
+    true;
+
 
   button.innerHTML = `
     <i class="icon icon-spinner icon-spin"></i>
     Sending...
   `;
 
+
   status.innerHTML = `
     <span
-      style="color:var(--text-muted);"
+      style="
+        color:var(--text-muted);
+      "
     >
       Sending your reply through US COURIER email service...
     </span>
@@ -1364,16 +2267,17 @@ async function sendMessageReply() {
 
     const res =
       await fetch(
-        `/api/admin/messages/${messageId}/reply`,
+        `/api/admin/messages/${encodeURIComponent(
+          messageId
+        )}/reply`,
         {
           method: 'POST',
 
+          credentials: 'include',
+
           headers: {
             'Content-Type':
-              'application/json',
-
-            'Authorization':
-              `Bearer ${authToken}`
+              'application/json'
           },
 
           body:
@@ -1384,8 +2288,17 @@ async function sendMessageReply() {
       );
 
 
-    const data =
-      await res.json();
+    let data = {};
+
+    try {
+
+      data =
+        await res.json();
+
+    } catch {
+
+      data = {};
+    }
 
 
     if (
@@ -1394,6 +2307,7 @@ async function sendMessageReply() {
     ) {
 
       handleAdminSessionExpired();
+
       return;
     }
 
@@ -1426,19 +2340,16 @@ async function sendMessageReply() {
     `;
 
 
-    /*
-     * Refresh the dashboard after a short delay so
-     * the message status changes to Read and the
-     * unread KPI updates.
-     */
+    setTimeout(
+      async () => {
 
-    setTimeout(() => {
+        closeMessageReply();
 
-      closeMessageReply();
+        await loadAdminDashboard();
 
-      loadAdminDashboard();
-
-    }, 900);
+      },
+      900
+    );
 
 
   } catch (err) {
@@ -1448,6 +2359,7 @@ async function sendMessageReply() {
       err
     );
 
+
     status.innerHTML = `
       <span
         style="
@@ -1456,16 +2368,17 @@ async function sendMessageReply() {
         "
       >
         <i class="icon icon-warning"></i>
-        ${
-          escapeAdminHtml(
-            err.message ||
-            'Unable to send reply.'
-          )
-        }
+        ${escapeAdminHtml(
+          err.message ||
+          'Unable to send reply.'
+        )}
       </span>
     `;
 
-    button.disabled = false;
+
+    button.disabled =
+      false;
+
 
     button.innerHTML = `
       <i class="icon icon-send"></i>
@@ -1479,37 +2392,69 @@ async function sendMessageReply() {
    MARK MESSAGE READ
 ========================================================= */
 
-async function markMessageRead(id) {
+async function markMessageRead(
+  id
+) {
+
+  if (!id) {
+
+    alert(
+      'Message ID is missing.'
+    );
+
+    return;
+  }
+
 
   try {
 
     const res =
       await fetch(
-        `/api/admin/messages/${id}/read`,
+        `/api/admin/messages/${encodeURIComponent(
+          id
+        )}/read`,
         {
           method: 'PUT',
 
-          headers: {
-            'Authorization':
-              `Bearer ${authToken}`
-          }
+          credentials: 'include'
         }
       );
+
 
     if (
       res.status === 401 ||
       res.status === 403
     ) {
-      return handleAdminSessionExpired();
+
+      handleAdminSessionExpired();
+
+      return;
     }
 
+
+    let data = {};
+
+    try {
+
+      data =
+        await res.json();
+
+    } catch {
+
+      data = {};
+    }
+
+
     if (!res.ok) {
+
       throw new Error(
+        data.error ||
         'Unable to update message.'
       );
     }
 
-    loadAdminDashboard();
+
+    await loadAdminDashboard();
 
   } catch (err) {
 
@@ -1519,6 +2464,7 @@ async function markMessageRead(id) {
     );
 
     alert(
+      err.message ||
       'Failed to update message.'
     );
   }
@@ -1529,45 +2475,80 @@ async function markMessageRead(id) {
    DELETE MESSAGE
 ========================================================= */
 
-async function deleteMessage(id) {
+async function deleteMessage(
+  id
+) {
 
-  if (
-    !confirm(
-      'Delete this message permanently?'
-    )
-  ) {
+  if (!id) {
+
+    alert(
+      'Message ID is missing.'
+    );
+
     return;
   }
+
+
+  const confirmed =
+    window.confirm(
+      'Delete this message permanently?'
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
 
   try {
 
     const res =
       await fetch(
-        `/api/admin/messages/${id}`,
+        `/api/admin/messages/${encodeURIComponent(
+          id
+        )}`,
         {
           method: 'DELETE',
 
-          headers: {
-            'Authorization':
-              `Bearer ${authToken}`
-          }
+          credentials: 'include'
         }
       );
+
 
     if (
       res.status === 401 ||
       res.status === 403
     ) {
-      return handleAdminSessionExpired();
+
+      handleAdminSessionExpired();
+
+      return;
     }
 
+
+    let data = {};
+
+    try {
+
+      data =
+        await res.json();
+
+    } catch {
+
+      data = {};
+    }
+
+
     if (!res.ok) {
+
       throw new Error(
+        data.error ||
         'Unable to delete message.'
       );
     }
 
-    loadAdminDashboard();
+
+    await loadAdminDashboard();
 
   } catch (err) {
 
@@ -1577,6 +2558,7 @@ async function deleteMessage(id) {
     );
 
     alert(
+      err.message ||
       'Failed to delete message.'
     );
   }
@@ -1589,15 +2571,10 @@ async function deleteMessage(id) {
 
 function handleAdminSessionExpired() {
 
-  localStorage.removeItem(
-    'us_courier_token'
-  );
-
-  authToken = null;
-
   alert(
     'Your admin session has expired. Please sign in again.'
   );
+
 
   showSection(
     'admin-login'
@@ -1606,47 +2583,128 @@ function handleAdminSessionExpired() {
 
 
 /* =========================================================
-   HTML SAFETY HELPERS
+   HTML SAFETY
 ========================================================= */
 
-function escapeAdminHtml(value) {
+function escapeAdminHtml(
+  value
+) {
 
   if (
     value === null ||
     value === undefined
   ) {
+
     return '';
   }
 
+
   return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(
+      /&/g,
+      '&amp;'
+    )
+    .replace(
+      /</g,
+      '&lt;'
+    )
+    .replace(
+      />/g,
+      '&gt;'
+    )
+    .replace(
+      /"/g,
+      '&quot;'
+    )
+    .replace(
+      /'/g,
+      '&#039;'
+    );
 }
 
 
-function escapeJsString(value) {
+/* =========================================================
+   JAVASCRIPT STRING SAFETY
+========================================================= */
+
+function escapeJsString(
+  value
+) {
 
   if (
     value === null ||
     value === undefined
   ) {
+
     return '';
   }
 
+
   return String(value)
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/\r/g, '\\r')
-    .replace(/\n/g, '\\n');
+    .replace(
+      /\\/g,
+      '\\\\'
+    )
+    .replace(
+      /'/g,
+      "\\'"
+    )
+    .replace(
+      /\r/g,
+      '\\r'
+    )
+    .replace(
+      /\n/g,
+      '\\n'
+    );
 }
 
 
-function safeStatus(value) {
+/* =========================================================
+   STATUS SAFETY
+========================================================= */
+
+function safeStatus(
+  value
+) {
 
   return escapeAdminHtml(
-    value || 'Unknown'
+    value ||
+    'Unknown'
+  );
+}
+
+
+/* =========================================================
+   ADMIN DATE FORMATTER
+========================================================= */
+
+function formatAdminDate(
+  value
+) {
+
+  if (!value) {
+    return '—';
+  }
+
+
+  const date =
+    new Date(value);
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return escapeAdminHtml(
+      value
+    );
+  }
+
+
+  return escapeAdminHtml(
+    date.toLocaleString()
   );
 }
