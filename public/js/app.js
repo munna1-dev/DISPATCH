@@ -1265,6 +1265,15 @@ async function handleTrackSubmit(
       `${packageCount} / ${weight}`
     );
 
+
+    // ========================================================
+    // TRACKING RESULT QR CODE
+    // ========================================================
+
+    generateTrackingQr(
+      shipment.tracking_number
+    );
+
     // Declared value
     if (
       shipment.declared_value !== null &&
@@ -1393,6 +1402,68 @@ async function handleTrackSubmit(
         "block";
     }
   }
+}
+
+
+// ============================================================
+// GENERATE TRACKING RESULT QR
+// ============================================================
+
+function generateTrackingQr(trackingNumber) {
+  const container =
+    document.getElementById(
+      "public-parcel-qrcode"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  if (
+    typeof QRCode === "undefined" ||
+    !trackingNumber
+  ) {
+    console.warn(
+      "[QR] QRCode library unavailable or tracking number missing."
+    );
+    return;
+  }
+
+  let trackingUrl;
+
+  try {
+    const url =
+      new URL(
+        window.location.href
+      );
+
+    url.searchParams.set(
+      "trk",
+      trackingNumber
+    );
+
+    trackingUrl =
+      url.toString();
+  } catch (error) {
+    console.error(
+      "[QR] Unable to build tracking URL.",
+      error
+    );
+    return;
+  }
+
+  new QRCode(
+    container,
+    {
+      text: trackingUrl,
+      width: 160,
+      height: 160,
+      correctLevel:
+        QRCode.CorrectLevel.M
+    }
+  );
 }
 
 
