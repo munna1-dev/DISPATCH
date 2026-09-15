@@ -1072,6 +1072,226 @@ app.post(
 
 
 // ============================================================
+// SITE SETTINGS - ADMIN
+// ============================================================
+
+const ALLOWED_SETTING_KEYS = new Set([
+  "company",
+  "contact",
+  "tracking",
+  "shipment",
+  "receipt",
+  "qr",
+  "notifications",
+  "website",
+  "footer",
+  "maintenance"
+]);
+
+const PUBLIC_SETTING_KEYS = new Set([
+  "company",
+  "contact",
+  "tracking",
+  "receipt",
+  "qr",
+  "website",
+  "footer",
+  "maintenance"
+]);
+
+function normalizeSettingsObject(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return {};
+  }
+
+  const output = {};
+
+  for (const [key, value] of Object.entries(input)) {
+    if (!ALLOWED_SETTING_KEYS.has(key)) {
+      continue;
+    }
+
+    if (
+      value === null ||
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      (typeof value === "object" && !Array.isArray(value))
+    ) {
+      output[key] = value;
+    }
+  }
+
+  return output;
+}
+
+app.get(
+  "/api/admin/settings",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const result = await queryWithRetry(
+        `
+        SELECT
+          setting_key,
+          setting_value,
+          is_public,
+          updated_by,
+          created_at,
+          updated_at
+        FROM site_settings
+        WHERE setting_key = ANY($1::text[])
+        ORDER BY setting_key ASC
+        `,
+        [Array.from(ALLOWED_SETTING_KEYS)]
+      );
+
+      const settings = {};
+
+      for (const row of result.rows) {
+        settings[row.setting_key] = row.setting_value;
+      }
+
+      return res.json({
+        success: true,
+        settings,
+        metadata: result.rows.map((row) => ({
+          setting_key: row.setting_key,
+          is_public: row.is_public,
+          updated_by: row.updated_by,
+          updated_at: row.updated_at
+        }))
+      });
+    } catch (error) {
+      console.error("[ADMIN SETTINGS GET]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to load site settings."
+      });
+    }
+  }
+);
+
+app.put(
+  "/api/admin/settings",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    const settings = normalizeSettingsObject(
+      req.body?.settings
+    );
+
+    if (Object.keys(settings).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No valid settings were provided."
+      });
+    }
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      for (const [settingKey, settingValue] of Object.entries(settings)) {
+        const isPublic =
+          PUBLIC_SETTING_KEYS.has(settingKey);
+
+        await client.query(
+          `
+          INSERT INTO site_settings
+          (
+            setting_key,
+            setting_value,
+            is_public,
+            updated_by,
+            updated_at
+          )
+          VALUES ($1, $2::jsonb, $3, $4, NOW())
+          ON CONFLICT (setting_key)
+          DO UPDATE SET
+            setting_value = EXCLUDED.setting_value,
+            is_public = EXCLUDED.is_public,
+            updated_by = EXCLUDED.updated_by,
+            updated_at = NOW()
+          `,
+          [
+            settingKey,
+            JSON.stringify(settingValue),
+            isPublic,
+            req.admin.id
+          ]
+        );
+      }
+
+      await client.query("COMMIT");
+
+      return res.json({
+        success: true,
+        message: "Site settings saved successfully.",
+        settings
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+
+      console.error("[ADMIN SETTINGS SAVE]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to save site settings."
+      });
+    } finally {
+      client.release();
+    }
+  }
+);
+
+// ============================================================
+// SITE SETTINGS - PUBLIC
+// ============================================================
+
+app.get(
+  "/api/public/settings",
+  async (req, res) => {
+    try {
+      const result = await queryWithRetry(
+        `
+        SELECT
+          setting_key,
+          setting_value
+        FROM site_settings
+        WHERE is_public = TRUE
+          AND setting_key = ANY($1::text[])
+        ORDER BY setting_key ASC
+        `,
+        [Array.from(PUBLIC_SETTING_KEYS)]
+      );
+
+      const settings = {};
+
+      for (const row of result.rows) {
+        settings[row.setting_key] = row.setting_value;
+      }
+
+      return res.json({
+        success: true,
+        settings
+      });
+    } catch (error) {
+      console.error("[PUBLIC SETTINGS]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to load website settings."
+      });
+    }
+  }
+);
+
+// ============================================================
 // ADMIN SHIPMENT EVENTS - VIEW
 // ============================================================
 

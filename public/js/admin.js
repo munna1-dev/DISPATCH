@@ -1774,8 +1774,13 @@ function generateShipmentReceipt(
 
 function triggerPrintOfficialReceipt() {
 
+  const getText = (id) => {
+    const el = document.getElementById(id);
+    return el?.textContent?.trim() || '';
+  };
+
   const trackingNumber =
-    document.getElementById('trk-number-val')?.textContent?.trim();
+    getText('trk-number-val');
 
   if (
     !trackingNumber ||
@@ -1785,30 +1790,76 @@ function triggerPrintOfficialReceipt() {
     alert(
       'Please track a shipment before printing the official receipt.'
     );
-
     return;
+  }
+
+  const packageText =
+    getText('trk-pkg-val');
+
+  let packageCount = '';
+  let weight = '';
+
+  if (packageText.includes('/')) {
+    const parts = packageText.split('/');
+    packageCount = parts[0].trim();
+    weight = parts.slice(1).join('/').trim();
+  } else {
+    packageCount = packageText;
   }
 
   const shipment = {
     tracking_number: trackingNumber,
 
+    reference:
+      getText('trk-reference-val'),
+
     service_type:
-      document.getElementById('trk-service-val')?.textContent?.trim() || '',
+      getText('trk-service-val'),
+
+    priority:
+      getText('trk-priority-val'),
 
     status:
-      document.getElementById('trk-detail-status-val')?.textContent?.trim() || '',
+      getText('trk-detail-status-val'),
+
+    sender_name:
+      getText('trk-sender-val'),
+
+    sender_country:
+      getText('trk-sender-country-val'),
+
+    recipient_name:
+      getText('trk-recipient-val'),
+
+    recipient_country:
+      getText('trk-recipient-country-val'),
 
     origin:
-      document.getElementById('trk-origin-val')?.textContent?.trim() || '',
+      getText('trk-origin-val'),
 
     current_location:
-      document.getElementById('trk-current-val')?.textContent?.trim() || '',
+      getText('trk-current-val'),
 
     destination:
-      document.getElementById('trk-destination-val')?.textContent?.trim() || '',
+      getText('trk-destination-val'),
+
+    estimated_delivery:
+      getText('trk-eta-val'),
 
     package_count:
-      document.getElementById('trk-pkg-val')?.textContent?.trim() || ''
+      packageCount,
+
+    weight:
+      weight,
+
+    currency:
+      getText('trk-currency-val'),
+
+    declared_value:
+      getText('trk-val-val'),
+
+    description:
+      getText('trk-desc-val')
   };
 
   const generated =
@@ -1818,7 +1869,6 @@ function triggerPrintOfficialReceipt() {
     alert(
       'Unable to prepare the official receipt.'
     );
-
     return;
   }
 
@@ -4030,6 +4080,537 @@ async function deleteMessage(
     alert(
       err.message ||
       'Failed to delete message.'
+    );
+  }
+}
+
+
+
+/* =========================================================
+   ADMIN SETTINGS
+========================================================= */
+
+function openAdminSettings() {
+  showSection('admin-settings');
+  loadAdminSettings();
+}
+
+
+function setAdminSettingValue(id, value) {
+  const element = document.getElementById(id);
+
+  if (!element) {
+    return;
+  }
+
+  if (element.type === 'checkbox') {
+    element.checked = Boolean(value);
+    return;
+  }
+
+  element.value =
+    value === null ||
+    value === undefined
+      ? ''
+      : String(value);
+}
+
+
+function showAdminSettingsMessage(message, type) {
+  const element =
+    document.getElementById(
+      'admin-settings-message'
+    );
+
+  if (!element) {
+    return;
+  }
+
+  element.style.display = 'block';
+  element.textContent = message;
+
+  if (type === 'error') {
+    element.style.border = '1px solid #dc3545';
+  } else {
+    element.style.border = '1px solid #198754';
+  }
+
+  element.style.padding = '0.75rem 1rem';
+  element.style.borderRadius = '6px';
+}
+
+
+async function loadAdminSettings() {
+  try {
+    const response =
+      await fetch(
+        '/api/admin/settings',
+        {
+          method: 'GET',
+          credentials: 'include'
+        }
+      );
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      handleAdminSessionExpired();
+      return;
+    }
+
+    let data = {};
+
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        'Unable to load admin settings.'
+      );
+    }
+
+    const settings =
+      data.settings || {};
+
+    const company =
+      settings.company || {};
+
+    const contact =
+      settings.contact || {};
+
+    const website =
+      settings.website || {};
+
+    const footer =
+      settings.footer || {};
+
+    const tracking =
+      settings.tracking || {};
+
+    const shipment =
+      settings.shipment || {};
+
+    const receipt =
+      settings.receipt || {};
+
+    const qr =
+      settings.qr || {};
+
+    const notifications =
+      settings.notifications || {};
+
+    const maintenance =
+      settings.maintenance || {};
+
+
+    setAdminSettingValue(
+      'setting-company-name',
+      company.name
+    );
+
+    setAdminSettingValue(
+      'setting-company-logo',
+      company.logo
+    );
+
+    setAdminSettingValue(
+      'setting-contact-email',
+      contact.email
+    );
+
+    setAdminSettingValue(
+      'setting-contact-phone',
+      contact.phone
+    );
+
+    setAdminSettingValue(
+      'setting-contact-address',
+      contact.address
+    );
+
+    setAdminSettingValue(
+      'setting-contact-timezone',
+      contact.timezone
+    );
+
+
+    setAdminSettingValue(
+      'setting-website-title',
+      website.title
+    );
+
+    setAdminSettingValue(
+      'setting-website-tagline',
+      website.tagline
+    );
+
+    setAdminSettingValue(
+      'setting-website-notice',
+      website.notice
+    );
+
+
+    setAdminSettingValue(
+      'setting-footer-copyright',
+      footer.copyright
+    );
+
+    setAdminSettingValue(
+      'setting-footer-text',
+      footer.text
+    );
+
+
+    setAdminSettingValue(
+      'setting-tracking-prefix',
+      tracking.prefix
+    );
+
+    setAdminSettingValue(
+      'setting-tracking-message',
+      tracking.message
+    );
+
+    setAdminSettingValue(
+      'setting-tracking-details',
+      tracking.show_details
+    );
+
+
+    setAdminSettingValue(
+      'setting-default-service',
+      shipment.default_service
+    );
+
+    setAdminSettingValue(
+      'setting-default-priority',
+      shipment.default_priority ||
+      'Standard'
+    );
+
+    setAdminSettingValue(
+      'setting-shipment-statuses',
+      Array.isArray(shipment.statuses)
+        ? shipment.statuses.join('\n')
+        : ''
+    );
+
+
+    setAdminSettingValue(
+      'setting-receipt-title',
+      receipt.title
+    );
+
+    setAdminSettingValue(
+      'setting-receipt-footer',
+      receipt.footer
+    );
+
+    setAdminSettingValue(
+      'setting-receipt-enabled',
+      receipt.enabled
+    );
+
+
+    setAdminSettingValue(
+      'setting-qr-enabled',
+      qr.enabled
+    );
+
+
+    setAdminSettingValue(
+      'setting-notifications-enabled',
+      notifications.enabled
+    );
+
+    setAdminSettingValue(
+      'setting-contact-enabled',
+      notifications.contact_form
+    );
+
+
+    setAdminSettingValue(
+      'setting-maintenance-enabled',
+      maintenance.enabled
+    );
+
+    setAdminSettingValue(
+      'setting-maintenance-message',
+      maintenance.message
+    );
+
+    showAdminSettingsMessage(
+      'Settings loaded successfully.',
+      'success'
+    );
+
+  } catch (error) {
+
+    console.error(
+      '[ADMIN SETTINGS LOAD]',
+      error
+    );
+
+    showAdminSettingsMessage(
+      error.message ||
+      'Failed to load admin settings.',
+      'error'
+    );
+  }
+}
+
+
+function getAdminSettingValue(id) {
+  const element =
+    document.getElementById(id);
+
+  if (!element) {
+    return '';
+  }
+
+  if (element.type === 'checkbox') {
+    return element.checked;
+  }
+
+  return element.value.trim();
+}
+
+
+async function saveAdminSettings() {
+
+  const statuses =
+    getAdminSettingValue(
+      'setting-shipment-statuses'
+    )
+      .split('\n')
+      .map(status => status.trim())
+      .filter(Boolean);
+
+
+  const settings = {
+
+    company: {
+      name:
+        getAdminSettingValue(
+          'setting-company-name'
+        ),
+
+      logo:
+        getAdminSettingValue(
+          'setting-company-logo'
+        )
+    },
+
+
+    contact: {
+      email:
+        getAdminSettingValue(
+          'setting-contact-email'
+        ),
+
+      phone:
+        getAdminSettingValue(
+          'setting-contact-phone'
+        ),
+
+      address:
+        getAdminSettingValue(
+          'setting-contact-address'
+        ),
+
+      timezone:
+        getAdminSettingValue(
+          'setting-contact-timezone'
+        )
+    },
+
+
+    website: {
+      title:
+        getAdminSettingValue(
+          'setting-website-title'
+        ),
+
+      tagline:
+        getAdminSettingValue(
+          'setting-website-tagline'
+        ),
+
+      notice:
+        getAdminSettingValue(
+          'setting-website-notice'
+        )
+    },
+
+
+    footer: {
+      copyright:
+        getAdminSettingValue(
+          'setting-footer-copyright'
+        ),
+
+      text:
+        getAdminSettingValue(
+          'setting-footer-text'
+        )
+    },
+
+
+    tracking: {
+      prefix:
+        getAdminSettingValue(
+          'setting-tracking-prefix'
+        ),
+
+      message:
+        getAdminSettingValue(
+          'setting-tracking-message'
+        ),
+
+      show_details:
+        getAdminSettingValue(
+          'setting-tracking-details'
+        )
+    },
+
+
+    shipment: {
+      default_service:
+        getAdminSettingValue(
+          'setting-default-service'
+        ),
+
+      default_priority:
+        getAdminSettingValue(
+          'setting-default-priority'
+        ),
+
+      statuses
+    },
+
+
+    receipt: {
+      title:
+        getAdminSettingValue(
+          'setting-receipt-title'
+        ),
+
+      footer:
+        getAdminSettingValue(
+          'setting-receipt-footer'
+        ),
+
+      enabled:
+        getAdminSettingValue(
+          'setting-receipt-enabled'
+        )
+    },
+
+
+    qr: {
+      enabled:
+        getAdminSettingValue(
+          'setting-qr-enabled'
+        )
+    },
+
+
+    notifications: {
+      enabled:
+        getAdminSettingValue(
+          'setting-notifications-enabled'
+        ),
+
+      contact_form:
+        getAdminSettingValue(
+          'setting-contact-enabled'
+        )
+    },
+
+
+    maintenance: {
+      enabled:
+        getAdminSettingValue(
+          'setting-maintenance-enabled'
+        ),
+
+      message:
+        getAdminSettingValue(
+          'setting-maintenance-message'
+        )
+    }
+  };
+
+
+  try {
+
+    const response =
+      await fetch(
+        '/api/admin/settings',
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body:
+            JSON.stringify({
+              settings
+            })
+        }
+      );
+
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      handleAdminSessionExpired();
+      return;
+    }
+
+
+    let data = {};
+
+    try {
+      data =
+        await response.json();
+    } catch {
+      data = {};
+    }
+
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        'Failed to save admin settings.'
+      );
+    }
+
+
+    showAdminSettingsMessage(
+      'Settings saved successfully.',
+      'success'
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      '[ADMIN SETTINGS SAVE]',
+      error
+    );
+
+    showAdminSettingsMessage(
+      error.message ||
+      'Failed to save admin settings.',
+      'error'
     );
   }
 }

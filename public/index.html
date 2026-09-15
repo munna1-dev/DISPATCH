@@ -362,6 +362,7 @@
           <h2>Logistics Operations Console</h2>
           <div>
             <button type="button" id="open-create-shipment-btn" class="btn-gold"><span class="icon icon-plus"></span> New Parcel</button>
+            <button type="button" onclick="openAdminSettings()" class="btn-outline" style="margin-left:0.5rem;"><span class="icon icon-settings"></span> Settings</button>
             <button onclick="handleAdminLogout()" class="btn-outline" style="margin-left:0.5rem;">Logout</button>
           </div>
         </div>
@@ -425,6 +426,239 @@
             </table>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- View: Admin Settings & Website Portal Configuration -->
+    <section id="view-admin-settings" style="display: none;">
+      <div class="container">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+          <div>
+            <h2>Admin Settings</h2>
+            <p style="color:var(--text-muted); margin-top:0.35rem;">
+              Configure US Courier operations and public website settings.
+            </p>
+          </div>
+
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" onclick="loadAdminDashboard()" class="btn-outline">
+              <span class="icon icon-arrow-left"></span> Dashboard
+            </button>
+            <button type="button" onclick="saveAdminSettings()" class="btn-gold">
+              <span class="icon icon-save"></span> Save Settings
+            </button>
+          </div>
+        </div>
+
+        <div id="admin-settings-message" style="display:none; margin-bottom:1rem;"></div>
+
+        <!-- Company & Contact -->
+        <div class="card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1rem;">
+            <span class="icon icon-building" style="color:var(--accent-gold);"></span>
+            Company & Contact
+          </h3>
+
+          <div class="grid-2">
+            <div>
+              <label>Company Name</label>
+              <input type="text" id="setting-company-name" class="form-control" placeholder="US Courier">
+            </div>
+
+            <div>
+              <label>Logo URL</label>
+              <input type="url" id="setting-company-logo" class="form-control" placeholder="https://example.com/logo.png">
+            </div>
+
+            <div>
+              <label>Support Email</label>
+              <input type="email" id="setting-contact-email" class="form-control" placeholder="support@example.com">
+            </div>
+
+            <div>
+              <label>Phone Number</label>
+              <input type="text" id="setting-contact-phone" class="form-control" placeholder="+1 000 000 0000">
+            </div>
+
+            <div>
+              <label>Address</label>
+              <input type="text" id="setting-contact-address" class="form-control" placeholder="Company address">
+            </div>
+
+            <div>
+              <label>Timezone</label>
+              <input type="text" id="setting-contact-timezone" class="form-control" placeholder="UTC">
+            </div>
+          </div>
+        </div>
+
+        <!-- Website Portal Configuration -->
+        <div class="card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1rem;">
+            <span class="icon icon-globe" style="color:var(--accent-gold);"></span>
+            Website Portal Configuration
+          </h3>
+
+          <div class="grid-2">
+            <div>
+              <label>Website Title</label>
+              <input type="text" id="setting-website-title" class="form-control" placeholder="US Courier">
+            </div>
+
+            <div>
+              <label>Website Tagline</label>
+              <input type="text" id="setting-website-tagline" class="form-control" placeholder="Reliable global delivery">
+            </div>
+
+            <div>
+              <label>Footer Copyright</label>
+              <input type="text" id="setting-footer-copyright" class="form-control" placeholder="© 2026 US Courier">
+            </div>
+
+            <div>
+              <label>Footer Text</label>
+              <input type="text" id="setting-footer-text" class="form-control" placeholder="Global logistics and parcel tracking">
+            </div>
+          </div>
+
+          <div style="margin-top:1rem;">
+            <label>Public Website Notice</label>
+            <textarea id="setting-website-notice" class="form-control" rows="3" placeholder="Optional notice displayed on the public portal"></textarea>
+          </div>
+        </div>
+
+        <!-- Tracking Configuration -->
+        <div class="card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1rem;">
+            <span class="icon icon-search" style="color:var(--accent-gold);"></span>
+            Tracking Configuration
+          </h3>
+
+          <div class="grid-2">
+            <div>
+              <label>Tracking Number Prefix</label>
+              <input type="text" id="setting-tracking-prefix" class="form-control" placeholder="USC-">
+            </div>
+
+            <div>
+              <label>Default Tracking Message</label>
+              <input type="text" id="setting-tracking-message" class="form-control" placeholder="Enter your tracking number">
+            </div>
+
+            <div>
+              <label>Default Service</label>
+              <input type="text" id="setting-default-service" class="form-control" placeholder="Express Air Freight">
+            </div>
+
+            <div>
+              <label>Default Priority</label>
+              <select id="setting-default-priority" class="form-control">
+                <option value="Standard">Standard</option>
+                <option value="Priority">Priority</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipment Configuration -->
+        <div class="card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1rem;">
+            <span class="icon icon-boxes" style="color:var(--accent-gold);"></span>
+            Shipment Configuration
+          </h3>
+
+          <div>
+            <label>Shipment Status Options</label>
+            <textarea id="setting-shipment-statuses" class="form-control" rows="5" placeholder="Shipment Created&#10;In Transit&#10;Customs Check&#10;Out for Delivery&#10;Delivered"></textarea>
+            <small style="display:block; margin-top:0.4rem; color:var(--text-muted);">
+              Enter one status per line.
+            </small>
+          </div>
+        </div>
+
+        <!-- Receipt & QR -->
+        <div class="card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1rem;">
+            <span class="icon icon-print" style="color:var(--accent-gold);"></span>
+            Receipt & QR Configuration
+          </h3>
+
+          <div class="grid-2">
+            <div>
+              <label>Receipt Title</label>
+              <input type="text" id="setting-receipt-title" class="form-control" placeholder="Official Shipment Receipt">
+            </div>
+
+            <div>
+              <label>Receipt Footer</label>
+              <input type="text" id="setting-receipt-footer" class="form-control" placeholder="Thank you for using US Courier">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="setting-receipt-enabled">
+              Enable public receipts
+            </label>
+
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="setting-qr-enabled">
+              Enable QR verification
+            </label>
+          </div>
+        </div>
+
+        <!-- Notifications & Public Features -->
+        <div class="card" style="margin-bottom:1.5rem;">
+          <h3 style="margin-bottom:1rem;">
+            <span class="icon icon-bell" style="color:var(--accent-gold);"></span>
+            Notifications & Public Features
+          </h3>
+
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="setting-notifications-enabled">
+              Enable notifications
+            </label>
+
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="setting-contact-enabled">
+              Enable contact form
+            </label>
+
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+              <input type="checkbox" id="setting-tracking-details">
+              Show detailed tracking information
+            </label>
+          </div>
+        </div>
+
+        <!-- Maintenance -->
+        <div class="card" style="margin-bottom:1.5rem; border-left:4px solid var(--accent-gold);">
+          <h3 style="margin-bottom:1rem;">
+            <span class="icon icon-warning" style="color:var(--accent-gold);"></span>
+            Maintenance Mode
+          </h3>
+
+          <label style="display:flex; align-items:center; gap:0.5rem;">
+            <input type="checkbox" id="setting-maintenance-enabled">
+            Enable website maintenance mode
+          </label>
+
+          <div style="margin-top:1rem;">
+            <label>Maintenance Message</label>
+            <textarea id="setting-maintenance-message" class="form-control" rows="3" placeholder="The website is temporarily unavailable. Please check back later."></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-bottom:2rem;">
+          <button type="button" onclick="saveAdminSettings()" class="btn-gold">
+            <span class="icon icon-save"></span> Save All Settings
+          </button>
+        </div>
+
       </div>
     </section>
 
