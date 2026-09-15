@@ -1081,6 +1081,9 @@ async function handleTrackSubmit(
     return;
   }
 
+  // Show tracking results section
+  showSection("tracking");
+
   const loading =
     document.getElementById(
       "tracking-loading"
