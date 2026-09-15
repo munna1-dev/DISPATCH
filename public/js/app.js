@@ -1097,21 +1097,16 @@ async function handleTrackSubmit(
     );
 
   if (loading) {
-    loading.style.display =
-      "block";
+    loading.style.display = "block";
   }
 
   if (error) {
-    error.style.display =
-      "none";
-
-    error.textContent =
-      "";
+    error.style.display = "none";
+    error.textContent = "";
   }
 
   if (results) {
-    results.style.display =
-      "none";
+    results.style.display = "none";
   }
 
   try {
@@ -1123,8 +1118,7 @@ async function handleTrackSubmit(
         {
           method: "GET",
           headers: {
-            "Accept":
-              "application/json"
+            "Accept": "application/json"
           }
         }
       );
@@ -1132,8 +1126,7 @@ async function handleTrackSubmit(
     let data;
 
     try {
-      data =
-        await response.json();
+      data = await response.json();
     } catch {
       throw new Error(
         "The tracking server returned an invalid response."
@@ -1160,27 +1153,169 @@ async function handleTrackSubmit(
         ? data.events
         : [];
 
-    const latestGps =
-      getLatestGpsEvent(events);
-
     const status =
       String(
-        shipment.status || ""
+        shipment.status || "Tracking"
       ).toLowerCase();
 
-    const isDelivered =
-      status.includes(
-        "delivered"
-      );
+    // ========================================================
+    // ROUTE INFORMATION
+    // ========================================================
+
+    setTrackingText(
+      "tel-origin",
+      shipment.origin || "—"
+    );
+
+    setTrackingText(
+      "tel-current",
+      shipment.current_location || "—"
+    );
+
+    setTrackingText(
+      "tel-destination",
+      shipment.destination || "—"
+    );
+
+    setTrackingText(
+      "tel-eta",
+      formatTrackingDate(
+        shipment.estimated_delivery
+      )
+    );
+
+    // ========================================================
+    // SHIPMENT DETAILS
+    // ========================================================
+
+    setTrackingText(
+      "trk-number-val",
+      shipment.tracking_number || trackingNumber
+    );
+
+    setTrackingText(
+      "trk-service-val",
+      shipment.service_type || "—"
+    );
 
     /*
-     * Prefer the latest GPS event.
-     * Otherwise use the shipment current_location.
+     * The public tracking API intentionally does not expose
+     * private sender/recipient information.
      */
-    const mapCurrent =
-      isDelivered
-        ? shipment.current_location
-        : latestGps
+    setTrackingText(
+      "trk-sender-val",
+      "Protected"
+    );
+
+    setTrackingText(
+      "trk-recipient-val",
+      "Protected"
+    );
+
+    const packageCount =
+      shipment.package_count || 1;
+
+    const weight =
+      shipment.weight_kg !== null &&
+      shipment.weight_kg !== undefined &&
+      shipment.weight_kg !== ""
+        ? `${shipment.weight_kg} kg`
+        : "—";
+
+    setTrackingText(
+      "trk-pkg-val",
+      `${packageCount} / ${weight}`
+    );
+
+    /*
+     * These fields are intentionally not returned by the
+     * public tracking API.
+     */
+    setTrackingText(
+      "trk-val-val",
+      "—"
+    );
+
+    setTrackingText(
+      "trk-desc-val",
+      "Protected"
+    );
+
+    // ========================================================
+    // STATUS BADGE
+    // ========================================================
+
+    const badge =
+      document.getElementById(
+        "trk-status-badge"
+      );
+
+    if (badge) {
+      badge.textContent =
+        shipment.status || "Tracking";
+
+      badge.className =
+        "badge badge-transit";
+
+      if (
+        status.includes("delivered")
+      ) {
+        badge.className =
+          "badge badge-delivered";
+      } else if (
+        status.includes("delay") ||
+        status.includes("exception") ||
+        status.includes("hold")
+      ) {
+        badge.className =
+          "badge badge-delayed";
+      }
+    }
+
+    // ========================================================
+    // TIMELINE
+    // ========================================================
+
+    updateTrackingTimeline(events);
+
+    /*
+     * Display the tracking result immediately after the
+     * shipment data has been rendered. Map/QR enhancements
+     * must never prevent the core tracking result from showing.
+     */
+    if (results) {
+      results.style.display = "block";
+    }
+
+    if (loading) {
+      loading.style.display = "none";
+    }
+
+    // ========================================================
+    // QR CODE
+    // ========================================================
+
+    try {
+      generateTrackingQr(
+        shipment.tracking_number
+      );
+    } catch (qrError) {
+      console.warn(
+        "[TRACKING] QR generation failed:",
+        qrError
+      );
+    }
+
+    // ========================================================
+    // MAP
+    // ========================================================
+
+    try {
+      const latestGps =
+        getLatestGpsEvent(events);
+
+      const mapCurrent =
+        latestGps
           ? {
               label:
                 latestGps.location ||
@@ -1199,164 +1334,27 @@ async function handleTrackSubmit(
             }
           : shipment.current_location;
 
-    // ========================================================
-    // ROUTE INFORMATION
-    // ========================================================
-
-    setTrackingText(
-      "tel-origin",
-      shipment.origin
-    );
-
-    setTrackingText(
-      "tel-current",
-      shipment.current_location
-    );
-
-    setTrackingText(
-      "tel-destination",
-      shipment.destination
-    );
-
-    setTrackingText(
-      "tel-eta",
-      formatTrackingDate(
-        shipment.estimated_delivery
-      )
-    );
-
-    // ========================================================
-    // SHIPMENT DETAILS
-    // ========================================================
-
-    setTrackingText(
-      "trk-number-val",
-      shipment.tracking_number
-    );
-
-    setTrackingText(
-      "trk-service-val",
-      shipment.service_type
-    );
-
-    setTrackingText(
-      "trk-sender-val",
-      shipment.sender_name
-    );
-
-    setTrackingText(
-      "trk-recipient-val",
-      shipment.recipient_name
-    );
-
-    // Your database uses `weight`, not `weight_kg`.
-    const packageCount =
-      shipment.package_count || 1;
-
-    const weight =
-      shipment.weight !== null &&
-      shipment.weight !== undefined &&
-      shipment.weight !== ""
-        ? `${shipment.weight} kg`
-        : "—";
-
-    setTrackingText(
-      "trk-pkg-val",
-      `${packageCount} / ${weight}`
-    );
-
-
-    // ========================================================
-    // TRACKING RESULT QR CODE
-    // ========================================================
-
-    generateTrackingQr(
-      shipment.tracking_number
-    );
-
-    // Declared value
-    if (
-      shipment.declared_value !== null &&
-      shipment.declared_value !== undefined
-    ) {
-      setTrackingText(
-        "trk-val-val",
-        `${shipment.currency || ""} ${shipment.declared_value}`.trim()
-      );
-    } else {
-      setTrackingText(
-        "trk-val-val",
-        "—"
+      requestAnimationFrame(() => {
+        try {
+          initMapCanvas(
+            shipment.origin,
+            mapCurrent,
+            shipment.destination,
+            shipment.status
+          );
+        } catch (mapError) {
+          console.warn(
+            "[TRACKING] Map rendering failed:",
+            mapError
+          );
+        }
+      });
+    } catch (mapError) {
+      console.warn(
+        "[TRACKING] Map preparation failed:",
+        mapError
       );
     }
-
-    setTrackingText(
-      "trk-desc-val",
-      shipment.description ||
-      "—"
-    );
-
-    // ========================================================
-    // STATUS BADGE
-    // ========================================================
-
-    const badge =
-      document.getElementById(
-        "trk-status-badge"
-      );
-
-    if (badge) {
-      badge.textContent =
-        shipment.status ||
-        "Tracking";
-
-      badge.className =
-        "badge badge-transit";
-
-      if (
-        status.includes("delivered")
-      ) {
-        badge.className =
-          "badge badge-delivered";
-      } else if (
-        status.includes("delay") ||
-        status.includes("exception")
-      ) {
-        badge.className =
-          "badge badge-delayed";
-      }
-    }
-
-    // ========================================================
-    // TIMELINE
-    // ========================================================
-
-    updateTrackingTimeline(
-      events
-    );
-
-    if (results) {
-      results.style.display =
-        "block";
-    }
-
-    if (loading) {
-      loading.style.display =
-        "none";
-    }
-
-    // ========================================================
-    // MAP
-    // ========================================================
-
-    requestAnimationFrame(() => {
-      initMapCanvas(
-        shipment.origin,
-        mapCurrent,
-        shipment.destination,
-        shipment.status
-      );
-    });
 
     // ========================================================
     // UPDATE URL
@@ -1389,8 +1387,7 @@ async function handleTrackSubmit(
     );
 
     if (loading) {
-      loading.style.display =
-        "none";
+      loading.style.display = "none";
     }
 
     if (error) {
@@ -1398,12 +1395,10 @@ async function handleTrackSubmit(
         err.message ||
         "Unable to retrieve shipment.";
 
-      error.style.display =
-        "block";
+      error.style.display = "block";
     }
   }
 }
-
 
 // ============================================================
 // GENERATE TRACKING RESULT QR
