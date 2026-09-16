@@ -3314,7 +3314,7 @@ app.post(
         const result =
           await resend.emails.send({
             from:
-              `US COURIER Support <support@uscourier.app>`,
+              `US Courier Support <${process.env.MAIL_FROM || "contact@uscourier.app"}>`,
             to: [
               process.env.CONTACT_RECIPIENT ||
               "contact@uscourier.app"

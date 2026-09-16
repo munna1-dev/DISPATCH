@@ -4,7 +4,7 @@ const https = require("https");
 
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL ||
-  "US COURIER <support@uscourier.app>";
+  "US COURIER <contact@uscourier.app>";
 
 const ADMIN_EMAIL =
   process.env.RESEND_ADMIN_EMAIL ||
