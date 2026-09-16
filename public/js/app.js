@@ -1457,34 +1457,95 @@ async function handleTrackSubmit(
 // ============================================================
 
 function generateTrackingQr(trackingNumber) {
-  const container =
-    document.getElementById(
-      "public-parcel-qrcode"
-    );
+  return trackingNumber || null;
+}
 
-  if (!container) {
-    return;
-  }
 
-  container.innerHTML = "";
+// ============================================================
+// VIEW / DOWNLOAD PUBLIC TRACKING QR
+// ============================================================
+
+function downloadPublicTrackingQr() {
+  const trackingNumber =
+    document
+      .getElementById("trk-number-val")
+      ?.textContent
+      ?.trim();
 
   if (
-    typeof QRCode === "undefined" ||
-    !trackingNumber
+    !trackingNumber ||
+    trackingNumber === "-" ||
+    trackingNumber === "—"
   ) {
-    console.warn(
-      "[QR] QRCode library unavailable or tracking number missing."
-    );
+    alert("Please track a shipment first.");
     return;
   }
+
+  if (typeof QRCode === "undefined") {
+    alert("QR code service is unavailable. Please refresh the page.");
+    return;
+  }
+
+  const oldModal =
+    document.getElementById("public-qr-modal");
+
+  if (oldModal) {
+    oldModal.remove();
+  }
+
+  const modal =
+    document.createElement("div");
+
+  modal.id = "public-qr-modal";
+
+  modal.style.cssText =
+    "position:fixed;" +
+    "inset:0;" +
+    "z-index:99999;" +
+    "display:flex;" +
+    "align-items:center;" +
+    "justify-content:center;" +
+    "padding:20px;" +
+    "background:rgba(0,0,0,.72);";
+
+  const card =
+    document.createElement("div");
+
+  card.style.cssText =
+    "width:min(380px,100%);" +
+    "background:#fff;" +
+    "border-radius:14px;" +
+    "padding:22px;" +
+    "box-shadow:0 20px 60px rgba(0,0,0,.35);" +
+    "text-align:center;" +
+    "color:#111;";
+
+  card.innerHTML =
+    '<h3 style="margin:0 0 6px;">QR Verification</h3>' +
+    '<div style="font-size:.75rem;color:#666;">Tracking Number</div>' +
+    '<div style="font-family:monospace;font-weight:700;color:#0b1f3a;margin:5px 0 16px;word-break:break-all;">' +
+    trackingNumber +
+    '</div>' +
+    '<div id="public-qr-modal-code" style="display:flex;align-items:center;justify-content:center;min-height:205px;padding:18px;background:#fff;border:2px solid #d9dee7;border-radius:10px;box-sizing:border-box;"></div>' +
+    '<p style="font-size:.75rem;color:#666;margin:12px 0 18px;">Scan to verify this shipment tracking page.</p>' +
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
+    '<button type="button" id="public-qr-download" class="btn-outline" style="padding:.6rem .9rem;">Download QR Code</button>' +
+    '<button type="button" id="public-qr-close" class="btn-gold" style="padding:.6rem .9rem;">Close</button>' +
+    '</div>';
+
+  modal.appendChild(card);
+  document.body.appendChild(modal);
+
+  const qrContainer =
+    document.getElementById(
+      "public-qr-modal-code"
+    );
 
   let trackingUrl;
 
   try {
     const url =
-      new URL(
-        window.location.href
-      );
+      new URL(window.location.href);
 
     url.searchParams.set(
       "trk",
@@ -1498,135 +1559,92 @@ function generateTrackingQr(trackingNumber) {
       "[QR] Unable to build tracking URL.",
       error
     );
+    modal.remove();
     return;
   }
 
   new QRCode(
-    container,
+    qrContainer,
     {
       text: trackingUrl,
-      width: 160,
-      height: 160,
+      width: 170,
+      height: 170,
       correctLevel:
         QRCode.CorrectLevel.M
     }
   );
-}
 
+  document
+    .getElementById("public-qr-download")
+    .onclick = function () {
+      const canvas =
+        qrContainer.querySelector("canvas");
 
-// ============================================================
-// DOWNLOAD PUBLIC TRACKING QR
-// ============================================================
+      const image =
+        qrContainer.querySelector("img");
 
-function downloadPublicTrackingQr() {
-  const container =
-    document.getElementById(
-      "public-parcel-qrcode"
-    );
+      let dataUrl = "";
 
-  const trackingNumber =
-    document
-      .getElementById(
-        "trk-number-val"
-      )
-      ?.textContent
-      ?.trim();
+      if (canvas) {
+        try {
+          dataUrl =
+            canvas.toDataURL("image/png");
+        } catch (error) {
+          console.error(
+            "[QR] QR export failed.",
+            error
+          );
+        }
+      }
 
-  const status =
-    document.getElementById(
-      "public-qr-status"
-    );
+      if (!dataUrl && image?.src) {
+        dataUrl = image.src;
+      }
 
-  if (!container) {
-    alert(
-      "QR code container was not found."
-    );
-    return;
-  }
-
-  if (
-    !trackingNumber ||
-    trackingNumber === "-" ||
-    trackingNumber === "—"
-  ) {
-    alert(
-      "Please track a shipment before downloading the QR code."
-    );
-    return;
-  }
-
-  let dataUrl = "";
-
-  const canvas =
-    container.querySelector(
-      "canvas"
-    );
-
-  if (canvas) {
-    try {
-      dataUrl =
-        canvas.toDataURL(
-          "image/png"
+      if (!dataUrl) {
+        alert(
+          "QR code is not ready yet. Please try again."
         );
-    } catch (error) {
-      console.error(
-        "[QR] Unable to export QR canvas.",
-        error
-      );
-    }
-  }
+        return;
+      }
 
-  if (!dataUrl) {
-    const image =
-      container.querySelector(
-        "img"
-      );
+      const link =
+        document.createElement("a");
 
-    if (image?.src) {
-      dataUrl = image.src;
-    }
-  }
+      link.href = dataUrl;
 
-  if (!dataUrl) {
-    alert(
-      "The QR code is not ready yet. Please wait a moment and try again."
-    );
+      link.download =
+        trackingNumber +
+        "-verification-qr.png";
 
-    if (status) {
-      status.textContent =
-        "QR code is not ready yet.";
-    }
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    };
 
-    return;
-  }
+  document
+    .getElementById("public-qr-close")
+    .onclick = function () {
+      modal.remove();
+    };
 
-  const link =
-    document.createElement(
-      "a"
-    );
-
-  link.href = dataUrl;
-
-  link.download =
-    `${trackingNumber}-verification-qr.png`;
-
-  document.body.appendChild(
-    link
-  );
-
-  link.click();
-
-  link.remove();
-
-  if (status) {
-    status.textContent =
-      "QR code downloaded successfully.";
-  }
+  modal.onclick =
+    function (event) {
+      if (event.target === modal) {
+        modal.remove();
+      }
+    };
 }
 
 
 // ============================================================
 // GPS-AWARE MAP WRAPPER
+// ============================================================
+
+
+// ============================================================
+
+
 // ============================================================
 
 function initMapCanvasWithGps(
