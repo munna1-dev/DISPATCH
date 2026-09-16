@@ -116,8 +116,8 @@ async function logAdminAction({
       ]
     );
   } catch (err) {
-    console.error("[AUDIT LOG]", err);
-    throw err;
+    // Never break the main request because of logging
+    console.error("[AUDIT LOG]", err.message);
   }
 }
 
@@ -1703,11 +1703,6 @@ app.put(
   adminMiddleware,
   requireSameOrigin,
   async (req, res) => {
-    console.log("[ADMIN USER UPDATE] request reached server", {
-      userId: req.params.id,
-      adminId: req.admin?.id,
-      adminEmail: req.admin?.email
-    });
     const userId = Number(req.params.id);
 
     if (
