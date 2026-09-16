@@ -1344,21 +1344,6 @@ async function handleTrackSubmit(
     }
 
     // ========================================================
-    // QR CODE
-    // ========================================================
-
-    try {
-      generateTrackingQr(
-        shipment.tracking_number
-      );
-    } catch (qrError) {
-      console.warn(
-        "[TRACKING] QR generation failed:",
-        qrError
-      );
-    }
-
-    // ========================================================
     // MAP
     // ========================================================
 
@@ -1451,15 +1436,6 @@ async function handleTrackSubmit(
     }
   }
 }
-
-// ============================================================
-// GENERATE TRACKING RESULT QR
-// ============================================================
-
-function generateTrackingQr(trackingNumber) {
-  return trackingNumber || null;
-}
-
 
 // ============================================================
 // VIEW / DOWNLOAD PUBLIC TRACKING QR
@@ -1812,7 +1788,8 @@ async function handleContactSubmit(
 
     if (alertBox) {
       alertBox.textContent =
-        "Your message has been sent successfully.";
+        data.message ||
+        "Thank you for contacting us. All management representatives are currently busy assisting customers. Your message has been received successfully, and a response will be sent back shortly.";
 
       alertBox.style.display =
         "block";

@@ -75,6 +75,52 @@ async function testDatabaseConnection() {
   );
 }
 
+
+// ============================================================
+// ADMIN AUDIT LOG HELPER
+// ============================================================
+
+async function logAdminAction({
+  adminId = null,
+  adminEmail = null,
+  action,
+  targetType = null,
+  targetId = null,
+  details = null,
+  ipAddress = null
+}) {
+  try {
+    if (!action) return;
+
+    await queryWithRetry(
+      `
+      INSERT INTO admin_audit_logs (
+        admin_id,
+        admin_email,
+        action,
+        target_type,
+        target_id,
+        details,
+        ip_address
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `,
+      [
+        adminId,
+        adminEmail,
+        String(action).slice(0, 100),
+        targetType ? String(targetType).slice(0, 50) : null,
+        targetId ? String(targetId).slice(0, 100) : null,
+        details ? String(details).slice(0, 2000) : null,
+        ipAddress ? String(ipAddress).slice(0, 100) : null
+      ]
+    );
+  } catch (err) {
+    console.error("[AUDIT LOG]", err);
+    throw err;
+  }
+}
+
 async function queryWithRetry(text, values = [], retries = 2) {
   let lastError;
 
@@ -195,7 +241,13 @@ function requireSameOrigin(req, res, next) {
     return next();
   }
 
-  if (origin !== "https://uscourier.app") {
+  const allowedOrigins = new Set([
+    "https://uscourier.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ]);
+
+  if (!allowedOrigins.has(origin)) {
     return res.status(403).json({
       success: false,
       error: "Invalid request origin."
@@ -717,25 +769,51 @@ app.get(
     try {
       const counts = await queryWithRetry(`
         SELECT
-          (SELECT COUNT(*) FROM shipments) AS total,
+          (
+            SELECT COUNT(*)
+            FROM shipments
+          ) AS total,
+
           (
             SELECT COUNT(*)
             FROM shipments
             WHERE status ILIKE '%transit%'
           ) AS in_transit,
+
           (
             SELECT COUNT(*)
             FROM shipments
             WHERE status ILIKE '%delivered%'
           ) AS delivered,
+
+          (
+            SELECT COUNT(*)
+            FROM shipments
+            WHERE
+              status ILIKE '%pending%'
+              OR status ILIKE '%exception%'
+              OR status ILIKE '%delay%'
+              OR status ILIKE '%held%'
+              OR status ILIKE '%failed%'
+          ) AS pending_exceptions,
+
+          (
+            SELECT COUNT(*)
+            FROM users
+            WHERE LOWER(
+              COALESCE(NULLIF(TRIM(role), ''), 'Customer')
+            ) <> 'admin'
+          ) AS customers,
+
           (
             SELECT COUNT(*)
             FROM contact_messages
           ) AS messages,
+
           (
             SELECT COUNT(*)
             FROM contact_messages
-            WHERE status = 'Unread'
+            WHERE LOWER(COALESCE(status, '')) = 'unread'
           ) AS unread_messages
       `);
 
@@ -751,6 +829,47 @@ app.get(
 
       return res.status(500).json({
         error: "Failed to load dashboard"
+      });
+    }
+  }
+);
+
+// ============================================================
+// ADMIN CUSTOMERS - LIST
+// ============================================================
+
+app.get(
+  "/api/admin/customers",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const result = await queryWithRetry(`
+        SELECT
+          id,
+          name,
+          email,
+          COALESCE(NULLIF(TRIM(role), ''), 'Customer') AS role,
+          created_at
+        FROM users
+        WHERE LOWER(COALESCE(NULLIF(TRIM(role), ''), 'Customer')) <> 'admin'
+        ORDER BY created_at DESC
+        LIMIT 500
+      `);
+
+      return res.json({
+        success: true,
+        customers: result.rows
+      });
+    } catch (err) {
+      console.error(
+        "[ADMIN CUSTOMERS]",
+        err.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to load customers"
       });
     }
   }
@@ -1071,6 +1190,89 @@ app.post(
 );
 
 
+
+// ============================================================
+// ADMIN SHIPMENTS - DELETE
+// ============================================================
+
+app.delete(
+  "/api/admin/shipments/:id",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    const shipmentId = Number(req.params.id);
+
+    if (!Number.isInteger(shipmentId) || shipmentId < 1) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid shipment ID."
+      });
+    }
+
+    const c = await pool.connect();
+
+    try {
+      await c.query("BEGIN");
+
+      const existing = await c.query(
+        `
+        SELECT
+          id,
+          tracking_number
+        FROM shipments
+        WHERE id = $1
+        FOR UPDATE
+        `,
+        [shipmentId]
+      );
+
+      if (!existing.rowCount) {
+        await c.query("ROLLBACK");
+
+        return res.status(404).json({
+          success: false,
+          error: "Shipment not found."
+        });
+      }
+
+      const shipment = existing.rows[0];
+
+      await c.query(
+        `
+        DELETE FROM shipments
+        WHERE id = $1
+        `,
+        [shipmentId]
+      );
+
+      await c.query("COMMIT");
+
+      return res.json({
+        success: true,
+        message: "Shipment deleted successfully.",
+        tracking_number: shipment.tracking_number
+      });
+
+    } catch (e) {
+      await c.query("ROLLBACK");
+
+      console.error(
+        "[DELETE SHIPMENT]",
+        e.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to delete shipment."
+      });
+
+    } finally {
+      c.release();
+    }
+  }
+);
+
 // ============================================================
 // SITE SETTINGS - ADMIN
 // ============================================================
@@ -1248,6 +1450,956 @@ app.put(
     }
   }
 );
+
+// ============================================================
+// ADMIN USER MANAGEMENT
+// ============================================================
+
+const ADMIN_ALLOWED_ROLES = new Set([
+  "Admin",
+  "Operations Manager",
+  "Dispatcher",
+  "Driver",
+  "Trunk Driver",
+  "Cargo Personnel",
+  "Warehouse Personnel",
+  "Customer Service",
+  "Customer"
+]);
+
+function normalizeAdminRole(value) {
+  const role = cleanString(value, 50);
+
+  if (!ADMIN_ALLOWED_ROLES.has(role)) {
+    return null;
+  }
+
+  return role;
+}
+
+function validateAdminUserName(value) {
+  const name = cleanString(value, 120);
+
+  if (!name) {
+    return "Name is required.";
+  }
+
+  if (name.length < 2) {
+    return "Name must contain at least 2 characters.";
+  }
+
+  return null;
+}
+
+function validateAdminPassword(value) {
+  const password = String(value || "");
+
+  if (!password) {
+    return "Password is required.";
+  }
+
+  if (password.length < 8) {
+    return "Password must contain at least 8 characters.";
+  }
+
+  if (password.length > 200) {
+    return "Password is too long.";
+  }
+
+  return null;
+}
+
+
+// ------------------------------------------------------------
+// LIST USERS
+// ------------------------------------------------------------
+
+app.get(
+  "/api/admin/users",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const result = await queryWithRetry(
+        `
+        SELECT
+          id,
+          name,
+          email,
+          role,
+          created_at
+        FROM users
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1000
+        `
+      );
+
+      return res.json({
+        success: true,
+        users: result.rows
+      });
+    } catch (error) {
+      console.error("[ADMIN USERS GET]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to load users."
+      });
+    }
+  }
+);
+
+
+// ------------------------------------------------------------
+// CREATE USER
+// ------------------------------------------------------------
+
+app.post(
+  "/api/admin/users",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    try {
+      const name = cleanString(req.body?.name, 120);
+      const email = cleanString(req.body?.email, 254)
+        .toLowerCase();
+      const password = String(req.body?.password || "");
+      const role = normalizeAdminRole(
+        req.body?.role || "Customer"
+      );
+
+      const nameError = validateAdminUserName(name);
+
+      if (nameError) {
+        return res.status(400).json({
+          success: false,
+          error: nameError
+        });
+      }
+
+      if (!email || !isValidEmail(email)) {
+        return res.status(400).json({
+          success: false,
+          error: "A valid email address is required."
+        });
+      }
+
+      const passwordError =
+        validateAdminPassword(password);
+
+      if (passwordError) {
+        return res.status(400).json({
+          success: false,
+          error: passwordError
+        });
+      }
+
+      if (!role) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid user role."
+        });
+      }
+
+      const existing = await queryWithRetry(
+        `
+        SELECT id
+        FROM users
+        WHERE LOWER(email) = $1
+        LIMIT 1
+        `,
+        [email]
+      );
+
+      if (existing.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: "A user with this email address already exists."
+        });
+      }
+
+      const passwordHash =
+        await bcrypt.hash(password, 12);
+
+      /*
+       * users.id is a PostgreSQL identity column.
+       * Do not supply id here; PostgreSQL generates it.
+       */
+
+      const result = await queryWithRetry(
+        `
+        INSERT INTO users
+        (
+          name,
+          email,
+          password_hash,
+          role
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING
+          id,
+          name,
+          email,
+          role,
+          created_at
+        `,
+        [
+          name,
+          email,
+          passwordHash,
+          role
+        ]
+      );
+
+      await logAdminAction({
+        adminId: req.admin?.id || null,
+        adminEmail: req.admin?.email || null,
+        action: "user.create",
+        targetType: "user",
+        targetId: result.rows[0]?.id,
+        details: JSON.stringify({
+          name,
+          email,
+          role
+        }),
+        ipAddress: req.ip || null
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "User created successfully.",
+        user: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[ADMIN USER CREATE]", error.message);
+
+      if (
+        error.code === "23505" &&
+        error.constraint === "users_email_key"
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: "A user with this email address already exists."
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to create user."
+      });
+    }
+  }
+);
+
+
+// ------------------------------------------------------------
+// EDIT USER
+// ------------------------------------------------------------
+
+app.put(
+  "/api/admin/users/:id",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    console.log("[ADMIN USER UPDATE] request reached server", {
+      userId: req.params.id,
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email
+    });
+    const userId = Number(req.params.id);
+
+    if (
+      !Number.isSafeInteger(userId) ||
+      userId < 1
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid user ID."
+      });
+    }
+
+    try {
+      const name = cleanString(req.body?.name, 120);
+      const email = cleanString(req.body?.email, 254)
+        .toLowerCase();
+
+      const nameError = validateAdminUserName(name);
+
+      if (nameError) {
+        return res.status(400).json({
+          success: false,
+          error: nameError
+        });
+      }
+
+      if (!email || !isValidEmail(email)) {
+        return res.status(400).json({
+          success: false,
+          error: "A valid email address is required."
+        });
+      }
+
+      const existing = await queryWithRetry(
+        `
+        SELECT id, role
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+
+      if (existing.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found."
+        });
+      }
+
+      const duplicate = await queryWithRetry(
+        `
+        SELECT id
+        FROM users
+        WHERE LOWER(email) = $1
+          AND id <> $2
+        LIMIT 1
+        `,
+        [email, userId]
+      );
+
+      if (duplicate.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: "Another user already uses this email address."
+        });
+      }
+
+      const result = await queryWithRetry(
+        `
+        UPDATE users
+        SET
+          name = $1,
+          email = $2
+        WHERE id = $3
+        RETURNING
+          id,
+          name,
+          email,
+          role,
+          created_at
+        `,
+        [
+          name,
+          email,
+          userId
+        ]
+      );
+
+      await logAdminAction({
+        adminId: req.admin?.id || null,
+        adminEmail: req.admin?.email || null,
+        action: "user.update",
+        targetType: "user",
+        targetId: result.rows[0]?.id,
+        details: JSON.stringify({
+          name,
+          email
+        }),
+        ipAddress: req.ip || null
+      });
+
+      return res.json({
+        success: true,
+        message: "User updated successfully.",
+        user: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[ADMIN USER UPDATE]", error.message);
+
+      if (
+        error.code === "23505" &&
+        error.constraint === "users_email_key"
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: "Another user already uses this email address."
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to update user."
+      });
+    }
+  }
+);
+
+
+// ------------------------------------------------------------
+// CHANGE USER ROLE
+// ------------------------------------------------------------
+
+app.put(
+  "/api/admin/users/:id/role",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    const userId = Number(req.params.id);
+
+    if (
+      !Number.isSafeInteger(userId) ||
+      userId < 1
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid user ID."
+      });
+    }
+
+    const role = normalizeAdminRole(
+      req.body?.role
+    );
+
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid user role."
+      });
+    }
+
+    try {
+      const targetResult = await queryWithRetry(
+        `
+        SELECT
+          id,
+          name,
+          email,
+          role,
+          created_at
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+
+      if (targetResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found."
+        });
+      }
+
+      const target = targetResult.rows[0];
+
+      /*
+       * The current administrator cannot remove their own
+       * Administrator privileges through this endpoint.
+       */
+
+      if (
+        Number(req.admin.id) === userId &&
+        role !== "Admin"
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "You cannot remove your own Administrator role."
+        });
+      }
+
+      /*
+       * Prevent the system from being left without an Admin.
+       */
+
+      if (
+        target.role === "Admin" &&
+        role !== "Admin"
+      ) {
+        const adminCountResult =
+          await queryWithRetry(
+            `
+            SELECT COUNT(*)::int AS count
+            FROM users
+            WHERE role = 'Admin'
+            `
+          );
+
+        const adminCount =
+          Number(adminCountResult.rows[0]?.count || 0);
+
+        if (adminCount <= 1) {
+          return res.status(400).json({
+            success: false,
+            error: "The last Administrator cannot be downgraded."
+          });
+        }
+      }
+
+      const result = await queryWithRetry(
+        `
+        UPDATE users
+        SET role = $1
+        WHERE id = $2
+        RETURNING
+          id,
+          name,
+          email,
+          role,
+          created_at
+        `,
+        [
+          role,
+          userId
+        ]
+      );
+
+      await logAdminAction({
+        adminId: req.admin?.id || null,
+        adminEmail: req.admin?.email || null,
+        action: "user.role_change",
+        targetType: "user",
+        targetId: result.rows[0]?.id,
+        details: JSON.stringify({
+          fromRole: target.role,
+          toRole: role
+        }),
+        ipAddress: req.ip || null
+      });
+
+      return res.json({
+        success: true,
+        message: "User role updated successfully.",
+        user: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[ADMIN USER ROLE]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to change user role."
+      });
+    }
+  }
+);
+
+
+// ------------------------------------------------------------
+// RESET USER PASSWORD
+// ------------------------------------------------------------
+
+app.post(
+  "/api/admin/users/:id/reset-password",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    const userId = Number(req.params.id);
+
+    if (
+      !Number.isSafeInteger(userId) ||
+      userId < 1
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid user ID."
+      });
+    }
+
+    try {
+      const password =
+        String(req.body?.password || "");
+
+      const passwordError =
+        validateAdminPassword(password);
+
+      if (passwordError) {
+        return res.status(400).json({
+          success: false,
+          error: passwordError
+        });
+      }
+
+      const target = await queryWithRetry(
+        `
+        SELECT id, role
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [userId]
+      );
+
+      if (target.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found."
+        });
+      }
+
+      /*
+       * Password changes are hashed on the server.
+       * The plaintext password is never stored.
+       */
+
+      const passwordHash =
+        await bcrypt.hash(password, 12);
+
+      await queryWithRetry(
+        `
+        UPDATE users
+        SET password_hash = $1
+        WHERE id = $2
+        `,
+        [
+          passwordHash,
+          userId
+        ]
+      );
+
+      await logAdminAction({
+        adminId: req.admin?.id || null,
+        adminEmail: req.admin?.email || null,
+        action: "user.password_reset",
+        targetType: "user",
+        targetId: userId,
+        details: JSON.stringify({
+          targetUserId: userId
+        }),
+        ipAddress: req.ip || null
+      });
+
+      return res.json({
+        success: true,
+        message: "User password reset successfully."
+      });
+    } catch (error) {
+      console.error(
+        "[ADMIN USER PASSWORD RESET]",
+        error.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to reset user password."
+      });
+    }
+  }
+);
+
+
+// ------------------------------------------------------------
+// ADMIN PROFILE
+// ------------------------------------------------------------
+
+app.get(
+  "/api/admin/profile",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const result = await queryWithRetry(
+        `
+        SELECT
+          id,
+          name,
+          email,
+          role,
+          created_at
+        FROM users
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [req.admin.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Administrator account not found."
+        });
+      }
+
+      return res.json({
+        success: true,
+        profile: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[ADMIN PROFILE GET]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to load administrator profile."
+      });
+    }
+  }
+);
+
+
+// ------------------------------------------------------------
+// UPDATE ADMIN PROFILE
+// ------------------------------------------------------------
+
+app.put(
+  "/api/admin/profile",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    try {
+      const name = cleanString(req.body?.name, 120);
+      const email = cleanString(req.body?.email, 254)
+        .toLowerCase();
+
+      const nameError = validateAdminUserName(name);
+
+      if (nameError) {
+        return res.status(400).json({
+          success: false,
+          error: nameError
+        });
+      }
+
+      if (!email || !isValidEmail(email)) {
+        return res.status(400).json({
+          success: false,
+          error: "A valid email address is required."
+        });
+      }
+
+      const duplicate = await queryWithRetry(
+        `
+        SELECT id
+        FROM users
+        WHERE LOWER(email) = $1
+          AND id <> $2
+        LIMIT 1
+        `,
+        [
+          email,
+          req.admin.id
+        ]
+      );
+
+      if (duplicate.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: "Another user already uses this email address."
+        });
+      }
+
+      const result = await queryWithRetry(
+        `
+        UPDATE users
+        SET
+          name = $1,
+          email = $2
+        WHERE id = $3
+          AND role = 'Admin'
+        RETURNING
+          id,
+          name,
+          email,
+          role,
+          created_at
+        `,
+        [
+          name,
+          email,
+          req.admin.id
+        ]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Administrator account not found."
+        });
+      }
+
+      /*
+       * The current JWT may contain the old email.
+       * The database remains the source of truth for admin
+       * authorization, so no new token is issued here.
+       */
+
+      await logAdminAction({
+        adminId: req.admin?.id || null,
+        adminEmail: req.admin?.email || null,
+        action: "admin.profile_update",
+        targetType: "admin",
+        targetId: result.rows[0]?.id,
+        details: JSON.stringify({
+          name,
+          email
+        }),
+        ipAddress: req.ip || null
+      });
+
+      return res.json({
+        success: true,
+        message: "Administrator profile updated successfully.",
+        profile: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[ADMIN PROFILE UPDATE]", error.message);
+
+      if (
+        error.code === "23505" &&
+        error.constraint === "users_email_key"
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: "Another user already uses this email address."
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to update administrator profile."
+      });
+    }
+  }
+);
+
+
+// ------------------------------------------------------------
+// CHANGE ADMIN PASSWORD
+// ------------------------------------------------------------
+
+app.put(
+  "/api/admin/profile/password",
+  authMiddleware,
+  adminMiddleware,
+  requireSameOrigin,
+  async (req, res) => {
+    try {
+      const currentPassword =
+        String(req.body?.currentPassword || "");
+
+      const newPassword =
+        String(req.body?.newPassword || "");
+
+      if (!currentPassword) {
+        return res.status(400).json({
+          success: false,
+          error: "Current password is required."
+        });
+      }
+
+      const passwordError =
+        validateAdminPassword(newPassword);
+
+      if (passwordError) {
+        return res.status(400).json({
+          success: false,
+          error: passwordError
+        });
+      }
+
+      const result = await queryWithRetry(
+        `
+        SELECT
+          id,
+          password_hash
+        FROM users
+        WHERE id = $1
+          AND role = 'Admin'
+        LIMIT 1
+        `,
+        [req.admin.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Administrator account not found."
+        });
+      }
+
+      const adminUser = result.rows[0];
+
+      const currentMatches =
+        await bcrypt.compare(
+          currentPassword,
+          adminUser.password_hash
+        );
+
+      if (!currentMatches) {
+        return res.status(401).json({
+          success: false,
+          error: "Current password is incorrect."
+        });
+      }
+
+      if (currentPassword === newPassword) {
+        return res.status(400).json({
+          success: false,
+          error: "New password must be different from the current password."
+        });
+      }
+
+      const passwordHash =
+        await bcrypt.hash(newPassword, 12);
+
+      await queryWithRetry(
+        `
+        UPDATE users
+        SET password_hash = $1
+        WHERE id = $2
+          AND role = 'Admin'
+        `,
+        [
+          passwordHash,
+          req.admin.id
+        ]
+      );
+
+      /*
+       * Force a fresh login after an administrator password
+       * change so an existing session cannot remain active
+       * indefinitely.
+       */
+
+      res.clearCookie("us_courier_token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/"
+      });
+
+      await logAdminAction({
+        adminId: req.admin?.id || null,
+        adminEmail: req.admin?.email || null,
+        action: "admin.password_change",
+        targetType: "admin",
+        targetId: req.admin?.id || null,
+        details: JSON.stringify({
+          passwordChanged: true
+        }),
+        ipAddress: req.ip || null
+      });
+
+      return res.json({
+        success: true,
+        message: "Administrator password changed successfully. Please sign in again."
+      });
+    } catch (error) {
+      console.error(
+        "[ADMIN PASSWORD CHANGE]",
+        error.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to change administrator password."
+      });
+    }
+  }
+);
+
 
 // ============================================================
 // SITE SETTINGS - PUBLIC
@@ -2197,9 +3349,7 @@ app.post(
         saved: true,
         email_sent: emailSent,
         message:
-          emailSent
-            ? "Message sent successfully."
-            : "Message saved successfully."
+          "Thank you for contacting us. All management representatives are currently busy assisting customers. Your message has been received successfully, and a response will be sent back shortly."
       });
     } catch (err) {
       console.error(

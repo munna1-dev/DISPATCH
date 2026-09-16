@@ -199,3 +199,1453 @@ th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font
   header { flex-direction: column; gap: 1rem; }
   .map-canvas-container { height: 260px; }
 }
+
+
+/* =========================================================
+   ADMIN PORTAL — PROFESSIONAL RESPONSIVE MANAGEMENT UI
+   Scoped to the admin portal so public tracking styles remain
+   unchanged.
+========================================================= */
+
+#admin-portal-shell {
+  --admin-bg: #f4f6f9;
+  --admin-surface: #ffffff;
+  --admin-surface-soft: #f8fafc;
+  --admin-sidebar: #0d1b2a;
+  --admin-sidebar-hover: #162b40;
+  --admin-sidebar-active: #1c3852;
+  --admin-text: #17202a;
+  --admin-muted: #6b7683;
+  --admin-border: #e2e7ed;
+  --admin-gold: #d4af37;
+  --admin-gold-dark: #a98416;
+  --admin-danger: #c0392b;
+  --admin-success: #27864b;
+  --admin-info: #286fa8;
+  --admin-warning: #b87912;
+
+  min-height: 100vh;
+  width: 100%;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  position: relative;
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   ADMIN APP FRAME
+========================================================= */
+
+#admin-portal-shell .admin-portal-header {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  min-height: 76px;
+  margin: 0;
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--admin-border);
+  box-shadow: 0 2px 12px rgba(13, 27, 42, 0.04);
+  backdrop-filter: blur(12px);
+}
+
+#admin-portal-shell .admin-header-left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#admin-portal-shell .admin-page-eyebrow {
+  color: var(--admin-gold-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  margin-bottom: 3px;
+}
+
+#admin-portal-shell #admin-page-title {
+  color: var(--admin-text);
+  font-size: 1.45rem;
+  font-weight: 750;
+  line-height: 1.2;
+  margin: 0;
+}
+
+#admin-portal-shell .admin-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#admin-portal-shell .admin-header-icon-button {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  cursor: pointer;
+  font-size: 1.05rem;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+#admin-portal-shell .admin-header-icon-button:hover {
+  border-color: var(--admin-gold);
+  background: #fffdf6;
+  transform: translateY(-1px);
+}
+
+#admin-portal-shell .admin-header-notification {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-danger);
+  color: #fff;
+  border: 2px solid #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+#admin-portal-shell .admin-header-profile {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--admin-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+#admin-portal-shell .admin-header-profile:hover {
+  background: var(--admin-surface-soft);
+}
+
+#admin-portal-shell .admin-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-sidebar);
+  color: var(--admin-gold);
+  font-weight: 800;
+}
+
+#admin-portal-shell .admin-profile-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#admin-portal-shell .admin-profile-copy strong {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--admin-text);
+  font-size: 0.86rem;
+}
+
+#admin-portal-shell .admin-profile-copy small {
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+}
+
+#admin-portal-shell .admin-profile-chevron {
+  color: var(--admin-muted);
+  font-size: 1rem;
+}
+
+#admin-portal-shell .admin-header-logout {
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+  padding: 0.62rem 1rem;
+}
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+#admin-portal-shell .admin-mobile-menu {
+  display: none;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  padding: 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface);
+  cursor: pointer;
+}
+
+#admin-portal-shell .admin-mobile-menu span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin: 4px 0;
+  background: var(--admin-text);
+  border-radius: 2px;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+#admin-portal-shell .admin-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1100;
+  width: 252px;
+  display: flex;
+  flex-direction: column;
+  background: var(--admin-sidebar);
+  color: #fff;
+  border-right: 1px solid rgba(255,255,255,.07);
+  box-shadow: 8px 0 30px rgba(13,27,42,.10);
+  overflow-y: auto;
+  transition: width .22s ease, transform .22s ease;
+}
+
+#admin-portal-shell .admin-sidebar-brand {
+  min-height: 86px;
+  padding: 20px 20px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+#admin-portal-shell .admin-sidebar-brand strong {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+#admin-portal-shell .admin-sidebar-brand small {
+  display: block;
+  margin-top: 2px;
+  color: rgba(255,255,255,.52);
+  font-size: .66rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+#admin-portal-shell .admin-sidebar-nav {
+  flex: 1;
+  padding: 18px 12px;
+}
+
+#admin-portal-shell .admin-sidebar-section-label {
+  padding: 12px 10px 8px;
+  color: rgba(255,255,255,.38);
+  font-size: .63rem;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+#admin-portal-shell .admin-sidebar nav,
+#admin-portal-shell .admin-sidebar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#admin-portal-shell .admin-sidebar li {
+  margin: 3px 0;
+}
+
+#admin-portal-shell .admin-sidebar a,
+#admin-portal-shell .admin-sidebar button {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255,255,255,.72);
+  text-decoration: none;
+  font: inherit;
+  font-size: .86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+
+#admin-portal-shell .admin-sidebar a:hover,
+#admin-portal-shell .admin-sidebar button:hover {
+  background: var(--admin-sidebar-hover);
+  color: #fff;
+}
+
+#admin-portal-shell .admin-sidebar a.active,
+#admin-portal-shell .admin-sidebar button.active {
+  background: var(--admin-sidebar-active);
+  border-color: rgba(212,175,55,.22);
+  color: #fff;
+}
+
+#admin-portal-shell .admin-sidebar .admin-nav-icon {
+  width: 20px;
+  flex: 0 0 20px;
+  text-align: center;
+  opacity: .85;
+}
+
+#admin-portal-shell .admin-sidebar .admin-nav-label {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+
+#admin-portal-shell .admin-sidebar .admin-nav-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--admin-danger);
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 800;
+}
+
+#admin-portal-shell .admin-sidebar-footer {
+  padding: 14px 12px 18px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+
+/* =========================================================
+   SIDEBAR BACKDROP
+========================================================= */
+
+#admin-portal-shell .admin-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(7,15,24,.48);
+  backdrop-filter: blur(2px);
+}
+
+#admin-portal-shell .admin-sidebar-backdrop.admin-backdrop-visible {
+  display: block;
+}
+
+
+/* =========================================================
+   MAIN ADMIN CONTENT
+========================================================= */
+
+#admin-portal-shell .admin-portal-main {
+  min-width: 0;
+  min-height: calc(100vh - 76px);
+  margin-left: 252px;
+  padding: 30px;
+  background: var(--admin-bg);
+}
+
+#admin-portal-shell .admin-panel {
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+#admin-portal-shell .admin-panel[style*="display:none"] {
+  display: none !important;
+}
+
+#admin-portal-shell .admin-panel.active {
+  display: block !important;
+}
+
+#admin-portal-shell .admin-panel-toolbar {
+  min-height: 60px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+#admin-portal-shell .admin-panel-toolbar h2 {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 1.45rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+#admin-portal-shell .admin-panel-toolbar p {
+  max-width: 760px;
+  margin: 6px 0 0;
+  color: var(--admin-muted);
+  font-size: .88rem;
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   CONTENT CARDS
+========================================================= */
+
+#admin-portal-shell .admin-content-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(13,27,42,.045);
+}
+
+#admin-portal-shell .admin-content-card > .admin-list-toolbar,
+#admin-portal-shell .admin-content-card > .admin-card-heading {
+  border-bottom: 1px solid var(--admin-border);
+}
+
+#admin-portal-shell .admin-card-heading,
+#admin-portal-shell .admin-list-toolbar {
+  min-height: 62px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+#admin-portal-shell .admin-card-heading h3,
+#admin-portal-shell .admin-list-toolbar strong {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: .94rem;
+  font-weight: 750;
+}
+
+#admin-portal-shell .admin-card-heading p {
+  margin: 3px 0 0;
+  color: var(--admin-muted);
+  font-size: .76rem;
+}
+
+#admin-portal-shell .admin-record-count {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--admin-muted);
+  font-size: .72rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   DASHBOARD KPI CARDS
+========================================================= */
+
+#admin-portal-shell .admin-kpi-grid,
+#admin-portal-shell .admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+#admin-portal-shell .admin-kpi-card {
+  min-width: 0;
+  padding: 18px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(13,27,42,.04);
+}
+
+#admin-portal-shell .admin-kpi-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--admin-muted);
+  font-size: .7rem;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+#admin-portal-shell .admin-kpi-card strong,
+#admin-portal-shell .admin-kpi-value {
+  display: block;
+  color: var(--admin-text);
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+#admin-portal-shell .admin-kpi-meta {
+  display: block;
+  margin-top: 9px;
+  color: var(--admin-muted);
+  font-size: .7rem;
+}
+
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+#admin-portal-shell .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#admin-portal-shell .admin-data-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  color: var(--admin-text);
+  text-align: left;
+}
+
+#admin-portal-shell .admin-data-table th,
+#admin-portal-shell .admin-data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--admin-border);
+  vertical-align: middle;
+  font-size: .82rem;
+}
+
+#admin-portal-shell .admin-data-table th {
+  background: var(--admin-surface-soft);
+  color: var(--admin-muted);
+  font-size: .67rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#admin-portal-shell .admin-data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+#admin-portal-shell .admin-data-table tbody tr:hover {
+  background: #fbfcfd;
+}
+
+#admin-portal-shell .admin-data-table td strong {
+  color: var(--admin-text);
+  font-weight: 700;
+}
+
+#admin-portal-shell .admin-table-action {
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+#admin-portal-shell .admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #eef1f4;
+  color: #55616d;
+  font-size: .66rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#admin-portal-shell .admin-status-badge.delivered {
+  background: rgba(39,134,75,.11);
+  color: var(--admin-success);
+}
+
+#admin-portal-shell .admin-status-badge.transit {
+  background: rgba(40,111,168,.11);
+  color: var(--admin-info);
+}
+
+#admin-portal-shell .admin-status-badge.pending,
+#admin-portal-shell .admin-status-badge.unread {
+  background: rgba(184,121,18,.12);
+  color: var(--admin-warning);
+}
+
+#admin-portal-shell .admin-status-badge.exception,
+#admin-portal-shell .admin-status-badge.failed {
+  background: rgba(192,57,43,.11);
+  color: var(--admin-danger);
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+#admin-portal-shell .btn-gold,
+#admin-portal-shell .btn-outline,
+#admin-portal-shell .btn-danger {
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+#admin-portal-shell .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  padding: .65rem 1rem;
+  border: 1px solid rgba(192,57,43,.25);
+  background: #fff;
+  color: var(--admin-danger);
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease;
+}
+
+#admin-portal-shell .btn-danger:hover {
+  background: rgba(192,57,43,.06);
+  border-color: rgba(192,57,43,.45);
+}
+
+
+/* =========================================================
+   PARCEL DETAIL CONSOLE
+========================================================= */
+
+#admin-portal-shell .admin-detail-console {
+  width: 100%;
+  margin-top: 20px;
+}
+
+#admin-portal-shell .admin-detail-toolbar {
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+#admin-portal-shell .admin-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#admin-portal-shell .admin-detail-heading {
+  margin-bottom: 20px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(13,27,42,.04);
+}
+
+#admin-portal-shell .admin-detail-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--admin-gold-dark);
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+#admin-portal-shell #admin-parcel-detail-tracking {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+#admin-portal-shell #admin-parcel-detail-reference {
+  margin: 5px 0 0;
+  color: var(--admin-muted);
+  font-size: .8rem;
+}
+
+#admin-portal-shell .admin-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, .9fr) minmax(380px, 1.1fr);
+  gap: 20px;
+}
+
+#admin-portal-shell .admin-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 4px 20px 20px;
+}
+
+#admin-portal-shell .admin-info-item {
+  min-width: 0;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+#admin-portal-shell .admin-info-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--admin-muted);
+  font-size: .66rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+#admin-portal-shell .admin-info-value {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--admin-text);
+  font-size: .8rem;
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   ADMIN TIMELINE
+========================================================= */
+
+#admin-portal-shell .admin-detail-timeline {
+  position: relative;
+  padding: 20px 24px 22px 48px;
+}
+
+#admin-portal-shell .admin-timeline-item {
+  position: relative;
+  padding: 0 0 22px 18px;
+}
+
+#admin-portal-shell .admin-timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+#admin-portal-shell .admin-timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 7px;
+  bottom: -1px;
+  width: 1px;
+  background: var(--admin-border);
+}
+
+#admin-portal-shell .admin-timeline-item:last-child::before {
+  display: none;
+}
+
+#admin-portal-shell .admin-timeline-dot {
+  position: absolute;
+  left: -6px;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--admin-surface);
+  border: 3px solid var(--admin-gold);
+  box-shadow: 0 0 0 3px rgba(212,175,55,.10);
+}
+
+#admin-portal-shell .admin-timeline-status {
+  color: var(--admin-text);
+  font-size: .82rem;
+  font-weight: 750;
+}
+
+#admin-portal-shell .admin-timeline-location {
+  margin-top: 3px;
+  color: var(--admin-muted);
+  font-size: .74rem;
+}
+
+#admin-portal-shell .admin-timeline-description {
+  margin-top: 4px;
+  color: var(--admin-text);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+
+#admin-portal-shell .admin-timeline-time {
+  margin-top: 5px;
+  color: var(--admin-muted);
+  font-size: .67rem;
+}
+
+
+/* =========================================================
+   CUSTOMER MESSAGES
+========================================================= */
+
+#admin-portal-shell .admin-messages-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, .85fr) minmax(420px, 1.15fr);
+  gap: 18px;
+  align-items: start;
+}
+
+#admin-portal-shell .admin-message-list-card,
+#admin-portal-shell .admin-message-detail-card {
+  min-width: 0;
+}
+
+#admin-portal-shell .admin-messages-list {
+  max-height: 650px;
+  overflow-y: auto;
+}
+
+#admin-portal-shell .admin-message-item {
+  position: relative;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  cursor: pointer;
+  transition: background .16s ease;
+}
+
+#admin-portal-shell .admin-message-item:last-child {
+  border-bottom: 0;
+}
+
+#admin-portal-shell .admin-message-item:hover {
+  background: #fbfcfd;
+}
+
+#admin-portal-shell .admin-message-item.active {
+  background: #fffdf6;
+  box-shadow: inset 3px 0 0 var(--admin-gold);
+}
+
+#admin-portal-shell .admin-message-item.unread {
+  background: #fcfaf1;
+}
+
+#admin-portal-shell .admin-message-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#admin-portal-shell .admin-message-sender {
+  min-width: 0;
+  color: var(--admin-text);
+  font-size: .8rem;
+  font-weight: 750;
+}
+
+#admin-portal-shell .admin-message-date {
+  flex: 0 0 auto;
+  color: var(--admin-muted);
+  font-size: .66rem;
+}
+
+#admin-portal-shell .admin-message-subject {
+  margin-top: 4px;
+  color: var(--admin-text);
+  font-size: .76rem;
+  font-weight: 650;
+}
+
+#admin-portal-shell .admin-message-preview {
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--admin-muted);
+  font-size: .7rem;
+  line-height: 1.5;
+}
+
+#admin-portal-shell .admin-message-detail-card {
+  min-height: 420px;
+}
+
+#admin-portal-shell .admin-message-detail-content {
+  padding: 22px;
+}
+
+#admin-portal-shell .admin-message-detail-header {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+#admin-portal-shell .admin-message-detail-header h3 {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 1.1rem;
+}
+
+#admin-portal-shell .admin-message-customer {
+  margin-top: 8px;
+  color: var(--admin-muted);
+  font-size: .76rem;
+  line-height: 1.55;
+}
+
+#admin-portal-shell .admin-message-body {
+  padding: 16px;
+  border: 1px solid var(--admin-border);
+  border-radius: 9px;
+  background: var(--admin-surface-soft);
+  color: var(--admin-text);
+  font-size: .82rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#admin-portal-shell .admin-message-response {
+  margin-top: 18px;
+}
+
+#admin-portal-shell .admin-message-response label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--admin-text);
+  font-size: .76rem;
+  font-weight: 750;
+}
+
+#admin-portal-shell .admin-message-response textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: var(--admin-text);
+  padding: 11px 12px;
+  font: inherit;
+  font-size: .8rem;
+  outline: none;
+}
+
+#admin-portal-shell .admin-message-response textarea:focus {
+  border-color: var(--admin-gold);
+  box-shadow: 0 0 0 3px rgba(212,175,55,.10);
+}
+
+#admin-portal-shell .admin-message-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   EMPTY / LOADING / ERROR STATES
+========================================================= */
+
+#admin-portal-shell .admin-empty-state {
+  min-height: 190px;
+  padding: 35px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#admin-portal-shell .admin-empty-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--admin-surface-soft);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-muted);
+  font-size: 1.1rem;
+}
+
+#admin-portal-shell .admin-empty-state h3 {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: .95rem;
+}
+
+#admin-portal-shell .admin-empty-state p {
+  max-width: 560px;
+  margin: 7px auto 0;
+  color: var(--admin-muted);
+  font-size: .75rem;
+  line-height: 1.55;
+}
+
+#admin-portal-shell .admin-inline-error {
+  margin: 14px 20px;
+  padding: 10px 12px;
+  border: 1px solid rgba(192,57,43,.2);
+  border-radius: 8px;
+  background: rgba(192,57,43,.06);
+  color: var(--admin-danger);
+  font-size: .74rem;
+}
+
+
+/* =========================================================
+   FOCUS ACCESSIBILITY
+========================================================= */
+
+#admin-portal-shell button:focus-visible,
+#admin-portal-shell a:focus-visible,
+#admin-portal-shell input:focus-visible,
+#admin-portal-shell textarea:focus-visible,
+#admin-portal-shell select:focus-visible {
+  outline: 3px solid rgba(212,175,55,.32);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   TABLET / IPAD
+========================================================= */
+
+@media (max-width: 1180px) {
+  #admin-portal-shell .admin-kpi-grid,
+  #admin-portal-shell .admin-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #admin-portal-shell .admin-detail-grid,
+  #admin-portal-shell .admin-messages-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  #admin-portal-shell .admin-sidebar {
+    width: 236px;
+    transform: translateX(-100%);
+  }
+
+  #admin-portal-shell .admin-sidebar.admin-sidebar-open {
+    transform: translateX(0);
+  }
+
+  #admin-portal-shell .admin-portal-main {
+    margin-left: 0;
+  }
+
+  #admin-portal-shell .admin-mobile-menu {
+    display: block;
+  }
+
+  #admin-portal-shell .admin-portal-header {
+    padding: 0 22px;
+  }
+
+  #admin-portal-shell .admin-portal-main {
+    padding: 24px;
+  }
+}
+
+
+/* =========================================================
+   SMALL TABLET / LARGE PHONE
+========================================================= */
+
+@media (max-width: 768px) {
+  #admin-portal-shell .admin-portal-header {
+    min-height: 68px;
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  #admin-portal-shell .admin-header-actions {
+    gap: 5px;
+  }
+
+  #admin-portal-shell .admin-profile-copy,
+  #admin-portal-shell .admin-profile-chevron,
+  #admin-portal-shell .admin-header-logout {
+    display: none;
+  }
+
+  #admin-portal-shell #admin-page-title {
+    font-size: 1.15rem;
+  }
+
+  #admin-portal-shell .admin-page-eyebrow {
+    font-size: .57rem;
+  }
+
+  #admin-portal-shell .admin-portal-main {
+    min-height: calc(100vh - 68px);
+    padding: 18px 14px 28px;
+  }
+
+  #admin-portal-shell .admin-panel-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 16px;
+  }
+
+  #admin-portal-shell .admin-panel-toolbar .btn-gold {
+    width: 100%;
+  }
+
+  #admin-portal-shell .admin-kpi-grid,
+  #admin-portal-shell .admin-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  #admin-portal-shell .admin-kpi-card {
+    padding: 15px;
+  }
+
+  #admin-portal-shell .admin-kpi-card strong,
+  #admin-portal-shell .admin-kpi-value {
+    font-size: 1.45rem;
+  }
+
+  #admin-portal-shell .admin-detail-heading {
+    padding: 18px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #admin-portal-shell .admin-detail-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #admin-portal-shell .admin-detail-actions {
+    width: 100%;
+  }
+
+  #admin-portal-shell .admin-detail-actions > button {
+    flex: 1 1 auto;
+  }
+
+  #admin-portal-shell .admin-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #admin-portal-shell .admin-messages-layout {
+    gap: 12px;
+  }
+
+  #admin-portal-shell .admin-messages-list {
+    max-height: 430px;
+  }
+}
+
+
+/* =========================================================
+   PHONE
+========================================================= */
+
+@media (max-width: 480px) {
+  #admin-portal-shell .admin-sidebar {
+    width: min(86vw, 300px);
+  }
+
+  #admin-portal-shell .admin-header-icon-button,
+  #admin-portal-shell .admin-mobile-menu {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  #admin-portal-shell .admin-header-left {
+    gap: 9px;
+  }
+
+  #admin-portal-shell .admin-avatar {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  #admin-portal-shell .admin-kpi-grid,
+  #admin-portal-shell .admin-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #admin-portal-shell .admin-content-card {
+    border-radius: 10px;
+  }
+
+  #admin-portal-shell .admin-card-heading,
+  #admin-portal-shell .admin-list-toolbar {
+    padding: 14px;
+  }
+
+  #admin-portal-shell .admin-message-detail-content {
+    padding: 15px;
+  }
+
+  #admin-portal-shell .admin-detail-timeline {
+    padding-left: 38px;
+    padding-right: 16px;
+  }
+
+  #admin-portal-shell .admin-detail-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #admin-portal-shell .admin-detail-actions > button {
+    width: 100%;
+  }
+
+  #admin-portal-shell .admin-detail-actions > button:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 360px) {
+  #admin-portal-shell .admin-kpi-grid,
+  #admin-portal-shell .admin-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #admin-portal-shell .admin-page-eyebrow {
+    display: none;
+  }
+
+  #admin-portal-shell .admin-panel-toolbar h2 {
+    font-size: 1.2rem;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  #admin-portal-shell *,
+  #admin-portal-shell *::before,
+  #admin-portal-shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+
+/* =========================================================
+   ADMIN USER MODALS — Create / Edit / Role / Password
+   Self-contained styles so the modals look correct
+========================================================= */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  z-index: 3000;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-overlay[style*="display: flex"],
+.modal-overlay[style*="display:flex"],
+.modal-overlay.active {
+  display: flex !important;
+}
+
+.modal-card {
+  background: #ffffff;
+  color: #17202a;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 14px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  animation: modalIn 0.22s ease-out;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem 0.9rem;
+  border-bottom: 1px solid #e8ecf0;
+}
+
+.modal-header h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-header p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.modal-close:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.modal-card form,
+.modal-card > form {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.01em;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #0f172a;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.18);
+  background: #ffffff;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8ecf0;
+}
+
+.admin-inline-message {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+/* Make buttons look good inside the light modals */
+.modal-card .btn-gold {
+  background: #d4af37;
+  color: #111;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-card .btn-gold:hover {
+  background: #c9a227;
+}
+
+.modal-card .btn-outline {
+  background: transparent;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-card .btn-outline:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
