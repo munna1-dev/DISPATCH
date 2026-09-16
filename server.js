@@ -3381,77 +3381,56 @@ app.get("*", (req, res) => {
 });
 
 // ============================================================
-// START SERVER
+// SERVER STARTUP / VERCEL EXPORT
 // ============================================================
 
-async function startServer() {
+async function testDatabaseConnectionSafe() {
   try {
     await testDatabaseConnection();
-
-    const server = app.listen(
-      PORT,
-      () => {
-        console.log(
-          `US COURIER Platform running on Port ${PORT}`
-        );
-
-        console.log(
-          `Environment: ${NODE_ENV}`
-        );
-
-        console.log(
-          "Database: Supabase PostgreSQL"
-        );
-
-        console.log(
-          "Live URL: https://uscourier.app"
-        );
-      }
-    );
-
-    const shutdown = async (signal) => {
-      console.log(
-        `[SERVER] ${signal} received. Shutting down...`
-      );
-
-      server.close(async () => {
-        try {
-          await pool.end();
-
-          console.log(
-            "[SERVER] Shutdown complete."
-          );
-
-          process.exit(0);
-        } catch (error) {
-          console.error(
-            "[SERVER] Shutdown error:",
-            error.message
-          );
-
-          process.exit(1);
-        }
-      });
-    };
-
-    process.on(
-      "SIGINT",
-      () => shutdown("SIGINT")
-    );
-
-    process.on(
-      "SIGTERM",
-      () => shutdown("SIGTERM")
-    );
+    return true;
   } catch (error) {
-    console.error(
-      "[DATABASE] Startup connection failed:"
-    );
-
-    console.error(error.message);
-
-    process.exit(1);
+    console.error("[DATABASE] Connection failed:", error.message);
+    return false;
   }
 }
 
-startServer();
+async function startServer() {
+  const connected = await testDatabaseConnectionSafe();
+
+  if (!connected) {
+    process.exit(1);
+  }
+
+  const server = app.listen(PORT, () => {
+    console.log(`US COURIER Platform running on Port ${PORT}`);
+    console.log(`Environment: ${NODE_ENV}`);
+    console.log("Database: Supabase PostgreSQL");
+    console.log("Live URL: https://uscourier.app");
+  });
+
+  const shutdown = async (signal) => {
+    console.log(`[SERVER] ${signal} received. Shutting down...`);
+
+    server.close(async () => {
+      try {
+        await pool.end();
+        console.log("[SERVER] Shutdown complete.");
+        process.exit(0);
+      } catch (error) {
+        console.error("[SERVER] Shutdown error:", error.message);
+        process.exit(1);
+      }
+    });
+  };
+
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+}
+
+// Local Node.js execution only.
+// Vercel imports the Express app instead of calling app.listen().
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
