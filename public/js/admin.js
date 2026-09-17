@@ -1341,15 +1341,7 @@ async function handleTrackingEventEditSubmit(e) {
     /*
      * Refresh the shipment table as well.
      */
-    if (
-      typeof loadShipments === 'function'
-    ) {
-      await loadShipments();
-    } else if (
-      typeof loadAdminShipments === 'function'
-    ) {
-      await loadAdminShipments();
-    }
+    await loadAdminDashboard();
 
   } catch (error) {
 
@@ -4555,43 +4547,6 @@ function handleAdminSessionExpired() {
 /* =========================================================
    HTML SAFETY
 ========================================================= */
-
-function escapeAdminHtml(
-  value
-) {
-
-  if (
-    value === null ||
-    value === undefined
-  ) {
-
-    return '';
-  }
-
-
-  return String(value)
-    .replace(
-      /&/g,
-      '&amp;'
-    )
-    .replace(
-      /</g,
-      '&lt;'
-    )
-    .replace(
-      />/g,
-      '&gt;'
-    )
-    .replace(
-      /"/g,
-      '&quot;'
-    )
-    .replace(
-      /'/g,
-      '&#039;'
-    );
-}
-
 
 /* =========================================================
    JAVASCRIPT STRING SAFETY

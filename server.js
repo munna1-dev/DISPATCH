@@ -461,19 +461,12 @@ app.get(
           status,
           service_type,
           priority,
-          sender_name,
-          sender_country,
-          recipient_name,
-          recipient_country,
           origin,
           current_location,
           destination,
           estimated_delivery,
           package_count,
-          weight AS weight_kg,
-          currency,
-          declared_value,
-          description
+          weight AS weight_kg
         FROM shipments
         WHERE tracking_number = $1
         LIMIT 1

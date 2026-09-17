@@ -1058,6 +1058,107 @@ function escapeTrackingHtml(value) {
 
 
 // ============================================================
+// QR CODE SCANNER
+// ============================================================
+
+let qrScanner = null;
+
+function openQrScannerModal(inputId) {
+  const modal = document.getElementById("modal-qr-scanner");
+  const reader = document.getElementById("qr-reader");
+
+  if (!modal || !reader) {
+    return;
+  }
+
+  if (typeof Html5Qrcode === "undefined") {
+    console.error("QR scanner library is not loaded.");
+    return;
+  }
+
+  modal.style.display = "flex";
+  reader.innerHTML = "";
+
+  qrScanner = new Html5Qrcode("qr-reader");
+
+  qrScanner.start(
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: { width: 250, height: 250 }
+    },
+    async (decodedText) => {
+      const trackingNumber = String(decodedText || "").trim();
+
+      if (!trackingNumber) {
+        return;
+      }
+
+      try {
+        await qrScanner.stop();
+      } catch (error) {
+        console.warn("QR scanner stop warning:", error);
+      }
+
+      qrScanner.clear();
+      qrScanner = null;
+
+      closeQrScannerModal();
+
+      const input =
+        document.getElementById(inputId) ||
+        document.getElementById("page-tracking-input") ||
+        document.getElementById("home-tracking-input");
+
+      if (!input) {
+        return;
+      }
+
+      input.value = trackingNumber;
+
+      await handleTrackSubmit(
+        null,
+        input.id
+      );
+    },
+    () => {
+      // Ignore normal QR scanning misses while the camera is running.
+    }
+  ).catch((error) => {
+    console.error("QR scanner could not start:", error);
+    closeQrScannerModal();
+  });
+}
+
+function closeQrScannerModal() {
+  const modal = document.getElementById("modal-qr-scanner");
+  const reader = document.getElementById("qr-reader");
+
+  if (qrScanner) {
+    qrScanner.stop()
+      .catch(() => {})
+      .finally(() => {
+        try {
+          qrScanner.clear();
+        } catch {}
+
+        qrScanner = null;
+
+        if (reader) {
+          reader.innerHTML = "";
+        }
+      });
+  } else if (reader) {
+    reader.innerHTML = "";
+  }
+
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+
+// ============================================================
 // TRACK SHIPMENT
 // ============================================================
 
