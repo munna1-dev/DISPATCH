@@ -214,60 +214,7 @@ async function loadAdminDashboard() {
 
     const counts =
       stats.counts || {};
-
-
-    const totalEl =
-      document.getElementById(
-        'kpi-total'
-      );
-
-    const transitEl =
-      document.getElementById(
-        'kpi-transit'
-      );
-
-    const deliveredEl =
-      document.getElementById(
-        'kpi-delivered'
-      );
-
-    const messagesEl =
-      document.getElementById(
-        'kpi-messages'
-      );
-
-
-    if (totalEl) {
-
-      totalEl.innerText =
-        counts.total ?? 0;
-    }
-
-
-    if (transitEl) {
-
-      transitEl.innerText =
-        counts.in_transit ?? 0;
-    }
-
-
-    if (deliveredEl) {
-
-      deliveredEl.innerText =
-        counts.delivered ?? 0;
-    }
-
-
-    if (messagesEl) {
-
-      messagesEl.innerText =
-        stats.unread_messages ??
-        counts.messages ??
-        0;
-    }
-
-
-    /* -----------------------------------------------------
+/* -----------------------------------------------------
        LOAD CUSTOMER MESSAGES
     ----------------------------------------------------- */
 
@@ -796,6 +743,19 @@ async function loadAdminDashboard() {
                       padding:0.2rem 0.6rem;
                       font-size:0.75rem;
                     "
+                    data-shipment-view-id="${shipmentId}"
+                  >
+                    <i class="icon icon-eye"></i>
+                    View Parcel
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-outline"
+                    style="
+                      padding:0.2rem 0.6rem;
+                      font-size:0.75rem;
+                    "
                     data-shipment-track-id="${shipmentId}"
                   >
                     <i class="icon icon-map"></i>
@@ -824,6 +784,11 @@ async function loadAdminDashboard() {
                 '[data-shipment-update-id]'
               );
 
+            const viewButton =
+              tr.querySelector(
+                '[data-shipment-view-id]'
+              );
+
             const trackingButton =
               tr.querySelector(
                 '[data-shipment-track-id]'
@@ -840,6 +805,15 @@ async function loadAdminDashboard() {
               updateButton.addEventListener(
                 'click',
                 () => openUpdateShipmentModal(s)
+              );
+            }
+
+
+            if (viewButton) {
+
+              viewButton.addEventListener(
+                'click',
+                () => openViewShipmentModal(s)
               );
             }
 
@@ -868,6 +842,18 @@ async function loadAdminDashboard() {
           }
         );
       }
+    }
+
+    /* -----------------------------------------------------
+       RENDER COMMAND CENTER
+       Uses the real dashboard counts returned by PostgreSQL.
+    ----------------------------------------------------- */
+
+    if (typeof renderAdminCommandCenter === 'function') {
+      renderAdminCommandCenter(
+        shipments,
+        counts
+      );
     }
 
   } catch (err) {
@@ -2242,6 +2228,164 @@ async function handleCreateShipmentSubmit(e) {
       'Failed to connect to backend server.'
     );
   }
+}
+
+
+/* =========================================================
+   VIEW SHIPMENT / PARCEL DETAILS
+========================================================= */
+
+function openViewShipmentModal(shipment) {
+
+  if (!shipment || !shipment.id) {
+
+    console.error(
+      'Invalid shipment supplied to view form.'
+    );
+
+    alert(
+      'Unable to open parcel details.'
+    );
+
+    return;
+  }
+
+  const modal =
+    document.getElementById(
+      'modal-view-shipment'
+    );
+
+  if (!modal) {
+
+    console.error(
+      'modal-view-shipment is missing.'
+    );
+
+    alert(
+      'Parcel details modal is missing.'
+    );
+
+    return;
+  }
+
+  const setValue = (
+    id,
+    value
+  ) => {
+
+    const el =
+      document.getElementById(id);
+
+    if (!el) {
+      return;
+    }
+
+    el.textContent =
+      value === null ||
+      value === undefined ||
+      value === ''
+        ? '—'
+        : String(value);
+  };
+
+
+  setValue(
+    'vs-tracking-number',
+    shipment.tracking_number
+  );
+
+  setValue(
+    'vs-reference',
+    shipment.reference
+  );
+
+  setValue(
+    'vs-status',
+    shipment.status
+  );
+
+  setValue(
+    'vs-origin',
+    shipment.origin
+  );
+
+  setValue(
+    'vs-destination',
+    shipment.destination
+  );
+
+  setValue(
+    'vs-current-location',
+    shipment.current_location
+  );
+
+  setValue(
+    'vs-service-type',
+    shipment.service_type
+  );
+
+  setValue(
+    'vs-priority',
+    shipment.priority
+  );
+
+  setValue(
+    'vs-sender-name',
+    shipment.sender_name
+  );
+
+  setValue(
+    'vs-sender-country',
+    shipment.sender_country
+  );
+
+  setValue(
+    'vs-recipient-name',
+    shipment.recipient_name
+  );
+
+  setValue(
+    'vs-recipient-country',
+    shipment.recipient_country
+  );
+
+  setValue(
+    'vs-package-count',
+    shipment.package_count
+  );
+
+  setValue(
+    'vs-weight',
+    shipment.weight
+  );
+
+  setValue(
+    'vs-currency',
+    shipment.currency
+  );
+
+  setValue(
+    'vs-declared-value',
+    shipment.declared_value
+  );
+
+  setValue(
+    'vs-eta',
+    shipment.estimated_delivery
+      ? String(
+          shipment.estimated_delivery
+        ).slice(0, 10)
+      : ''
+  );
+
+  setValue(
+    'vs-description',
+    shipment.description
+  );
+
+  showModal(
+    'modal-view-shipment'
+  );
 }
 
 
@@ -4641,4 +4785,682 @@ if (
 } else {
 
   bindCreateParcelButton();
+}
+
+
+/* =========================================================
+   ADMIN COMMAND CENTER
+   ========================================================= */
+
+function getAdminShipmentStatus(shipment) {
+    return String(
+        shipment?.status ||
+        shipment?.shipment_status ||
+        shipment?.current_status ||
+        ''
+    ).trim();
+}
+
+function getAdminShipmentDate(shipment) {
+    return (
+        shipment?.created_at ||
+        shipment?.updated_at ||
+        shipment?.createdAt ||
+        shipment?.updatedAt ||
+        shipment?.estimated_delivery ||
+        ''
+    );
+}
+
+function formatAdminDashboardDate(value) {
+    if (!value) return '—';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+
+    return date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+function normalizeAdminStatus(status) {
+    return String(status || '')
+        .toLowerCase()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function isAdminDelivered(status) {
+    const value = normalizeAdminStatus(status);
+    return value === 'delivered' || value === 'complete' || value === 'completed';
+}
+
+function isAdminTransit(status) {
+    const value = normalizeAdminStatus(status);
+    return [
+        'in transit',
+        'out for delivery',
+        'dispatched',
+        'shipped',
+        'moving',
+        'on the way'
+    ].includes(value);
+}
+
+function isAdminPending(status) {
+    const value = normalizeAdminStatus(status);
+    return [
+        'pending',
+        'processing',
+        'created',
+        'awaiting pickup',
+        'awaiting collection',
+        'ready for pickup'
+    ].includes(value);
+}
+
+function isAdminException(status) {
+    const value = normalizeAdminStatus(status);
+    return [
+        'exception',
+        'failed',
+        'cancelled',
+        'canceled',
+        'returned',
+        'held',
+        'delayed',
+        'lost'
+    ].some(term => value === term || value.includes(term));
+}
+
+function setAdminKpi(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = Number(value || 0).toLocaleString();
+}
+
+function renderAdminCommandCenter(shipments, dashboardCounts = {}) {
+    const shipmentList = Array.isArray(shipments) ? shipments : [];
+
+    const total = shipmentList.length;
+    const delivered = shipmentList.filter(
+        s => isAdminDelivered(getAdminShipmentStatus(s))
+    ).length;
+
+    const transit = shipmentList.filter(
+        s => isAdminTransit(getAdminShipmentStatus(s))
+    ).length;
+
+    const unreadMessages = Number(
+        dashboardCounts.unread_messages ??
+        dashboardCounts.unreadMessages ??
+        0
+    );
+
+    setAdminKpi('admin-kpi-total', total);
+    setAdminKpi('admin-kpi-transit', transit);
+    setAdminKpi('admin-kpi-delivered', delivered);
+    setAdminKpi('admin-kpi-messages', unreadMessages);
+
+    updateAdminSidebarMessageCount(unreadMessages);
+
+    renderAdminStatusDistribution(shipmentList);
+    renderAdminOperationalAlerts(shipmentList);
+    renderAdminRecentShipments(shipmentList);
+
+    const refresh = document.getElementById('admin-dashboard-last-refresh');
+    if (refresh) {
+        refresh.textContent = `Updated ${new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`;
+    }
+}
+
+function renderAdminStatusDistribution(shipments) {
+    const container = document.getElementById('admin-status-distribution');
+    if (!container) return;
+
+    if (!shipments.length) {
+        container.innerHTML = '<div class="admin-status-empty">No shipment data available.</div>';
+        return;
+    }
+
+    const counts = new Map();
+
+    shipments.forEach(shipment => {
+        const raw = getAdminShipmentStatus(shipment);
+        const label = raw || 'Unknown';
+        const key = normalizeAdminStatus(label) || 'unknown';
+
+        if (!counts.has(key)) {
+            counts.set(key, {
+                label,
+                count: 0
+            });
+        }
+
+        counts.get(key).count += 1;
+    });
+
+    const rows = Array.from(counts.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8);
+
+    const max = Math.max(...rows.map(row => row.count), 1);
+
+    container.innerHTML = rows.map(row => {
+        const percentage = Math.max(2, Math.round((row.count / max) * 100));
+
+        return `
+            <div class="admin-status-row">
+                <span class="admin-status-name">${escapeHtml(row.label)}</span>
+                <div class="admin-status-track">
+                    <div class="admin-status-fill" style="width:${percentage}%"></div>
+                </div>
+                <span class="admin-status-value">${row.count}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderAdminOperationalAlerts(shipments) {
+    const container = document.getElementById('admin-operational-alerts');
+    if (!container) return;
+
+    const alerts = [];
+
+    const exceptions = shipments.filter(s =>
+        isAdminException(getAdminShipmentStatus(s))
+    );
+
+    if (exceptions.length) {
+        alerts.push({
+            type: 'danger',
+            title: `${exceptions.length} shipment${exceptions.length === 1 ? '' : 's'} need attention`,
+            detail: 'Review exception, delay, failed, held, or returned shipments.'
+        });
+    }
+
+    const missingDestination = shipments.filter(s =>
+        !String(s?.destination || '').trim()
+    );
+
+    if (missingDestination.length) {
+        alerts.push({
+            type: 'warning',
+            title: `${missingDestination.length} shipment${missingDestination.length === 1 ? '' : 's'} missing destination`,
+            detail: 'Destination information is incomplete.'
+        });
+    }
+
+    const missingRecipient = shipments.filter(s =>
+        !String(s?.recipient_name || s?.recipientName || '').trim()
+    );
+
+    if (missingRecipient.length) {
+        alerts.push({
+            type: 'warning',
+            title: `${missingRecipient.length} shipment${missingRecipient.length === 1 ? '' : 's'} missing recipient`,
+            detail: 'Recipient information is incomplete.'
+        });
+    }
+
+    if (!alerts.length) {
+        alerts.push({
+            type: 'info',
+            title: 'No operational alerts',
+            detail: 'No issues were detected from the available shipment fields.'
+        });
+    }
+
+    container.innerHTML = alerts.slice(0, 5).map(alert => `
+        <div class="admin-alert-item alert-${alert.type}">
+            <span class="admin-alert-dot"></span>
+            <div class="admin-alert-body">
+                <strong>${escapeHtml(alert.title)}</strong>
+                <span>${escapeHtml(alert.detail)}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderAdminRecentShipments(shipments) {
+    const container = document.getElementById('admin-recent-shipments');
+    const countElement = document.getElementById('admin-recent-count');
+
+    if (!container) return;
+
+    const recent = [...shipments]
+        .sort((a, b) => {
+            const aDate = new Date(getAdminShipmentDate(a)).getTime() || 0;
+            const bDate = new Date(getAdminShipmentDate(b)).getTime() || 0;
+            return bDate - aDate;
+        })
+        .slice(0, 6);
+
+    if (countElement) countElement.textContent = String(recent.length);
+
+    if (!recent.length) {
+        container.innerHTML = '<div class="admin-status-empty">No recent shipments.</div>';
+        return;
+    }
+
+    container.innerHTML = recent.map(shipment => {
+        const tracking =
+            shipment?.tracking_number ||
+            shipment?.trackingNumber ||
+            shipment?.reference ||
+            'Unassigned';
+
+        const recipient =
+            shipment?.recipient_name ||
+            shipment?.recipientName ||
+            'Recipient unavailable';
+
+        const origin = shipment?.origin || 'Origin';
+        const destination = shipment?.destination || 'Destination';
+        const status = getAdminShipmentStatus(shipment) || 'Unknown';
+
+        return `
+            <div class="admin-recent-row">
+                <div class="admin-recent-main">
+                    <span class="admin-recent-tracking">${escapeHtml(tracking)}</span>
+                    <span class="admin-recent-route">
+                        ${escapeHtml(origin)} → ${escapeHtml(destination)}
+                    </span>
+                    <span class="admin-recent-status">${escapeHtml(status)}</span>
+                </div>
+
+                <div class="admin-recent-recipient">
+                    ${escapeHtml(recipient)}
+                </div>
+
+                <div class="admin-recent-date">
+                    ${escapeHtml(formatAdminDashboardDate(getAdminShipmentDate(shipment)))}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function setupAdminCommandCenter() {
+    const refreshButton = document.getElementById('admin-dashboard-refresh');
+
+    if (refreshButton && !refreshButton.dataset.bound) {
+        refreshButton.dataset.bound = 'true';
+
+        refreshButton.addEventListener('click', async () => {
+            refreshButton.disabled = true;
+            refreshButton.textContent = 'Refreshing…';
+
+            try {
+                if (typeof loadAdminDashboard === 'function') {
+                    await loadAdminDashboard();
+                }
+            } finally {
+                refreshButton.disabled = false;
+                refreshButton.textContent = '↻ Refresh';
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', setupAdminCommandCenter);
+
+
+
+/* =========================================================
+   DISPATCH ADMIN SIDEBAR CONTROLLER
+========================================================= */
+
+(function initDispatchAdminSidebar() {
+
+  if (window.__dispatchAdminSidebarInitialized) {
+    return;
+  }
+
+  window.__dispatchAdminSidebarInitialized = true;
+
+  const body = document.body;
+
+  const sidebarToggle =
+    document.getElementById('admin-sidebar-toggle');
+
+  const mobileMenu =
+    document.getElementById('admin-mobile-menu');
+
+  const backdrop =
+    document.getElementById('admin-sidebar-backdrop');
+
+  const exitButton =
+    document.getElementById('admin-sidebar-exit');
+
+  const navItems =
+    document.querySelectorAll('[data-admin-nav]');
+
+  function isMobile() {
+    return window.matchMedia('(max-width: 850px)').matches;
+  }
+
+  function closeMobileSidebar() {
+    body.classList.remove(
+      'admin-sidebar-mobile-open'
+    );
+  }
+
+  function openMobileSidebar() {
+    body.classList.add(
+      'admin-sidebar-mobile-open'
+    );
+  }
+
+  function toggleSidebar() {
+
+    if (isMobile()) {
+      if (
+        body.classList.contains(
+          'admin-sidebar-mobile-open'
+        )
+      ) {
+        closeMobileSidebar();
+      } else {
+        openMobileSidebar();
+      }
+
+      return;
+    }
+
+    body.classList.toggle(
+      'admin-sidebar-collapsed'
+    );
+
+    const collapsed =
+      body.classList.contains(
+        'admin-sidebar-collapsed'
+      );
+
+    localStorage.setItem(
+      'dispatch_admin_sidebar_collapsed',
+      collapsed ? '1' : '0'
+    );
+
+    if (sidebarToggle) {
+      sidebarToggle.textContent =
+        collapsed ? '›' : '‹';
+
+      sidebarToggle.setAttribute(
+        'aria-label',
+        collapsed
+          ? 'Expand sidebar'
+          : 'Collapse sidebar'
+      );
+    }
+  }
+
+  function restoreSidebarState() {
+
+    if (isMobile()) {
+      body.classList.remove(
+        'admin-sidebar-collapsed'
+      );
+      return;
+    }
+
+    const saved =
+      localStorage.getItem(
+        'dispatch_admin_sidebar_collapsed'
+      );
+
+    if (saved === '1') {
+      body.classList.add(
+        'admin-sidebar-collapsed'
+      );
+
+      if (sidebarToggle) {
+        sidebarToggle.textContent = '›';
+      }
+    }
+  }
+
+  function setActiveNav(name) {
+
+    navItems.forEach(function(item) {
+
+      item.classList.toggle(
+        'active',
+        item.dataset.adminNav === name
+      );
+
+    });
+
+  }
+
+  function scrollToDashboardArea(selector) {
+
+    const target =
+      document.querySelector(selector);
+
+    if (!target) {
+      return;
+    }
+
+    closeMobileSidebar();
+
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+
+  function handleNav(name) {
+
+    setActiveNav(name);
+
+    if (name === 'dashboard') {
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+
+      return;
+    }
+
+    /*
+     * These sections already exist elsewhere in the
+     * application. We use existing controls/functions
+     * where possible instead of creating duplicate views.
+     */
+
+    if (name === 'shipments') {
+
+      const target =
+        document.getElementById(
+          'admin-shipments-table'
+        ) ||
+        document.querySelector(
+          '[data-admin-shipments]'
+        );
+
+      if (target) {
+        scrollToDashboardArea(
+          '#admin-shipments-table'
+        );
+      }
+
+      return;
+    }
+
+    if (name === 'tracking') {
+
+      const target =
+        document.getElementById(
+          'admin-tracking'
+        );
+
+      if (target) {
+        scrollToDashboardArea(
+          '#admin-tracking'
+        );
+      }
+
+      return;
+    }
+
+    if (name === 'messages') {
+
+      const target =
+        document.getElementById(
+          'admin-messages'
+        );
+
+      if (target) {
+        scrollToDashboardArea(
+          '#admin-messages'
+        );
+      }
+
+      return;
+    }
+
+    if (name === 'settings') {
+
+      const target =
+        document.getElementById(
+          'view-admin-settings'
+        );
+
+      if (target) {
+        scrollToDashboardArea(
+          '#view-admin-settings'
+        );
+      }
+
+    }
+
+  }
+
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener(
+      'click',
+      toggleSidebar
+    );
+  }
+
+  if (mobileMenu) {
+    mobileMenu.addEventListener(
+      'click',
+      toggleSidebar
+    );
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener(
+      'click',
+      closeMobileSidebar
+    );
+  }
+
+  navItems.forEach(function(item) {
+
+    item.addEventListener(
+      'click',
+      function() {
+
+        handleNav(
+          item.dataset.adminNav
+        );
+
+      }
+    );
+
+  });
+
+  if (exitButton) {
+
+    exitButton.addEventListener(
+      'click',
+      function() {
+
+        /*
+         * Reuse existing application navigation
+         * rather than forcing a reload.
+         */
+
+        if (
+          typeof loadPublicHome ===
+          'function'
+        ) {
+          loadPublicHome();
+          return;
+        }
+
+        const home =
+          document.querySelector(
+            '[data-view="home"]'
+          );
+
+        if (home) {
+          home.click();
+          return;
+        }
+
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+
+      }
+    );
+
+  }
+
+  window.addEventListener(
+    'resize',
+    function() {
+
+      if (!isMobile()) {
+        closeMobileSidebar();
+        restoreSidebarState();
+      }
+
+    }
+  );
+
+  restoreSidebarState();
+
+})();
+
+/* =========================================================
+   SIDEBAR MESSAGE BADGE
+========================================================= */
+
+function updateAdminSidebarMessageCount(count) {
+
+  const badge =
+    document.getElementById(
+      'admin-sidebar-message-count'
+    );
+
+  if (!badge) {
+    return;
+  }
+
+  const value =
+    Number.isFinite(Number(count))
+      ? Number(count)
+      : 0;
+
+  badge.textContent =
+    value > 99
+      ? '99+'
+      : String(value);
+
+  badge.style.display =
+    value > 0
+      ? 'inline-flex'
+      : 'none';
 }

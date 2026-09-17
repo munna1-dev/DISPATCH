@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>US Courier | Global Logistics & Verified Tracking Portal</title>
   <meta name="description" content="Official US Courier portal for live parcel tracking, express freight delivery, and verified shipment waybill receipts.">
-  
+
   <!-- CSS -->
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/icons.css">
-  
+
   <!-- QR Libraries -->
   <!-- QRCode.js generates the public verification QR -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <!-- html5-qrcode provides camera-based QR scanning -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  
+
   <!-- Dynamic Schema.org JSON-LD structured data for Google Web Search -->
   <script id="schema-jsonld" type="application/ld+json">
   {
@@ -53,13 +53,13 @@
 
   <!-- Main Viewport -->
   <main id="app-viewport">
-    
+
     <!-- View: Home -->
     <section id="view-home">
       <div class="hero">
         <h1>Global Precision Freight & Instant Tracking</h1>
         <p>Real-time location telemetry, direct QR code scanning, and verified shipment custody across international supply chains.</p>
-        
+
         <div class="tracking-search-card">
           <form onsubmit="handleTrackSubmit(event, 'home-tracking-input')">
             <div class="search-input-group">
@@ -142,7 +142,7 @@
         <div class="card">
           <h2>Contact US Courier Support</h2>
           <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Send a direct dispatch message to our operations management desk.</p>
-          
+
           <div id="contact-alert" style="display: none; padding: 0.8rem; margin-bottom: 1rem; border-radius: 6px; font-weight: 600;"></div>
 
           <form onsubmit="handleContactSubmit(event)">
@@ -198,7 +198,7 @@
               <h3><span class="icon icon-map" style="color: var(--accent-gold);"></span> Operations Map & Live Telemetry</h3>
               <span id="trk-status-badge" class="badge badge-transit">In Transit</span>
             </div>
-            
+
             <div class="map-canvas-container">
               <canvas id="liveMapCanvas"></canvas>
             </div>
@@ -315,7 +315,6 @@
             </div>
           </div>
         </div>
-      </div>
     </section>
 
     <!-- View: Admin Login -->
@@ -340,7 +339,252 @@
     </section>
 
     <!-- View: Admin Operations Portal -->
-    <section id="view-admin-dashboard" style="display: none;">
+
+      <!-- =====================================================
+           ADMIN PORTAL SHELL
+      ====================================================== -->
+      <div id="admin-portal-shell" class="admin-portal-shell">
+
+        <aside id="admin-sidebar" class="admin-sidebar">
+
+          <div class="admin-sidebar-brand">
+            <a href="#" class="admin-sidebar-logo" data-admin-nav="dashboard">
+              <span class="admin-sidebar-logo-mark">D</span>
+              <span class="admin-sidebar-logo-text">
+                DISPATCH
+                <small>OPERATIONS</small>
+              </span>
+            </a>
+
+            <button
+              type="button"
+              id="admin-sidebar-toggle"
+              class="admin-sidebar-toggle"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              ‹
+            </button>
+          </div>
+
+          <div class="admin-sidebar-user">
+            <div class="admin-user-avatar">A</div>
+            <div class="admin-user-meta">
+              <strong>Administrator</strong>
+              <span>Operations Control</span>
+            </div>
+          </div>
+
+          <nav class="admin-sidebar-nav" aria-label="Admin navigation">
+
+            <div class="admin-nav-section">
+              <span class="admin-nav-section-label">WORKSPACE</span>
+
+              <button
+                type="button"
+                class="admin-nav-item active"
+                data-admin-nav="dashboard"
+              >
+                <span class="admin-nav-icon">⌂</span>
+                <span class="admin-nav-label">Command Center</span>
+              </button>
+
+              <button
+                type="button"
+                class="admin-nav-item"
+                data-admin-nav="shipments"
+              >
+                <span class="admin-nav-icon">▣</span>
+                <span class="admin-nav-label">Shipments</span>
+              </button>
+
+              <button
+                type="button"
+                class="admin-nav-item"
+                data-admin-nav="tracking"
+              >
+                <span class="admin-nav-icon">⌁</span>
+                <span class="admin-nav-label">Live Tracking</span>
+              </button>
+
+              <button
+                type="button"
+                class="admin-nav-item"
+                data-admin-nav="messages"
+              >
+                <span class="admin-nav-icon">✉</span>
+                <span class="admin-nav-label">
+                  Messages
+                  <span id="admin-sidebar-message-count" class="admin-nav-count">0</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="admin-nav-section">
+              <span class="admin-nav-section-label">MANAGEMENT</span>
+
+              <button
+                type="button"
+                class="admin-nav-item"
+                data-admin-nav="settings"
+              >
+                <span class="admin-nav-icon">⚙</span>
+                <span class="admin-nav-label">Settings</span>
+              </button>
+            </div>
+
+          </nav>
+
+          <div class="admin-sidebar-footer">
+
+            <div class="admin-system-status">
+              <span class="admin-status-dot"></span>
+              <span class="admin-status-text">
+                <strong>System Online</strong>
+                <small>Operations active</small>
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="admin-sidebar-exit"
+              id="admin-sidebar-exit"
+            >
+              <span>↪</span>
+              <span class="admin-nav-label">Exit Portal</span>
+            </button>
+
+          </div>
+
+        </aside>
+
+        <div
+          id="admin-sidebar-backdrop"
+          class="admin-sidebar-backdrop"
+        ></div>
+
+        <main class="admin-portal-main">
+
+          <div class="admin-mobile-header">
+            <button
+              type="button"
+              id="admin-mobile-menu"
+              class="admin-mobile-menu"
+              aria-label="Open navigation"
+            >
+              ☰
+            </button>
+
+            <div class="admin-mobile-title">
+              <strong>DISPATCH</strong>
+              <span>Operations</span>
+            </div>
+          </div>
+<section id="view-admin-dashboard" style="display: none;">
+        <div id="admin-command-center" class="admin-command-center">
+
+          <div class="admin-command-header">
+            <div>
+              <span class="admin-eyebrow">OPERATIONS</span>
+              <h2>Command Center</h2>
+              <p>Live shipment overview and operational activity.</p>
+            </div>
+
+            <div class="admin-command-meta">
+              <span id="admin-dashboard-last-refresh">Awaiting data</span>
+              <button type="button" class="btn btn-secondary" id="admin-dashboard-refresh">
+                ↻ Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="admin-kpi-grid">
+
+            <article class="admin-kpi-card">
+              <div class="admin-kpi-icon">▣</div>
+              <div class="admin-kpi-content">
+                <span class="admin-kpi-label">Total Shipments</span>
+                <strong id="admin-kpi-total">0</strong>
+                <small>All recorded shipments</small>
+              </div>
+            </article>
+
+            <article class="admin-kpi-card">
+              <div class="admin-kpi-icon">➜</div>
+              <div class="admin-kpi-content">
+                <span class="admin-kpi-label">In Transit</span>
+                <strong id="admin-kpi-transit">0</strong>
+                <small>Currently moving</small>
+              </div>
+            </article>
+
+            <article class="admin-kpi-card">
+              <div class="admin-kpi-icon">✓</div>
+              <div class="admin-kpi-content">
+                <span class="admin-kpi-label">Delivered</span>
+                <strong id="admin-kpi-delivered">0</strong>
+                <small>Completed shipments</small>
+              </div>
+            </article>
+
+            <article class="admin-kpi-card admin-kpi-message">
+              <div class="admin-kpi-icon">✉</div>
+              <div class="admin-kpi-content">
+                <span class="admin-kpi-label">Unread Messages</span>
+                <strong id="admin-kpi-messages">0</strong>
+                <small>Customer messages awaiting review</small>
+              </div>
+            </article>
+
+          </div>
+
+          <div class="admin-command-grid">
+
+            <section class="admin-command-panel">
+              <div class="admin-panel-heading">
+                <div>
+                  <span class="admin-panel-kicker">STATUS</span>
+                  <h3>Shipment Distribution</h3>
+                </div>
+              </div>
+
+              <div class="admin-status-bars" id="admin-status-distribution">
+                <div class="admin-status-empty">Loading shipment data…</div>
+              </div>
+            </section>
+
+            <section class="admin-command-panel">
+              <div class="admin-panel-heading">
+                <div>
+                  <span class="admin-panel-kicker">ATTENTION</span>
+                  <h3>Operational Alerts</h3>
+                </div>
+              </div>
+
+              <div id="admin-operational-alerts" class="admin-operational-alerts">
+                <div class="admin-status-empty">Checking alerts…</div>
+              </div>
+            </section>
+
+          </div>
+
+          <section class="admin-command-panel admin-activity-panel">
+            <div class="admin-panel-heading">
+              <div>
+                <span class="admin-panel-kicker">ACTIVITY</span>
+                <h3>Recent Shipments</h3>
+              </div>
+              <span id="admin-recent-count" class="admin-panel-count">0</span>
+            </div>
+
+            <div id="admin-recent-shipments" class="admin-recent-shipments">
+              <div class="admin-status-empty">Loading recent activity…</div>
+            </div>
+          </section>
+
+        </div>
+
+
       <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
           <h2>Logistics Operations Console</h2>
@@ -348,25 +592,6 @@
             <button type="button" id="open-create-shipment-btn" class="btn-gold"><span class="icon icon-plus"></span> New Parcel</button>
             <button type="button" onclick="openAdminSettings()" class="btn-outline" style="margin-left:0.5rem;"><span class="icon icon-settings"></span> Settings</button>
             <button onclick="handleAdminLogout()" class="btn-outline" style="margin-left:0.5rem;">Logout</button>
-          </div>
-        </div>
-
-        <div class="grid-4" style="margin-bottom: 1.5rem;">
-          <div class="card">
-            <span class="telemetry-label">TOTAL SHIPMENTS</span>
-            <h2 id="kpi-total">0</h2>
-          </div>
-          <div class="card">
-            <span class="telemetry-label">IN TRANSIT</span>
-            <h2 id="kpi-transit" style="color: var(--status-transit);">0</h2>
-          </div>
-          <div class="card">
-            <span class="telemetry-label">DELIVERED</span>
-            <h2 id="kpi-delivered" style="color: var(--status-delivered);">0</h2>
-          </div>
-          <div class="card">
-            <span class="telemetry-label">UNREAD MESSAGES</span>
-            <h2 id="kpi-messages" style="color: var(--accent-gold);">0</h2>
           </div>
         </div>
 
@@ -391,30 +616,133 @@
           </div>
         </div>
 
-        <!-- Admin Shipments Table -->
-        <div class="card">
-          <h3 style="margin-bottom: 1rem;"><span class="icon icon-boxes" style="color: var(--accent-gold);"></span> Active Waybills & Parcels</h3>
-          <div class="table-responsive">
-            <table>
+        <!-- Admin Parcel Details Workspace -->
+        <div class="card admin-parcel-workspace">
+
+          <div class="admin-parcel-workspace-header">
+            <div>
+              <div class="admin-section-eyebrow">
+                PARCEL OPERATIONS
+              </div>
+
+              <h3 class="admin-section-title">
+                <span class="icon icon-boxes"></span>
+                Parcel Details
+              </h3>
+
+              <p class="admin-section-description">
+                Search, filter and manage active courier shipments from one operational workspace.
+              </p>
+            </div>
+
+            <div class="admin-parcel-result-summary">
+              <span id="admin-shipment-result-count">0</span>
+              <span>shipments</span>
+            </div>
+          </div>
+
+          <div class="admin-parcel-toolbar">
+
+            <div class="admin-parcel-search">
+              <span class="icon icon-search"></span>
+
+              <input
+                type="search"
+                id="admin-shipment-search"
+                class="form-control"
+                placeholder="Search tracking number, reference or receiver..."
+                autocomplete="off"
+                aria-label="Search shipments"
+              >
+
+              <button
+                type="button"
+                id="admin-shipment-search-clear"
+                class="admin-filter-clear"
+                aria-label="Clear shipment search"
+                title="Clear search"
+                hidden
+              >
+                <span class="icon icon-close"></span>
+              </button>
+            </div>
+
+            <div class="admin-parcel-filter">
+              <label
+                class="admin-filter-label"
+                for="admin-shipment-status-filter"
+              >
+                Status
+              </label>
+
+              <select
+                id="admin-shipment-status-filter"
+                class="form-control"
+                aria-label="Filter shipments by status"
+              >
+                <option value="">All statuses</option>
+              </select>
+            </div>
+
+            <div class="admin-parcel-filter">
+              <label
+                class="admin-filter-label"
+                for="admin-shipment-service-filter"
+              >
+                Service
+              </label>
+
+              <select
+                id="admin-shipment-service-filter"
+                class="form-control"
+                aria-label="Filter shipments by service"
+              >
+                <option value="">All services</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              id="admin-shipment-filters-reset"
+              class="btn-outline admin-filter-reset"
+            >
+              <span class="icon icon-refresh"></span>
+              Reset
+            </button>
+
+          </div>
+
+          <div class="admin-parcel-table-meta">
+            <span id="admin-shipment-filter-summary">
+              Showing all shipments
+            </span>
+          </div>
+
+          <div class="table-responsive admin-parcel-table-wrap">
+            <table class="admin-parcel-table">
               <thead>
                 <tr>
                   <th>Tracking Number</th>
-                  <th>Origin -> Destination</th>
-                  <th>Current Node</th>
-                  <th>Service</th>
+                  <th>Receiver</th>
+                  <th>Service / Type</th>
+                  <th>Route</th>
+                  <th>Current Location</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody id="admin-shipments-tbody"></tbody>
             </table>
           </div>
+
         </div>
       </div>
     </section>
 
     <!-- View: Admin Settings & Website Portal Configuration -->
-    <section id="view-admin-settings" style="display: none;">
+
+<section id="view-admin-settings" style="display: none;">
       <div class="container">
 
         <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
@@ -646,7 +974,8 @@
       </div>
     </section>
 
-  </main>
+          </main>
+        </div>
 
   <!-- Modal: Camera QR Code Scanner -->
   <div id="modal-qr-scanner" class="modal-overlay">
@@ -736,6 +1065,208 @@
   </div>
 
   <!-- Modal: Edit Parcel -->
+  <!-- =====================================================
+       VIEW PARCEL MODAL
+  ====================================================== -->
+
+  <div
+    id="modal-view-shipment"
+    class="modal-overlay"
+    style="display:none;"
+  >
+
+    <div
+      class="modal-content"
+      style="
+        max-width:850px;
+        width:95%;
+        max-height:90vh;
+        overflow-y:auto;
+      "
+    >
+
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:1rem;
+          margin-bottom:1rem;
+        "
+      >
+
+        <div>
+          <h2 style="margin:0;">
+            Parcel Details
+          </h2>
+
+          <p
+            style="
+              margin:0.35rem 0 0;
+              color:var(--text-muted);
+            "
+          >
+            Complete shipment information
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="hideModal('modal-view-shipment')"
+        >
+          Close
+        </button>
+
+      </div>
+
+
+      <div
+        style="
+          display:grid;
+          grid-template-columns:
+            repeat(auto-fit,minmax(220px,1fr));
+          gap:1rem;
+        "
+      >
+
+        <div>
+          <strong>Tracking Number</strong>
+          <div id="vs-tracking-number">—</div>
+        </div>
+
+        <div>
+          <strong>Reference</strong>
+          <div id="vs-reference">—</div>
+        </div>
+
+        <div>
+          <strong>Status</strong>
+          <div id="vs-status">—</div>
+        </div>
+
+        <div>
+          <strong>Service Type</strong>
+          <div id="vs-service-type">—</div>
+        </div>
+
+        <div>
+          <strong>Priority</strong>
+          <div id="vs-priority">—</div>
+        </div>
+
+        <div>
+          <strong>Origin</strong>
+          <div id="vs-origin">—</div>
+        </div>
+
+        <div>
+          <strong>Destination</strong>
+          <div id="vs-destination">—</div>
+        </div>
+
+        <div>
+          <strong>Current Location</strong>
+          <div id="vs-current-location">—</div>
+        </div>
+
+        <div>
+          <strong>Sender</strong>
+          <div id="vs-sender-name">—</div>
+        </div>
+
+        <div>
+          <strong>Sender Country</strong>
+          <div id="vs-sender-country">—</div>
+        </div>
+
+        <div>
+          <strong>Recipient</strong>
+          <div id="vs-recipient-name">—</div>
+        </div>
+
+        <div>
+          <strong>Recipient Country</strong>
+          <div id="vs-recipient-country">—</div>
+        </div>
+
+        <div>
+          <strong>Package Count</strong>
+          <div id="vs-package-count">—</div>
+        </div>
+
+        <div>
+          <strong>Weight</strong>
+          <div id="vs-weight">—</div>
+        </div>
+
+        <div>
+          <strong>Currency</strong>
+          <div id="vs-currency">—</div>
+        </div>
+
+        <div>
+          <strong>Declared Value</strong>
+          <div id="vs-declared-value">—</div>
+        </div>
+
+        <div>
+          <strong>Estimated Delivery</strong>
+          <div id="vs-eta">—</div>
+        </div>
+
+      </div>
+
+
+      <div
+        style="
+          margin-top:1.25rem;
+        "
+      >
+
+        <strong>Description</strong>
+
+        <div
+          id="vs-description"
+          style="
+            margin-top:0.5rem;
+            padding:0.85rem;
+            border:1px solid
+              var(--border-color, #333);
+            border-radius:0.5rem;
+            white-space:pre-wrap;
+          "
+        >
+          —
+        </div>
+
+      </div>
+
+
+      <div
+        style="
+          display:flex;
+          justify-content:flex-end;
+          gap:0.5rem;
+          margin-top:1.25rem;
+        "
+      >
+
+        <button
+          type="button"
+          class="btn-outline"
+          onclick="hideModal('modal-view-shipment')"
+        >
+          Close
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
   <div id="modal-update-shipment" class="modal-overlay">
     <div class="card" style="max-width: 900px; width: 94%; max-height: 90vh; overflow-y: auto;">
       <h3 style="margin-bottom: 1rem;">
@@ -1166,6 +1697,8 @@
       </form>
     </div>
   </div>
+
+  </main>
 
 </body>
 </html>
