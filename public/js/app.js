@@ -1340,26 +1340,6 @@ async function handleTrackSubmit(
       shipment.priority || "—"
     );
 
-    setTrackingText(
-      "trk-sender-val",
-      shipment.sender_name || "—"
-    );
-
-    setTrackingText(
-      "trk-sender-country-val",
-      shipment.sender_country || "—"
-    );
-
-    setTrackingText(
-      "trk-recipient-val",
-      shipment.recipient_name || "—"
-    );
-
-    setTrackingText(
-      "trk-recipient-country-val",
-      shipment.recipient_country || "—"
-    );
-
     const packageCount =
       shipment.package_count || 1;
 
@@ -1373,25 +1353,6 @@ async function handleTrackSubmit(
     setTrackingText(
       "trk-pkg-val",
       `${packageCount} / ${weight}`
-    );
-
-    setTrackingText(
-      "trk-currency-val",
-      shipment.currency || "—"
-    );
-
-    setTrackingText(
-      "trk-val-val",
-      shipment.declared_value !== null &&
-      shipment.declared_value !== undefined &&
-      shipment.declared_value !== ""
-        ? shipment.declared_value
-        : "—"
-    );
-
-    setTrackingText(
-      "trk-desc-val",
-      shipment.description || "—"
     );
 
     // ========================================================

@@ -2838,11 +2838,6 @@ async function handleUpdateShipmentSubmit(e) {
       eventDescriptionEl.value.trim()
   };
 
-  console.log(
-    '[UPDATE SHIPMENT] Sending payload:',
-    payload
-  );
-
   const saveButton =
     e.submitter ||
     document.querySelector(
@@ -2888,12 +2883,6 @@ async function handleUpdateShipmentSubmit(e) {
         jsonError
       );
     }
-
-    console.log(
-      '[UPDATE SHIPMENT] Server response:',
-      response.status,
-      data
-    );
 
     if (
       response.status === 401 ||
