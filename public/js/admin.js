@@ -1384,9 +1384,16 @@ async function loadAdminDashboard() {
         }
 
         if (filterSummary) {
+          const currentSearchTerm =
+            normalizeShipmentValue(
+              searchInput
+                ? searchInput.value
+                : ''
+            );
+
           const hasFilters =
             Boolean(
-              searchTerm ||
+              currentSearchTerm ||
               selectedStatus ||
               selectedService
             );
@@ -1401,8 +1408,15 @@ async function loadAdminDashboard() {
         }
 
         if (searchClear) {
+          const currentSearchTerm =
+            normalizeShipmentValue(
+              searchInput
+                ? searchInput.value
+                : ''
+            );
+
           searchClear.hidden =
-            !searchTerm;
+            !currentSearchTerm;
         }
       };
 
