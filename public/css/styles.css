@@ -1317,10 +1317,14 @@ tbody tr:last-child td {
 /* Main admin shell */
 .admin-portal-shell {
   position: relative;
-  display: flex;
+  display: none;
   width: 100%;
   min-height: calc(100vh - 72px);
   background: var(--admin-shell-bg);
+}
+
+body.admin-portal-active .admin-portal-shell {
+  display: flex;
 }
 
 /* Sidebar */

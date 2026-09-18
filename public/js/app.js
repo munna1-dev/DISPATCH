@@ -1729,6 +1729,15 @@ function initMapCanvasWithGps(
 // ============================================================
 
 function showSection(section) {
+  const isAdminSection =
+    typeof section === "string" &&
+    section.indexOf("admin-") === 0;
+
+  document.body.classList.toggle(
+    "admin-portal-active",
+    isAdminSection
+  );
+
   document
     .querySelectorAll(
       "section[id^='view-']"
