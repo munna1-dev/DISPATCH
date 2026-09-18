@@ -604,6 +604,59 @@ async function adminMiddleware(req, res, next) {
 }
 
 // ============================================================
+// ROLE-AWARE ADMIN PORTAL AUTHORIZATION
+// ============================================================
+
+async function adminPortalMiddleware(req, res, next) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        error: "Authentication required"
+      });
+    }
+
+    const result = await queryWithRetry(
+      `
+      SELECT id, email, role
+      FROM users
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        error: "User account not found"
+      });
+    }
+
+    const user = result.rows[0];
+
+    if (!ADMIN_ALLOWED_ROLES.has(user.role)) {
+      return res.status(403).json({
+        error: "Portal access denied"
+      });
+    }
+
+    req.admin = user;
+
+    next();
+  } catch (error) {
+    console.error(
+      "[ADMIN PORTAL AUTH]",
+      error.message
+    );
+
+    return res.status(500).json({
+      error: "Authorization check failed"
+    });
+  }
+}
+
+// ============================================================
+
+// ============================================================
 // AUTH LOGIN
 // ============================================================
 
@@ -668,9 +721,9 @@ app.post(
        * Prevent a missing database role from automatically
        * becoming Administrator.
        */
-      if (user.role !== "Admin") {
+      if (!ADMIN_ALLOWED_ROLES.has(user.role)) {
         return res.status(403).json({
-          error: "Administrator privileges required"
+          error: "Portal access denied"
         });
       }
 
@@ -757,7 +810,8 @@ app.post(
 app.get(
   "/api/admin/dashboard",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("dashboard.view"),
   async (req, res) => {
     try {
       const counts = await queryWithRetry(`
@@ -875,7 +929,8 @@ app.get(
 app.get(
   "/api/admin/shipments",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("shipments.view"),
   async (req, res) => {
     try {
       const result = await queryWithRetry(
@@ -932,7 +987,8 @@ app.get(
 app.post(
   "/api/admin/shipments",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("shipments.create"),
   requireSameOrigin,
   async (req, res) => {
     const b = req.body || {};
@@ -1191,7 +1247,8 @@ app.post(
 app.delete(
   "/api/admin/shipments/:id",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("shipments.delete"),
   requireSameOrigin,
   async (req, res) => {
     const shipmentId = Number(req.params.id);
@@ -1230,6 +1287,17 @@ app.delete(
       }
 
       const shipment = existing.rows[0];
+
+      // Remove dependent tracking history first.
+      // This keeps deletion deterministic even when the FK does
+      // not use ON DELETE CASCADE.
+      await c.query(
+        `
+        DELETE FROM shipment_events
+        WHERE shipment_id = $1
+        `,
+        [shipmentId]
+      );
 
       await c.query(
         `
@@ -1445,6 +1513,177 @@ app.put(
 );
 
 // ============================================================
+// ROLE-BASED ACCESS CONTROL
+// ============================================================
+
+/*
+ * Centralized RBAC policy.
+ *
+ * Keep the existing users.role values exactly as stored in
+ * PostgreSQL. Do not rename legacy roles here.
+ *
+ * "admin" remains the compatibility gate for the existing
+ * administrator portal. The permissions below are used by
+ * individual API operations when role-aware access is enabled.
+ */
+
+const ADMIN_ROLE_PERMISSIONS = Object.freeze({
+  "Admin": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "shipments.create",
+    "shipments.update",
+    "shipments.delete",
+    "tracking.view",
+    "tracking.update",
+    "messages.view",
+    "messages.reply",
+    "messages.read",
+    "messages.delete",
+    "staff.view",
+    "staff.create",
+    "staff.update",
+    "staff.role",
+    "staff.password",
+    "settings.view",
+    "settings.update",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Operations Manager": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "shipments.create",
+    "shipments.update",
+    "shipments.delete",
+    "tracking.view",
+    "tracking.update",
+    "messages.view",
+    "messages.reply",
+    "messages.read",
+    "messages.delete",
+    "staff.view",
+    "staff.create",
+    "staff.update",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Dispatcher": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "shipments.create",
+    "shipments.update",
+    "tracking.view",
+    "tracking.update",
+    "messages.view",
+    "messages.reply",
+    "messages.read",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Driver": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "tracking.view",
+    "tracking.update",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Trunk Driver": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "tracking.view",
+    "tracking.update",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Cargo Personnel": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "tracking.view",
+    "tracking.update",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Warehouse Personnel": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "tracking.view",
+    "tracking.update",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Customer Service": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "tracking.view",
+    "messages.view",
+    "messages.reply",
+    "messages.read",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ]),
+
+  "Customer": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "tracking.view",
+    "profile.view",
+    "profile.update",
+    "profile.password"
+  ])
+});
+
+
+function hasAdminPermission(role, permission) {
+  const permissions =
+    ADMIN_ROLE_PERMISSIONS[String(role || "")];
+
+  return Boolean(
+    permissions &&
+    permissions.has(permission)
+  );
+}
+
+
+function requireAdminPermission(permission) {
+
+  return function(req, res, next) {
+
+    const role =
+      req.admin?.role ||
+      req.user?.role ||
+      "";
+
+    if (!hasAdminPermission(role, permission)) {
+      return res.status(403).json({
+        success: false,
+        error: "Insufficient permissions."
+      });
+    }
+
+    next();
+  };
+
+}
+
+
+// ============================================================
 // ADMIN USER MANAGEMENT
 // ============================================================
 
@@ -1510,7 +1749,8 @@ function validateAdminPassword(value) {
 app.get(
   "/api/admin/users",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("staff.view"),
   async (req, res) => {
     try {
       const result = await queryWithRetry(
@@ -1550,7 +1790,8 @@ app.get(
 app.post(
   "/api/admin/users",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("staff.create"),
   requireSameOrigin,
   async (req, res) => {
     try {
@@ -1693,7 +1934,8 @@ app.post(
 app.put(
   "/api/admin/users/:id",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("staff.update"),
   requireSameOrigin,
   async (req, res) => {
     const userId = Number(req.params.id);
@@ -2085,7 +2327,8 @@ app.post(
 app.get(
   "/api/admin/profile",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("profile.view"),
   async (req, res) => {
     try {
       const result = await queryWithRetry(
@@ -2133,7 +2376,8 @@ app.get(
 app.put(
   "/api/admin/profile",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("profile.update"),
   requireSameOrigin,
   async (req, res) => {
     try {
@@ -2260,7 +2504,8 @@ app.put(
 app.put(
   "/api/admin/profile/password",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("profile.password"),
   requireSameOrigin,
   async (req, res) => {
     try {
@@ -2438,7 +2683,8 @@ app.get(
 app.get(
   "/api/admin/shipments/:id/events",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("tracking.view"),
   async (req, res) => {
     const shipmentId = Number(req.params.id);
 
@@ -2497,7 +2743,8 @@ app.get(
 app.put(
   "/api/admin/shipment-events/:id",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("tracking.update"),
   requireSameOrigin,
   async (req, res) => {
     const b = req.body || {};
@@ -2673,7 +2920,8 @@ app.put(
 app.put(
   "/api/admin/shipments/:id",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("shipments.update"),
   requireSameOrigin,
   async (req, res) => {
     const b = req.body || {};
@@ -2965,7 +3213,8 @@ app.put(
 app.get(
   "/api/admin/messages",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("messages.view"),
   async (req, res) => {
     try {
       const result = await queryWithRetry(
@@ -3017,7 +3266,8 @@ app.get(
 app.post(
   "/api/admin/messages/:id/reply",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("messages.reply"),
   requireSameOrigin,
   rateLimit(
     "admin-message-reply",
@@ -3119,7 +3369,8 @@ app.post(
 app.put(
   "/api/admin/messages/:id/read",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("messages.read"),
   requireSameOrigin,
   async (req, res) => {
     const messageId = Number(req.params.id);
@@ -3180,7 +3431,8 @@ app.put(
 app.delete(
   "/api/admin/messages/:id",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("messages.delete"),
   requireSameOrigin,
   async (req, res) => {
     const messageId = Number(req.params.id);

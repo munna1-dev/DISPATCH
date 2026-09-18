@@ -7555,118 +7555,18 @@ function renderAdminStatusDistribution(shipments) {
     const max = Math.max(...rows.map(row => row.count), 1);
 
     container.innerHTML = rows.map(row => {
-        const percentage =
-            Math.max(
-                2,
-                Math.round(
-                    (row.count / max) * 100
-                )
-            );
-
-        const safeLabel =
-            escapeHtml(row.label);
+        const percentage = Math.max(2, Math.round((row.count / max) * 100));
 
         return `
-            <div
-                class="admin-status-row admin-status-action"
-                role="button"
-                tabindex="0"
-                data-admin-status-filter="${safeLabel}"
-                aria-label="Filter shipments by status ${safeLabel}"
-            >
-                <span class="admin-status-name">
-                    ${safeLabel}
-                </span>
-
+            <div class="admin-status-row">
+                <span class="admin-status-name">${escapeHtml(row.label)}</span>
                 <div class="admin-status-track">
-                    <div
-                        class="admin-status-fill"
-                        style="width:${percentage}%"
-                    ></div>
+                    <div class="admin-status-fill" style="width:${percentage}%"></div>
                 </div>
-
-                <span class="admin-status-value">
-                    ${row.count}
-                </span>
+                <span class="admin-status-value">${row.count}</span>
             </div>
         `;
     }).join('');
-
-    container
-        .querySelectorAll('[data-admin-status-filter]')
-        .forEach(function(row) {
-            if (row.dataset.statusFilterBound === 'true') {
-                return;
-            }
-
-            row.dataset.statusFilterBound = 'true';
-
-            const activate = function() {
-                adminCommandCenterFilterStatus(
-                    row.dataset.adminStatusFilter || ''
-                );
-            };
-
-            row.addEventListener(
-                'click',
-                activate
-            );
-
-            row.addEventListener(
-                'keydown',
-                function(event) {
-                    if (
-                        event.key === 'Enter' ||
-                        event.key === ' '
-                    ) {
-                        event.preventDefault();
-                        activate();
-                    }
-                }
-            );
-        });
-}
-
-function adminCommandCenterFilterStatus(status) {
-    if (
-        !adminActionAllowed("shipments.view")
-    ) {
-        return;
-    }
-
-    const shipmentNav =
-        document.querySelector(
-            '[data-admin-nav="shipments"]'
-        );
-
-    if (
-        shipmentNav &&
-        !shipmentNav.hidden
-    ) {
-        shipmentNav.click();
-    }
-
-    const applyFilter = function() {
-        const controller =
-            window.__adminShipmentFilterController;
-
-        if (
-            controller &&
-            typeof controller.setStatus === "function"
-        ) {
-            controller.setStatus(status);
-            return true;
-        }
-
-        return false;
-    };
-
-    if (!applyFilter()) {
-        window.setTimeout(
-            applyFilter,
-            180
-        );
-    }
 }
 
 function renderAdminOperationalAlerts(shipments) {

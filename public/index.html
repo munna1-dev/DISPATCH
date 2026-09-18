@@ -426,6 +426,15 @@
               <button
                 type="button"
                 class="admin-nav-item"
+                data-admin-nav="staff"
+              >
+                <span class="admin-nav-icon">◉</span>
+                <span class="admin-nav-label">Staff Management</span>
+              </button>
+
+              <button
+                type="button"
+                class="admin-nav-item"
                 data-admin-nav="settings"
               >
                 <span class="admin-nav-icon">⚙</span>
@@ -487,7 +496,7 @@
             <div>
               <span class="admin-eyebrow">OPERATIONS</span>
               <h2>Command Center</h2>
-              <p>Live shipment overview and operational activity.</p>
+              <p>Live shipment overview and recent shipment activity.</p>
             </div>
 
             <div class="admin-command-meta">
@@ -500,7 +509,11 @@
 
           <div class="admin-kpi-grid">
 
-            <article class="admin-kpi-card">
+            <article class="admin-kpi-card admin-kpi-action"
+                     role="button"
+                     tabindex="0"
+                     data-admin-command-action="shipments"
+                     aria-label="Open shipments workspace">
               <div class="admin-kpi-icon">▣</div>
               <div class="admin-kpi-content">
                 <span class="admin-kpi-label">Total Shipments</span>
@@ -509,7 +522,11 @@
               </div>
             </article>
 
-            <article class="admin-kpi-card">
+            <article class="admin-kpi-card admin-kpi-action"
+                     role="button"
+                     tabindex="0"
+                     data-admin-command-action="shipments"
+                     aria-label="Open shipments workspace">
               <div class="admin-kpi-icon">➜</div>
               <div class="admin-kpi-content">
                 <span class="admin-kpi-label">In Transit</span>
@@ -518,7 +535,11 @@
               </div>
             </article>
 
-            <article class="admin-kpi-card">
+            <article class="admin-kpi-card admin-kpi-action"
+                     role="button"
+                     tabindex="0"
+                     data-admin-command-action="shipments"
+                     aria-label="Open shipments workspace">
               <div class="admin-kpi-icon">✓</div>
               <div class="admin-kpi-content">
                 <span class="admin-kpi-label">Delivered</span>
@@ -527,7 +548,11 @@
               </div>
             </article>
 
-            <article class="admin-kpi-card admin-kpi-message">
+            <article class="admin-kpi-card admin-kpi-message admin-kpi-action"
+                     role="button"
+                     tabindex="0"
+                     data-admin-command-action="messages"
+                     aria-label="Open messages workspace">
               <div class="admin-kpi-icon">✉</div>
               <div class="admin-kpi-content">
                 <span class="admin-kpi-label">Unread Messages</span>
@@ -578,7 +603,7 @@
             </div>
 
             <div id="admin-recent-shipments" class="admin-recent-shipments">
-              <div class="admin-status-empty">Loading recent activity…</div>
+              <div class="admin-status-empty">Loading recent shipments…</div>
             </div>
           </section>
 
@@ -590,20 +615,162 @@
           <h2>Logistics Operations Console</h2>
           <div>
             <button type="button" id="open-create-shipment-btn" class="btn-gold"><span class="icon icon-plus"></span> New Parcel</button>
-            <button type="button" onclick="openAdminSettings()" class="btn-outline" style="margin-left:0.5rem;"><span class="icon icon-settings"></span> Settings</button>
-            <button onclick="handleAdminLogout()" class="btn-outline" style="margin-left:0.5rem;">Logout</button>
+
           </div>
         </div>
 
-        <!-- Admin Messages Table -->
-        <div class="card" style="margin-bottom: 1.5rem;">
-          <h3 style="margin-bottom: 1rem;"><span class="icon icon-envelope" style="color: var(--accent-gold);"></span> Operations Dispatch Messages</h3>
-          <div class="table-responsive">
-            <table>
+        <!-- =====================================================
+             ADMIN MESSAGE COMMAND CENTER
+        ====================================================== -->
+        <section
+          id="admin-messages"
+          class="admin-message-center"
+          aria-label="Customer message command center"
+        >
+
+          <div class="admin-message-center-header">
+
+            <div>
+              <div class="admin-section-eyebrow">
+                CUSTOMER COMMUNICATIONS
+              </div>
+
+              <h2 class="admin-section-title">
+                <span class="icon icon-envelope"></span>
+                Message Command Center
+              </h2>
+
+              <p class="admin-section-description">
+                Review customer enquiries, manage unread messages,
+                respond to customers and maintain communication records.
+              </p>
+            </div>
+
+            <div class="admin-message-summary">
+              <div class="admin-message-summary-item">
+                <span class="admin-message-summary-label">
+                  Total
+                </span>
+                <strong id="admin-message-total-count">0</strong>
+              </div>
+
+              <div class="admin-message-summary-item is-unread">
+                <span class="admin-message-summary-label">
+                  Unread
+                </span>
+                <strong id="admin-message-unread-count">0</strong>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="admin-message-toolbar">
+
+            <div class="admin-message-search">
+              <span class="icon icon-search" aria-hidden="true"></span>
+
+              <input
+                type="search"
+                id="admin-message-search"
+                class="form-control"
+                placeholder="Search sender, email, subject or message..."
+                autocomplete="off"
+                aria-label="Search customer messages"
+              />
+
+              <button
+                type="button"
+                id="admin-message-search-clear"
+                class="admin-filter-clear"
+                aria-label="Clear message search"
+                title="Clear search"
+                hidden
+              >
+                <span class="icon icon-close"></span>
+              </button>
+            </div>
+
+            <div class="admin-message-filter">
+              <label
+                class="admin-filter-label"
+                for="admin-message-status-filter"
+              >
+                Status
+              </label>
+
+              <select
+                id="admin-message-status-filter"
+                class="form-control"
+                aria-label="Filter messages by status"
+              >
+                <option value="">All messages</option>
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              id="admin-message-refresh"
+              class="btn-outline"
+            >
+              <span class="icon icon-refresh"></span>
+              Refresh
+            </button>
+
+          </div>
+
+          <div class="admin-message-tabs" role="tablist" aria-label="Message views">
+
+            <button
+              type="button"
+              class="admin-message-tab is-active"
+              data-message-view="all"
+              role="tab"
+              aria-selected="true"
+            >
+              All Messages
+            </button>
+
+            <button
+              type="button"
+              class="admin-message-tab"
+              data-message-view="unread"
+              role="tab"
+              aria-selected="false"
+            >
+              Unread
+              <span
+                id="admin-message-unread-tab-count"
+                class="admin-nav-count"
+              >0</span>
+            </button>
+
+            <button
+              type="button"
+              class="admin-message-tab"
+              data-message-view="dispatch"
+              role="tab"
+              aria-selected="false"
+            >
+              Dispatch
+            </button>
+
+          </div>
+
+          <div class="admin-message-table-meta">
+            <span id="admin-message-filter-summary">
+              Showing all messages
+            </span>
+          </div>
+
+          <div class="table-responsive admin-message-table-wrap">
+
+            <table class="admin-message-table">
+
               <thead>
                 <tr>
                   <th>Sender</th>
-                  <th>Email</th>
                   <th>Subject</th>
                   <th>Message</th>
                   <th>Received</th>
@@ -611,10 +778,14 @@
                   <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody id="admin-messages-tbody"></tbody>
+
             </table>
+
           </div>
-        </div>
+
+        </section>
 
         <!-- Admin Parcel Details Workspace -->
         <div class="card admin-parcel-workspace">
@@ -740,7 +911,394 @@
       </div>
     </section>
 
-    <!-- View: Admin Settings & Website Portal Configuration -->
+
+<!-- =========================================================
+     STAFF MANAGEMENT
+========================================================= -->
+<section
+  id="admin-staff-management"
+  class="admin-staff-management"
+  aria-label="Staff management"
+  style="display:none;"
+>
+  <div class="admin-staff-header">
+
+    <div>
+      <span class="admin-section-eyebrow">WORKFORCE CONTROL</span>
+      <h2 class="admin-section-title">
+        <span class="icon icon-users"></span>
+        Staff Management
+      </h2>
+      <p class="admin-section-description">
+        Manage authorized users, operational roles and account access.
+      </p>
+    </div>
+
+    <div class="admin-staff-header-actions">
+      <button
+        type="button"
+        class="btn-outline"
+        id="admin-staff-dashboard"
+      >
+        <span class="icon icon-arrow-left"></span>
+        Dashboard
+      </button>
+
+      <button
+        type="button"
+        class="btn-gold"
+        id="admin-staff-refresh"
+      >
+        <span class="icon icon-refresh"></span>
+        Refresh
+      </button>
+    </div>
+
+  </div>
+
+  <div class="admin-staff-summary">
+
+    <article class="admin-staff-summary-card">
+      <span class="admin-staff-summary-label">Total Accounts</span>
+      <strong id="admin-staff-total">0</strong>
+    </article>
+
+    <article class="admin-staff-summary-card">
+      <span class="admin-staff-summary-label">Administrators</span>
+      <strong id="admin-staff-admins">0</strong>
+    </article>
+
+    <article class="admin-staff-summary-card">
+      <span class="admin-staff-summary-label">Operations</span>
+      <strong id="admin-staff-operations">0</strong>
+    </article>
+
+    <article class="admin-staff-summary-card">
+      <span class="admin-staff-summary-label">Customer Service</span>
+      <strong id="admin-staff-service">0</strong>
+    </article>
+
+  </div>
+
+  <div class="admin-staff-toolbar">
+
+    <div class="admin-staff-search">
+      <span class="icon icon-search" aria-hidden="true"></span>
+      <input
+        type="search"
+        id="admin-staff-search"
+        class="form-control"
+        placeholder="Search name or email..."
+        autocomplete="off"
+        aria-label="Search staff"
+      />
+    </div>
+
+    <div class="admin-staff-filter">
+      <label
+        class="admin-filter-label"
+        for="admin-staff-role-filter"
+      >
+        Role
+      </label>
+
+      <select
+        id="admin-staff-role-filter"
+        class="form-control"
+        aria-label="Filter staff by role"
+      >
+        <option value="">All roles</option>
+        <option value="Admin">Admin</option>
+        <option value="Operations Manager">Operations Manager</option>
+        <option value="Dispatcher">Dispatcher</option>
+        <option value="Driver">Driver</option>
+        <option value="Trunk Driver">Trunk Driver</option>
+        <option value="Cargo Personnel">Cargo Personnel</option>
+        <option value="Warehouse Personnel">Warehouse Personnel</option>
+        <option value="Customer Service">Customer Service</option>
+        <option value="Customer">Customer</option>
+      </select>
+    </div>
+
+  </div>
+
+  <div
+    id="admin-staff-feedback"
+    class="admin-staff-feedback"
+    role="status"
+    aria-live="polite"
+    hidden
+  ></div>
+
+  <div class="admin-staff-table-meta">
+    <span id="admin-staff-filter-summary">
+      Showing all accounts
+    </span>
+  </div>
+
+  <div class="table-responsive admin-staff-table-wrap">
+
+    <table class="admin-staff-table">
+
+      <thead>
+        <tr>
+          <th>Staff Member</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody id="admin-staff-tbody">
+        <tr>
+          <td colspan="5">
+            <div class="admin-status-empty">
+              Staff records will appear here.
+            </div>
+          </td>
+        </tr>
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>
+
+<!-- =========================================================
+     STAFF EDIT MODAL
+========================================================= -->
+<div
+  id="admin-staff-edit-modal"
+  class="admin-staff-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="admin-staff-edit-title"
+>
+  <div class="admin-staff-modal-backdrop" data-staff-modal-close></div>
+
+  <div class="admin-staff-modal-card">
+
+    <div class="admin-staff-modal-header">
+      <div>
+        <span class="admin-section-eyebrow">ACCOUNT PROFILE</span>
+        <h3 id="admin-staff-edit-title">Edit Staff Member</h3>
+      </div>
+
+      <button
+        type="button"
+        class="admin-staff-modal-close"
+        data-staff-modal-close
+        aria-label="Close edit staff dialog"
+      >
+        ×
+      </button>
+    </div>
+
+    <form id="admin-staff-edit-form">
+
+      <input type="hidden" id="admin-staff-edit-id" />
+
+      <div class="admin-staff-form-grid">
+
+        <div>
+          <label for="admin-staff-edit-name">Full Name</label>
+          <input
+            type="text"
+            id="admin-staff-edit-name"
+            class="form-control"
+            maxlength="120"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="admin-staff-edit-email">Email</label>
+          <input
+            type="email"
+            id="admin-staff-edit-email"
+            class="form-control"
+            maxlength="254"
+            required
+          />
+        </div>
+
+      </div>
+
+      <div class="admin-staff-modal-actions">
+        <button
+          type="button"
+          class="btn-outline"
+          data-staff-modal-close
+        >
+          Cancel
+        </button>
+
+        <button type="submit" class="btn-gold">
+          Save Changes
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- =========================================================
+     STAFF ROLE MODAL
+========================================================= -->
+<div
+  id="admin-staff-role-modal"
+  class="admin-staff-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="admin-staff-role-title"
+>
+  <div class="admin-staff-modal-backdrop" data-staff-role-close></div>
+
+  <div class="admin-staff-modal-card">
+
+    <div class="admin-staff-modal-header">
+      <div>
+        <span class="admin-section-eyebrow">ACCESS CONTROL</span>
+        <h3 id="admin-staff-role-title">Change Role</h3>
+      </div>
+
+      <button
+        type="button"
+        class="admin-staff-modal-close"
+        data-staff-role-close
+        aria-label="Close role dialog"
+      >
+        ×
+      </button>
+    </div>
+
+    <form id="admin-staff-role-form">
+
+      <input type="hidden" id="admin-staff-role-id" />
+
+      <p id="admin-staff-role-member" class="admin-staff-modal-note">
+        Select a new operational role.
+      </p>
+
+      <label for="admin-staff-role-select">Role</label>
+
+      <select
+        id="admin-staff-role-select"
+        class="form-control"
+        required
+      >
+        <option value="Admin">Admin</option>
+        <option value="Operations Manager">Operations Manager</option>
+        <option value="Dispatcher">Dispatcher</option>
+        <option value="Driver">Driver</option>
+        <option value="Trunk Driver">Trunk Driver</option>
+        <option value="Cargo Personnel">Cargo Personnel</option>
+        <option value="Warehouse Personnel">Warehouse Personnel</option>
+        <option value="Customer Service">Customer Service</option>
+        <option value="Customer">Customer</option>
+      </select>
+
+      <div class="admin-staff-modal-actions">
+        <button
+          type="button"
+          class="btn-outline"
+          data-staff-role-close
+        >
+          Cancel
+        </button>
+
+        <button type="submit" class="btn-gold">
+          Update Role
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- =========================================================
+     STAFF PASSWORD RESET MODAL
+========================================================= -->
+<div
+  id="admin-staff-password-modal"
+  class="admin-staff-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="admin-staff-password-title"
+>
+  <div class="admin-staff-modal-backdrop" data-staff-password-close></div>
+
+  <div class="admin-staff-modal-card">
+
+    <div class="admin-staff-modal-header">
+      <div>
+        <span class="admin-section-eyebrow">SECURITY CONTROL</span>
+        <h3 id="admin-staff-password-title">Reset Password</h3>
+      </div>
+
+      <button
+        type="button"
+        class="admin-staff-modal-close"
+        data-staff-password-close
+        aria-label="Close password reset dialog"
+      >
+        ×
+      </button>
+    </div>
+
+    <form id="admin-staff-password-form">
+
+      <input type="hidden" id="admin-staff-password-id" />
+
+      <p id="admin-staff-password-member" class="admin-staff-modal-note">
+        Set a new password for this account.
+      </p>
+
+      <label for="admin-staff-new-password">New Password</label>
+
+      <input
+        type="password"
+        id="admin-staff-new-password"
+        class="form-control"
+        minlength="8"
+        maxlength="200"
+        autocomplete="new-password"
+        required
+      />
+
+      <div class="admin-staff-security-note">
+        The password is transmitted to the server over the authenticated
+        connection and stored only as a bcrypt hash.
+      </div>
+
+      <div class="admin-staff-modal-actions">
+        <button
+          type="button"
+          class="btn-outline"
+          data-staff-password-close
+        >
+          Cancel
+        </button>
+
+        <button type="submit" class="btn-gold">
+          Reset Password
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+
+<!-- View: Admin Settings & Website Portal Configuration -->
 
 <section id="view-admin-settings" style="display: none;">
       <div class="container">
@@ -1064,51 +1622,336 @@
     </div>
   </div>
 
-  <!-- Modal: Edit Parcel -->
   <!-- =====================================================
-       VIEW PARCEL MODAL
+       VIEW PARCEL MODAL — PHASE 3.2
   ====================================================== -->
 
   <div
     id="modal-view-shipment"
     class="modal-overlay"
     style="display:none;"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="vs-modal-title"
   >
 
-    <div
-      class="modal-content"
-      style="
-        max-width:850px;
-        width:95%;
-        max-height:90vh;
-        overflow-y:auto;
-      "
-    >
+    <div class="admin-parcel-detail-modal">
 
-      <div
-        style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:1rem;
-          margin-bottom:1rem;
-        "
-      >
+      <div class="admin-parcel-detail-header">
 
-        <div>
-          <h2 style="margin:0;">
+        <div class="admin-parcel-detail-heading">
+
+          <div class="admin-section-eyebrow">
+            PARCEL OPERATIONS
+          </div>
+
+          <h2 id="vs-modal-title">
             Parcel Details
           </h2>
 
-          <p
-            style="
-              margin:0.35rem 0 0;
-              color:var(--text-muted);
-            "
-          >
-            Complete shipment information
+          <p>
+            Complete shipment information and chronological tracking history.
           </p>
+
         </div>
+
+        <button
+          type="button"
+          class="admin-modal-close"
+          onclick="hideModal('modal-view-shipment')"
+          aria-label="Close parcel details"
+        >
+          <span class="icon icon-close" aria-hidden="true"></span>
+        </button>
+
+      </div>
+
+
+      <div class="admin-parcel-detail-statusbar">
+
+        <div>
+          <span class="admin-detail-label">
+            TRACKING NUMBER
+          </span>
+
+          <strong
+            id="vs-tracking-number"
+            class="admin-detail-tracking"
+          >
+            —
+          </strong>
+        </div>
+
+        <div class="admin-detail-status-wrap">
+
+          <span class="admin-detail-label">
+            CURRENT STATUS
+          </span>
+
+          <span
+            id="vs-status"
+            class="admin-detail-status"
+          >
+            —
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <section class="admin-detail-section">
+
+        <div class="admin-detail-section-heading">
+          <div>
+            <span class="admin-section-eyebrow">
+              SHIPMENT
+            </span>
+
+            <h3>Shipment Information</h3>
+          </div>
+        </div>
+
+        <div class="admin-detail-grid">
+
+          <div class="admin-detail-field">
+            <span>Reference</span>
+            <strong id="vs-reference">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Service Type</span>
+            <strong id="vs-service-type">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Priority</span>
+            <strong id="vs-priority">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Estimated Delivery</span>
+            <strong id="vs-eta">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Created</span>
+            <strong id="vs-created-at">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Last Updated</span>
+            <strong id="vs-updated-at">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Package Count</span>
+            <strong id="vs-package-count">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Weight</span>
+            <strong id="vs-weight">—</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section class="admin-detail-section">
+
+        <div class="admin-detail-section-heading">
+          <div>
+            <span class="admin-section-eyebrow">
+              ROUTE
+            </span>
+
+            <h3>Shipment Route</h3>
+          </div>
+        </div>
+
+        <div class="admin-route-card">
+
+          <div class="admin-route-point">
+            <span class="admin-route-marker admin-route-origin"></span>
+
+            <div>
+              <span>Origin</span>
+              <strong id="vs-origin">—</strong>
+            </div>
+          </div>
+
+          <div class="admin-route-line" aria-hidden="true"></div>
+
+          <div class="admin-route-point">
+            <span class="admin-route-marker admin-route-current"></span>
+
+            <div>
+              <span>Current Location</span>
+              <strong id="vs-current-location">—</strong>
+            </div>
+          </div>
+
+          <div class="admin-route-line" aria-hidden="true"></div>
+
+          <div class="admin-route-point">
+            <span class="admin-route-marker admin-route-destination"></span>
+
+            <div>
+              <span>Destination</span>
+              <strong id="vs-destination">—</strong>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section class="admin-detail-section">
+
+        <div class="admin-detail-section-heading">
+          <div>
+            <span class="admin-section-eyebrow">
+              PARTIES
+            </span>
+
+            <h3>Sender &amp; Recipient</h3>
+          </div>
+        </div>
+
+        <div class="admin-detail-party-grid">
+
+          <div class="admin-party-card">
+
+            <span class="admin-party-kicker">
+              SENDER
+            </span>
+
+            <strong id="vs-sender-name">—</strong>
+
+            <span id="vs-sender-country">—</span>
+
+          </div>
+
+          <div class="admin-party-card">
+
+            <span class="admin-party-kicker">
+              RECIPIENT
+            </span>
+
+            <strong id="vs-recipient-name">—</strong>
+
+            <span id="vs-recipient-country">—</span>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section class="admin-detail-section">
+
+        <div class="admin-detail-section-heading">
+          <div>
+            <span class="admin-section-eyebrow">
+              PACKAGE
+            </span>
+
+            <h3>Package &amp; Value</h3>
+          </div>
+        </div>
+
+        <div class="admin-detail-grid">
+
+          <div class="admin-detail-field">
+            <span>Currency</span>
+            <strong id="vs-currency">—</strong>
+          </div>
+
+          <div class="admin-detail-field">
+            <span>Declared Value</span>
+            <strong id="vs-declared-value">—</strong>
+          </div>
+
+        </div>
+
+        <div class="admin-detail-description-wrap">
+
+          <span class="admin-detail-label">
+            DESCRIPTION
+          </span>
+
+          <div
+            id="vs-description"
+            class="admin-detail-description"
+          >
+            —
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section class="admin-detail-section">
+
+        <div class="admin-detail-section-heading">
+
+          <div>
+            <span class="admin-section-eyebrow">
+              TRACKING
+            </span>
+
+            <h3>Tracking History</h3>
+          </div>
+
+          <span
+            id="vs-event-count"
+            class="admin-event-count"
+          >
+            0 events
+          </span>
+
+        </div>
+
+        <div
+          id="vs-tracking-loading"
+          class="admin-tracking-state"
+          hidden
+        >
+          <span class="admin-loading-dot" aria-hidden="true"></span>
+          Loading tracking history...
+        </div>
+
+        <div
+          id="vs-tracking-empty"
+          class="admin-tracking-state"
+          hidden
+        >
+          No tracking events have been recorded for this parcel yet.
+        </div>
+
+        <div
+          id="vs-tracking-error"
+          class="admin-tracking-state admin-tracking-error"
+          hidden
+        >
+          Unable to load tracking history.
+        </div>
+
+        <div
+          id="vs-tracking-history"
+          class="admin-tracking-history"
+          aria-live="polite"
+        ></div>
+
+      </section>
+
+
+      <div class="admin-parcel-detail-actions">
 
         <button
           type="button"
@@ -1118,146 +1961,20 @@
           Close
         </button>
 
-      </div>
-
-
-      <div
-        style="
-          display:grid;
-          grid-template-columns:
-            repeat(auto-fit,minmax(220px,1fr));
-          gap:1rem;
-        "
-      >
-
-        <div>
-          <strong>Tracking Number</strong>
-          <div id="vs-tracking-number">—</div>
-        </div>
-
-        <div>
-          <strong>Reference</strong>
-          <div id="vs-reference">—</div>
-        </div>
-
-        <div>
-          <strong>Status</strong>
-          <div id="vs-status">—</div>
-        </div>
-
-        <div>
-          <strong>Service Type</strong>
-          <div id="vs-service-type">—</div>
-        </div>
-
-        <div>
-          <strong>Priority</strong>
-          <div id="vs-priority">—</div>
-        </div>
-
-        <div>
-          <strong>Origin</strong>
-          <div id="vs-origin">—</div>
-        </div>
-
-        <div>
-          <strong>Destination</strong>
-          <div id="vs-destination">—</div>
-        </div>
-
-        <div>
-          <strong>Current Location</strong>
-          <div id="vs-current-location">—</div>
-        </div>
-
-        <div>
-          <strong>Sender</strong>
-          <div id="vs-sender-name">—</div>
-        </div>
-
-        <div>
-          <strong>Sender Country</strong>
-          <div id="vs-sender-country">—</div>
-        </div>
-
-        <div>
-          <strong>Recipient</strong>
-          <div id="vs-recipient-name">—</div>
-        </div>
-
-        <div>
-          <strong>Recipient Country</strong>
-          <div id="vs-recipient-country">—</div>
-        </div>
-
-        <div>
-          <strong>Package Count</strong>
-          <div id="vs-package-count">—</div>
-        </div>
-
-        <div>
-          <strong>Weight</strong>
-          <div id="vs-weight">—</div>
-        </div>
-
-        <div>
-          <strong>Currency</strong>
-          <div id="vs-currency">—</div>
-        </div>
-
-        <div>
-          <strong>Declared Value</strong>
-          <div id="vs-declared-value">—</div>
-        </div>
-
-        <div>
-          <strong>Estimated Delivery</strong>
-          <div id="vs-eta">—</div>
-        </div>
-
-      </div>
-
-
-      <div
-        style="
-          margin-top:1.25rem;
-        "
-      >
-
-        <strong>Description</strong>
-
-        <div
-          id="vs-description"
-          style="
-            margin-top:0.5rem;
-            padding:0.85rem;
-            border:1px solid
-              var(--border-color, #333);
-            border-radius:0.5rem;
-            white-space:pre-wrap;
-          "
-        >
-          —
-        </div>
-
-      </div>
-
-
-      <div
-        style="
-          display:flex;
-          justify-content:flex-end;
-          gap:0.5rem;
-          margin-top:1.25rem;
-        "
-      >
-
         <button
           type="button"
           class="btn-outline"
-          onclick="hideModal('modal-view-shipment')"
+          id="vs-update-button"
         >
-          Close
+          Update Parcel
+        </button>
+
+        <button
+          type="button"
+          class="btn-danger"
+          id="vs-delete-button"
+        >
+          Delete Parcel
         </button>
 
       </div>
@@ -1536,7 +2253,296 @@
   <script src="/js/app.js"></script>
   <script src="/js/admin.js"></script>
 
-  <!-- Modal: Admin Tracking Details / Route History -->
+
+<!-- =========================================================
+     ADMIN OPERATIONS TRACKING CENTER
+========================================================= -->
+<div
+  id="admin-tracking-workspace"
+  class="admin-tracking-workspace"
+  aria-label="Operations Tracking Center"
+>
+
+  <div class="admin-tracking-header">
+
+    <div>
+      <div class="admin-section-eyebrow">
+        OPERATIONS CONTROL
+      </div>
+
+      <h2 class="admin-tracking-title">
+        <span class="icon icon-map"></span>
+        Live Tracking
+      </h2>
+
+      <p class="admin-tracking-description">
+        Monitor shipment movement, tracking history and verified
+        location events from the operational database.
+      </p>
+    </div>
+
+    <div class="admin-tracking-header-actions">
+
+      <button
+        type="button"
+        class="btn-outline"
+        id="admin-tracking-refresh"
+      >
+        <span class="icon icon-refresh"></span>
+        Refresh
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="admin-tracking-selector card">
+
+    <div class="admin-tracking-selector-copy">
+
+      <span class="admin-filter-label">
+        Shipment
+      </span>
+
+      <strong>
+        Select a shipment to inspect its route
+      </strong>
+
+    </div>
+
+    <div class="admin-tracking-selector-control">
+
+      <select
+        id="admin-tracking-shipment-select"
+        class="form-control"
+        aria-label="Select shipment for tracking"
+      >
+        <option value="">
+          Select shipment...
+        </option>
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="admin-tracking-empty"
+    class="card admin-tracking-state"
+  >
+    <span class="icon icon-map"></span>
+
+    <strong>
+      No shipment selected
+    </strong>
+
+    <span>
+      Select a shipment above to view its operational route
+      and tracking history.
+    </span>
+  </div>
+
+
+  <div
+    id="admin-tracking-loading"
+    class="card admin-tracking-state"
+    hidden
+  >
+    <span class="admin-tracking-spinner"></span>
+
+    <strong>
+      Loading tracking data...
+    </strong>
+
+    <span>
+      Retrieving the latest tracking events.
+    </span>
+  </div>
+
+
+  <div
+    id="admin-tracking-error"
+    class="card admin-tracking-state admin-tracking-error"
+    hidden
+  >
+    <strong>
+      Unable to load tracking data.
+    </strong>
+
+    <span id="admin-tracking-error-text">
+      Please try again.
+    </span>
+  </div>
+
+
+  <div
+    id="admin-tracking-content"
+    hidden
+  >
+
+    <div class="admin-tracking-overview-grid">
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Tracking Number</span>
+
+        <strong id="admin-tracking-number">
+          —
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Status</span>
+
+        <strong id="admin-tracking-status">
+          —
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Current Location</span>
+
+        <strong id="admin-tracking-current">
+          —
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Tracking Events</span>
+
+        <strong id="admin-tracking-event-count">
+          0
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>GPS Points</span>
+
+        <strong id="admin-tracking-gps-count">
+          0
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Last Update</span>
+
+        <strong id="admin-tracking-last-update">
+          —
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <div class="admin-tracking-main-grid">
+
+      <section class="card admin-tracking-map-card">
+
+        <div class="admin-tracking-card-header">
+
+          <div>
+
+            <span class="admin-section-eyebrow">
+              ROUTE VISUALIZATION
+            </span>
+
+            <h3>
+              Shipment Route
+            </h3>
+
+          </div>
+
+          <span
+            id="admin-tracking-gps-state"
+            class="admin-tracking-gps-badge"
+          >
+            GPS unavailable
+          </span>
+
+        </div>
+
+
+        <div class="admin-tracking-map">
+
+          <canvas
+            id="adminTrackingMapCanvas"
+            aria-label="Shipment route map"
+          ></canvas>
+
+          <div
+            id="admin-tracking-map-empty"
+            class="admin-tracking-map-empty"
+            hidden
+          >
+            No GPS coordinates are available for this shipment.
+          </div>
+
+        </div>
+
+
+        <div class="admin-tracking-route-summary">
+
+          <div>
+            <span>Origin</span>
+            <strong id="admin-tracking-origin">—</strong>
+          </div>
+
+          <div>
+            <span>Destination</span>
+            <strong id="admin-tracking-destination">—</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section class="card admin-tracking-history-card">
+
+        <div class="admin-tracking-card-header">
+
+          <div>
+
+            <span class="admin-section-eyebrow">
+              CHRONOLOGY
+            </span>
+
+            <h3>
+              Tracking History
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="admin-tracking-history"
+          class="admin-tracking-history-list"
+        ></div>
+
+      </section>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal: Admin Tracking Details / Route History -->
   <div id="modal-tracking-events" class="modal-overlay">
     <div class="card" style="max-width: 1100px; width: 94%; max-height: 90vh; overflow-y: auto;">
 
