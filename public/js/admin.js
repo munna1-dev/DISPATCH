@@ -7995,50 +7995,103 @@ function adminCommandCenterNavigate(action, shipmentId = null) {
     }
 
     if (
-        normalizedAction === "shipments" ||
-        normalizedAction === "shipment"
+        normalizedAction !== "shipments" &&
+        normalizedAction !== "shipment"
     ) {
-        if (!adminActionAllowed("shipments.view")) {
-            return;
-        }
+        return;
+    }
 
-        const shipmentNav =
-            document.querySelector('[data-admin-nav="shipments"]');
+    if (!adminActionAllowed("shipments.view")) {
+        return;
+    }
 
-        if (shipmentNav && !shipmentNav.hidden) {
-            shipmentNav.click();
+    const shipmentNav =
+        document.querySelector('[data-admin-nav="shipments"]');
+
+    if (shipmentNav && !shipmentNav.hidden) {
+        shipmentNav.click();
+    }
+
+    if (
+        normalizedAction !== "shipment" ||
+        !shipmentId
+    ) {
+        return;
+    }
+
+    const openShipment = function() {
+        const controller =
+            window.__adminShipmentFilterController;
+
+        let shipments = [];
+
+        if (
+            controller &&
+            typeof controller.getAll === "function"
+        ) {
+            shipments = controller.getAll() || [];
         }
 
         if (
-            normalizedAction === "shipment" &&
-            shipmentId
+            !shipments.length &&
+            Array.isArray(window.__adminShipments)
         ) {
-            window.setTimeout(() => {
-                const row = document.querySelector(
-                    '#admin-shipments-tbody tr[data-shipment-id="' +
-                    CSS.escape(String(shipmentId)) +
-                    '"]'
-                );
-
-                if (row) {
-                    row.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
-
-                    row.classList.add(
-                        "admin-command-target-highlight"
-                    );
-
-                    window.setTimeout(() => {
-                        row.classList.remove(
-                            "admin-command-target-highlight"
-                        );
-                    }, 1600);
-                }
-            }, 120);
+            shipments = window.__adminShipments;
         }
+
+        const targetId = String(shipmentId);
+
+        const shipment = shipments.find(function(item) {
+            return String(
+                item?.id ??
+                item?.shipment_id ??
+                ""
+            ) === targetId;
+        });
+
+        if (
+            shipment &&
+            typeof openViewShipmentModal === "function"
+        ) {
+            openViewShipmentModal(shipment);
+            return true;
+        }
+
+        return false;
+    };
+
+    if (openShipment()) {
+        return;
     }
+
+    window.setTimeout(function() {
+        if (openShipment()) {
+            return;
+        }
+
+        const row = document.querySelector(
+            '#admin-shipments-tbody tr[data-shipment-id="' +
+            CSS.escape(String(shipmentId)) +
+            '"]'
+        );
+
+        if (row) {
+            row.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+            row.classList.add(
+                "admin-command-target-highlight"
+            );
+
+            window.setTimeout(function() {
+                row.classList.remove(
+                    "admin-command-target-highlight"
+                );
+            }, 1600);
+        }
+    }, 180);
 }
 
 function setupAdminCommandCenter() {
