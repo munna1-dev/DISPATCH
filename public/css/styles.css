@@ -4038,3 +4038,113 @@ body.admin-sidebar-collapsed .admin-nav-count {
     transition: none;
   }
 }
+
+/* COMMAND CENTER INTERACTION POLISH V1 */
+
+.admin-status-action,
+.admin-alert-item[data-admin-alert-action],
+.admin-recent-action {
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-status-action::after,
+.admin-alert-item[data-admin-alert-action]::after,
+.admin-recent-action::after {
+  content: "›";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  pointer-events: none;
+}
+
+.admin-status-action:hover::after,
+.admin-alert-item[data-admin-alert-action]:hover::after,
+.admin-recent-action:hover::after {
+  opacity: .7;
+  transform: translate(3px, -50%);
+}
+
+.admin-status-action:hover,
+.admin-alert-item[data-admin-alert-action]:hover,
+.admin-recent-action:hover {
+  filter: brightness(1.025);
+}
+
+.admin-status-action:focus-visible,
+.admin-alert-item[data-admin-alert-action]:focus-visible,
+.admin-recent-action:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .08);
+}
+
+.admin-status-action:active,
+.admin-alert-item[data-admin-alert-action]:active,
+.admin-recent-action:active {
+  transform: scale(.995);
+}
+
+.admin-recent-action {
+  padding-right: 38px;
+}
+
+.admin-alert-item[data-admin-alert-action] {
+  padding-right: 42px;
+}
+
+.admin-command-target-highlight {
+  animation: adminCommandTargetPulse 1.6s ease;
+}
+
+@keyframes adminCommandTargetPulse {
+  0% {
+    outline: 2px solid transparent;
+    outline-offset: 0;
+  }
+
+  25% {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 4px;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-status-action::after,
+  .admin-alert-item[data-admin-alert-action]::after,
+  .admin-recent-action::after {
+    right: 10px;
+  }
+
+  .admin-recent-action {
+    padding-right: 32px;
+  }
+
+  .admin-alert-item[data-admin-alert-action] {
+    padding-right: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-status-action::after,
+  .admin-alert-item[data-admin-alert-action]::after,
+  .admin-recent-action::after {
+    transition: none;
+  }
+
+  .admin-command-target-highlight {
+    animation: none;
+  }
+}
+
