@@ -7548,6 +7548,7 @@ function renderAdminCommandCenter(shipments, dashboardCounts = {}) {
     updateAdminSidebarMessageCount(unreadMessages);
 
     renderAdminStatusDistribution(shipmentList);
+    adminCommandCenterBindKpiActions();
     renderAdminOperationalAlerts(shipmentList);
     renderAdminRecentShipments(shipmentList);
 
@@ -7974,6 +7975,158 @@ function renderAdminRecentShipments(shipments) {
             </div>
         `;
     }).join('');
+}
+
+
+/* COMMAND CENTER KPI ACTIONS V1 */
+
+function adminCommandCenterOpenKpi(action) {
+    const normalizedAction =
+        String(action || "").trim();
+
+    if (
+        normalizedAction === "shipments" ||
+        normalizedAction === "total"
+    ) {
+        if (!adminActionAllowed("shipments.view")) {
+            return;
+        }
+
+        const nav =
+            document.querySelector(
+                '[data-admin-nav="shipments"]'
+            );
+
+        if (nav && !nav.hidden) {
+            nav.click();
+        }
+
+        return;
+    }
+
+    if (normalizedAction === "transit") {
+        if (!adminActionAllowed("shipments.view")) {
+            return;
+        }
+
+        const nav =
+            document.querySelector(
+                '[data-admin-nav="shipments"]'
+            );
+
+        if (nav && !nav.hidden) {
+            nav.click();
+        }
+
+        window.setTimeout(function() {
+            const controller =
+                window.__adminShipmentFilterController;
+
+            if (
+                controller &&
+                typeof controller.setStatus === "function"
+            ) {
+                controller.setStatus("In Transit");
+            }
+        }, 180);
+
+        return;
+    }
+
+    if (normalizedAction === "delivered") {
+        if (!adminActionAllowed("shipments.view")) {
+            return;
+        }
+
+        const nav =
+            document.querySelector(
+                '[data-admin-nav="shipments"]'
+            );
+
+        if (nav && !nav.hidden) {
+            nav.click();
+        }
+
+        window.setTimeout(function() {
+            const controller =
+                window.__adminShipmentFilterController;
+
+            if (
+                controller &&
+                typeof controller.setStatus === "function"
+            ) {
+                controller.setStatus("Delivered");
+            }
+        }, 180);
+
+        return;
+    }
+
+    if (normalizedAction === "messages") {
+        if (!adminActionAllowed("messages.view")) {
+            return;
+        }
+
+        const nav =
+            document.querySelector(
+                '[data-admin-nav="messages"]'
+            );
+
+        if (nav && !nav.hidden) {
+            nav.click();
+        }
+    }
+}
+
+function adminCommandCenterBindKpiActions() {
+    const container =
+        document.getElementById(
+            "view-admin-dashboard"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    container
+        .querySelectorAll(
+            "[data-admin-kpi-action]"
+        )
+        .forEach(function(card) {
+
+            if (
+                card.dataset.kpiActionBound ===
+                "true"
+            ) {
+                return;
+            }
+
+            card.dataset.kpiActionBound = "true";
+
+            const activate = function() {
+                adminCommandCenterOpenKpi(
+                    card.dataset.adminKpiAction
+                );
+            };
+
+            card.addEventListener(
+                "click",
+                activate
+            );
+
+            card.addEventListener(
+                "keydown",
+                function(event) {
+                    if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                    ) {
+                        event.preventDefault();
+                        activate();
+                    }
+                }
+            );
+        });
 }
 
 function adminCommandCenterNavigate(action, shipmentId = null) {
