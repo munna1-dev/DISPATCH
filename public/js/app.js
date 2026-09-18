@@ -2035,7 +2035,40 @@ document.addEventListener(
 // AUTO-TRACK FROM PUBLIC QR URL
 // ============================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  const adminParams = new URLSearchParams(window.location.search);
+
+  if (adminParams.get("admin") === "1") {
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname
+    );
+
+    try {
+      if (
+        typeof scheduleAdminRBACBootstrap === "function"
+      ) {
+        await scheduleAdminRBACBootstrap();
+      }
+
+      if (
+        typeof loadAdminDashboard === "function"
+      ) {
+        await loadAdminDashboard();
+      }
+
+    } catch (error) {
+      console.error(
+        "[ADMIN REDIRECT]",
+        error
+      );
+    }
+
+    return;
+  }
+
+
   try {
     const params = new URLSearchParams(window.location.search);
     const trackingNumber = (params.get("trk") || "").trim();

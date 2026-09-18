@@ -6683,25 +6683,30 @@ function isAdminPortalVisible() {
 function scheduleAdminRBACBootstrap() {
 
   if (
-    window.__adminRBACBootstrapStarted
+    window.__adminRBACBootstrapPromise
   ) {
-    return;
+    return window.__adminRBACBootstrapPromise;
   }
 
   window.__adminRBACBootstrapStarted =
     true;
 
-  bootstrapAdminRBAC()
-    .catch(function(error) {
+  window.__adminRBACBootstrapPromise =
+    bootstrapAdminRBAC()
+      .catch(function(error) {
 
-      console.error(
-        "[ADMIN RBAC BOOTSTRAP]",
-        error
-      );
+        console.error(
+          "[ADMIN RBAC BOOTSTRAP]",
+          error
+        );
 
-      setAdminCurrentUser(null);
+        setAdminCurrentUser(null);
 
-    });
+        return null;
+
+      });
+
+  return window.__adminRBACBootstrapPromise;
 
 }
 
