@@ -174,8 +174,8 @@ async function handleAdminLogout() {
 
   } finally {
 
-    showSection(
-      'admin-login'
+    window.location.replace(
+      '/admin-login.html'
     );
   }
 }

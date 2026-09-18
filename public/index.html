@@ -46,7 +46,7 @@
         <li><a onclick="showSection('tracking')" id="nav-tracking">Track Parcel</a></li>
         <li><a onclick="showSection('services')" id="nav-services">Services</a></li>
         <li><a onclick="showSection('contact')" id="nav-contact">Contact Us</a></li>
-        <li><a onclick="showSection('admin-login')" id="nav-admin">Admin Portal</a></li>
+        <li><a onclick="window.location.href='/admin-login.html'" id="nav-admin">Admin Portal</a></li>
       </ul>
     </nav>
   </header>
@@ -315,27 +315,6 @@
             </div>
           </div>
         </div>
-    </section>
-
-    <!-- View: Admin Login -->
-    <section id="view-admin-login" style="display: none;">
-      <div class="container" style="max-width: 420px; margin-top: 3rem;">
-        <div class="card">
-          <h2 style="text-align: center; margin-bottom: 0.5rem;">US Courier Admin</h2>
-          <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Authorized Operations Management Portal</p>
-          <form onsubmit="handleAdminLogin(event)" autocomplete="off">
-            <div style="margin-bottom: 1rem;">
-              <label style="font-size: 0.8rem; color: var(--text-muted);">Operator Email</label>
-              <input type="email" id="login-email" class="form-control" autocomplete="off" required>
-            </div>
-            <div style="margin-bottom: 1.5rem;">
-              <label style="font-size: 0.8rem; color: var(--text-muted);">Password</label>
-              <input type="password" id="login-password" class="form-control" autocomplete="new-password" required>
-            </div>
-            <button type="submit" class="btn-gold" style="width: 100%;">Sign In</button>
-          </form>
-        </div>
-      </div>
     </section>
 
     <!-- View: Admin Operations Portal -->
