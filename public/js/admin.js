@@ -615,234 +615,465 @@ async function loadAdminDashboard() {
         'admin-shipments-tbody'
       );
 
+    /*
+     * Parcel Details workspace
+     * The API already returns the latest 100 real shipments.
+     * Search/filtering is performed client-side against that
+     * authenticated PostgreSQL result so no duplicate API is needed.
+     */
+    window.__adminShipments = shipments;
 
-    if (tbody) {
+    const searchInput =
+      document.getElementById(
+        'admin-shipment-search'
+      );
 
-      tbody.innerHTML = '';
+    const searchClear =
+      document.getElementById(
+        'admin-shipment-search-clear'
+      );
 
+    const statusFilter =
+      document.getElementById(
+        'admin-shipment-status-filter'
+      );
 
-      if (shipments.length === 0) {
+    const serviceFilter =
+      document.getElementById(
+        'admin-shipment-service-filter'
+      );
 
-        tbody.innerHTML = `
-          <tr>
-            <td
-              colspan="6"
-              style="
-                text-align:center;
-                padding:2rem;
-                color:var(--text-muted);
-              "
-            >
-              No shipments available.
-            </td>
-          </tr>
-        `;
+    const filtersReset =
+      document.getElementById(
+        'admin-shipment-filters-reset'
+      );
 
-      } else {
+    const resultCount =
+      document.getElementById(
+        'admin-shipment-result-count'
+      );
 
-        shipments.forEach(
-          (s) => {
+    const filterSummary =
+      document.getElementById(
+        'admin-shipment-filter-summary'
+      );
 
-            const tr =
+    const normalizeShipmentValue =
+      (value) =>
+        String(value || '')
+          .trim()
+          .toLowerCase();
+
+    const populateShipmentFilter =
+      (select, values) => {
+        if (!select) {
+          return;
+        }
+
+        const currentValue =
+          select.value;
+
+        const uniqueValues =
+          [...new Set(
+            values
+              .map(value => String(value || '').trim())
+              .filter(Boolean)
+          )].sort(
+            (a, b) =>
+              a.localeCompare(
+                b,
+                undefined,
+                {
+                  sensitivity: 'base'
+                }
+              )
+          );
+
+        select.innerHTML =
+          '<option value="">All</option>';
+
+        uniqueValues.forEach(
+          value => {
+            const option =
               document.createElement(
-                'tr'
+                'option'
               );
 
+            option.value = value;
+            option.textContent = value;
 
-            const shipmentId =
-              Number(s.id);
-
-
-            const status =
-              String(
-                s.status ||
-                'Pending'
-              );
-
-
-            const currentLocation =
-              String(
-                s.current_location ||
-                ''
-              );
-
-
-            tr.innerHTML = `
-              <td>
-                <strong
-                  style="
-                    color:var(--accent-gold);
-                  "
-                >
-                  ${escapeAdminHtml(
-                    s.tracking_number
-                  )}
-                </strong>
-              </td>
-
-              <td>
-                ${escapeAdminHtml(
-                  s.origin ||
-                  ''
-                )}
-                ➔
-                ${escapeAdminHtml(
-                  s.destination ||
-                  ''
-                )}
-              </td>
-
-              <td>
-                ${escapeAdminHtml(
-                  currentLocation
-                )}
-              </td>
-
-              <td>
-                ${escapeAdminHtml(
-                  s.service_type ||
-                  'Express'
-                )}
-              </td>
-
-              <td>
-                <span
-                  class="badge badge-transit"
-                >
-                  ${safeStatus(
-                    status
-                  )}
-                </span>
-              </td>
-
-              <td>
-                <div
-                  style="
-                    display:flex;
-                    flex-wrap:wrap;
-                    gap:0.35rem;
-                  "
-                >
-                  <button
-                    type="button"
-                    class="btn-gold"
-                    style="
-                      padding:0.2rem 0.6rem;
-                      font-size:0.75rem;
-                    "
-                    data-shipment-update-id="${shipmentId}"
-                  >
-                    <i class="icon icon-edit"></i>
-                    Update
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn-outline"
-                    style="
-                      padding:0.2rem 0.6rem;
-                      font-size:0.75rem;
-                    "
-                    data-shipment-view-id="${shipmentId}"
-                  >
-                    <i class="icon icon-eye"></i>
-                    View Parcel
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn-outline"
-                    style="
-                      padding:0.2rem 0.6rem;
-                      font-size:0.75rem;
-                    "
-                    data-shipment-track-id="${shipmentId}"
-                  >
-                    <i class="icon icon-map"></i>
-                    View Tracking
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn-outline"
-                    style="
-                      padding:0.2rem 0.6rem;
-                      font-size:0.75rem;
-                    "
-                    data-shipment-print-id="${shipmentId}"
-                  >
-                    <i class="icon icon-print"></i>
-                    Print Tracking
-                  </button>
-                </div>
-              </td>
-            `;
-
-
-            const updateButton =
-              tr.querySelector(
-                '[data-shipment-update-id]'
-              );
-
-            const viewButton =
-              tr.querySelector(
-                '[data-shipment-view-id]'
-              );
-
-            const trackingButton =
-              tr.querySelector(
-                '[data-shipment-track-id]'
-              );
-
-            const printButton =
-              tr.querySelector(
-                '[data-shipment-print-id]'
-              );
-
-
-            if (updateButton) {
-
-              updateButton.addEventListener(
-                'click',
-                () => openUpdateShipmentModal(s)
-              );
-            }
-
-
-            if (viewButton) {
-
-              viewButton.addEventListener(
-                'click',
-                () => openViewShipmentModal(s)
-              );
-            }
-
-
-            if (trackingButton) {
-
-              trackingButton.addEventListener(
-                'click',
-                () => viewShipmentTracking(s)
-              );
-            }
-
-
-            if (printButton) {
-
-              printButton.addEventListener(
-                'click',
-                () => printShipmentTracking(s)
-              );
-            }
-
-
-            tbody.appendChild(
-              tr
+            select.appendChild(
+              option
             );
           }
         );
-      }
+
+        if (
+          uniqueValues.includes(
+            currentValue
+          )
+        ) {
+          select.value =
+            currentValue;
+        }
+      };
+
+    populateShipmentFilter(
+      statusFilter,
+      shipments.map(
+        shipment => shipment.status
+      )
+    );
+
+    populateShipmentFilter(
+      serviceFilter,
+      shipments.map(
+        shipment => shipment.service_type
+      )
+    );
+
+    const renderParcelWorkspace =
+      () => {
+        if (!tbody) {
+          return;
+        }
+
+        const searchTerm =
+          normalizeShipmentValue(
+            searchInput
+              ? searchInput.value
+              : ''
+          );
+
+        const selectedStatus =
+          normalizeShipmentValue(
+            statusFilter
+              ? statusFilter.value
+              : ''
+          );
+
+        const selectedService =
+          normalizeShipmentValue(
+            serviceFilter
+              ? serviceFilter.value
+              : ''
+          );
+
+        const filteredShipments =
+          shipments.filter(
+            shipment => {
+              const searchableText =
+                [
+                  shipment.tracking_number,
+                  shipment.reference,
+                  shipment.recipient_name
+                ]
+                  .map(
+                    normalizeShipmentValue
+                  )
+                  .join(' ');
+
+              const matchesSearch =
+                !searchTerm ||
+                searchableText.includes(
+                  searchTerm
+                );
+
+              const matchesStatus =
+                !selectedStatus ||
+                normalizeShipmentValue(
+                  shipment.status
+                ) === selectedStatus;
+
+              const matchesService =
+                !selectedService ||
+                normalizeShipmentValue(
+                  shipment.service_type
+                ) === selectedService;
+
+              return (
+                matchesSearch &&
+                matchesStatus &&
+                matchesService
+              );
+            }
+          );
+
+        tbody.innerHTML = '';
+
+        if (
+          filteredShipments.length === 0
+        ) {
+          tbody.innerHTML = `
+            <tr>
+              <td
+                colspan="7"
+                class="admin-parcel-empty"
+              >
+                No shipments match the current filters.
+              </td>
+            </tr>
+          `;
+        } else {
+          filteredShipments.forEach(
+            shipment => {
+              const tr =
+                document.createElement(
+                  'tr'
+                );
+
+              const shipmentId =
+                Number(
+                  shipment.id
+                );
+
+              const status =
+                String(
+                  shipment.status ||
+                  'Pending'
+                );
+
+              const service =
+                String(
+                  shipment.service_type ||
+                  'Express'
+                );
+
+              const receiver =
+                String(
+                  shipment.recipient_name ||
+                  '—'
+                );
+
+              const parcelType =
+                String(
+                  shipment.reference ||
+                  'Courier Parcel'
+                );
+
+              const origin =
+                String(
+                  shipment.origin ||
+                  '—'
+                );
+
+              const destination =
+                String(
+                  shipment.destination ||
+                  '—'
+                );
+
+              const currentLocation =
+                String(
+                  shipment.current_location ||
+                  '—'
+                );
+
+              tr.dataset.shipmentId =
+                String(
+                  shipmentId
+                );
+
+              tr.innerHTML = `
+                <td>
+                  <strong class="admin-parcel-tracking">
+                    ${escapeAdminHtml(
+                      shipment.tracking_number ||
+                      '—'
+                    )}
+                  </strong>
+                </td>
+
+                <td>
+                  <span class="admin-parcel-receiver">
+                    ${escapeAdminHtml(
+                      receiver
+                    )}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="admin-parcel-service">
+                    <strong>
+                      ${escapeAdminHtml(
+                        service
+                      )}
+                    </strong>
+                    <span>
+                      ${escapeAdminHtml(
+                        parcelType
+                      )}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <span class="admin-parcel-route">
+                    ${escapeAdminHtml(
+                      origin
+                    )}
+                    <span aria-hidden="true">→</span>
+                    ${escapeAdminHtml(
+                      destination
+                    )}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="admin-parcel-location">
+                    ${escapeAdminHtml(
+                      currentLocation
+                    )}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="badge badge-transit">
+                    ${safeStatus(
+                      status
+                    )}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="admin-parcel-actions">
+                    <button
+                      type="button"
+                      class="btn-gold"
+                      data-shipment-view-id="${shipmentId}"
+                    >
+                      View
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn-outline"
+                      data-shipment-update-id="${shipmentId}"
+                    >
+                      Update
+                    </button>
+                  </div>
+                </td>
+              `;
+
+              const viewButton =
+                tr.querySelector(
+                  '[data-shipment-view-id]'
+                );
+
+              const updateButton =
+                tr.querySelector(
+                  '[data-shipment-update-id]'
+                );
+
+              if (viewButton) {
+                viewButton.addEventListener(
+                  'click',
+                  () =>
+                    openViewShipmentModal(
+                      shipment
+                    )
+                );
+              }
+
+              if (updateButton) {
+                updateButton.addEventListener(
+                  'click',
+                  () =>
+                    openUpdateShipmentModal(
+                      shipment
+                    )
+                );
+              }
+
+              tbody.appendChild(
+                tr
+              );
+            }
+          );
+        }
+
+        if (resultCount) {
+          resultCount.textContent =
+            String(
+              filteredShipments.length
+            );
+        }
+
+        if (filterSummary) {
+          const hasFilters =
+            Boolean(
+              searchTerm ||
+              selectedStatus ||
+              selectedService
+            );
+
+          if (hasFilters) {
+            filterSummary.textContent =
+              `Showing ${filteredShipments.length} of ${shipments.length} shipments`;
+          } else {
+            filterSummary.textContent =
+              `Showing all ${shipments.length} shipments`;
+          }
+        }
+
+        if (searchClear) {
+          searchClear.hidden =
+            !searchTerm;
+        }
+      };
+
+    if (searchInput) {
+      searchInput.oninput =
+        renderParcelWorkspace;
     }
+
+    if (statusFilter) {
+      statusFilter.onchange =
+        renderParcelWorkspace;
+    }
+
+    if (serviceFilter) {
+      serviceFilter.onchange =
+        renderParcelWorkspace;
+    }
+
+    if (searchClear) {
+      searchClear.onclick =
+        () => {
+          if (searchInput) {
+            searchInput.value =
+              '';
+            searchInput.focus();
+          }
+
+          renderParcelWorkspace();
+        };
+    }
+
+    if (filtersReset) {
+      filtersReset.onclick =
+        () => {
+          if (searchInput) {
+            searchInput.value =
+              '';
+          }
+
+          if (statusFilter) {
+            statusFilter.value =
+              '';
+          }
+
+          if (serviceFilter) {
+            serviceFilter.value =
+              '';
+          }
+
+          renderParcelWorkspace();
+        };
+    }
+
+    renderParcelWorkspace();
 
     /* -----------------------------------------------------
        RENDER COMMAND CENTER
