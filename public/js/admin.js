@@ -7707,6 +7707,120 @@ function adminCommandCenterFilterStatus(status) {
     }
 }
 
+
+/* COMMAND CENTER OPERATIONAL ALERT ACTIONS V1 */
+
+function adminCommandCenterOpenShipments(options = {}) {
+    if (!adminActionAllowed("shipments.view")) {
+        return;
+    }
+
+    const shipmentNav =
+        document.querySelector(
+            '[data-admin-nav="shipments"]'
+        );
+
+    if (
+        shipmentNav &&
+        !shipmentNav.hidden
+    ) {
+        shipmentNav.click();
+    }
+
+    const apply = function() {
+        const controller =
+            window.__adminShipmentFilterController;
+
+        if (
+            !controller ||
+            typeof controller.setStatus !== "function"
+        ) {
+            return false;
+        }
+
+        if (
+            options.status &&
+            typeof controller.setStatus === "function"
+        ) {
+            controller.setStatus(options.status);
+        }
+
+        return true;
+    };
+
+    if (!apply()) {
+        window.setTimeout(
+            apply,
+            180
+        );
+    }
+}
+
+function adminCommandCenterBindAlertActions() {
+    const container =
+        document.getElementById(
+            "admin-operational-alerts"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    container
+        .querySelectorAll(
+            "[data-admin-alert-action]"
+        )
+        .forEach(function(alert) {
+
+            if (
+                alert.dataset.alertActionBound ===
+                "true"
+            ) {
+                return;
+            }
+
+            alert.dataset.alertActionBound = "true";
+
+            const activate = function() {
+                const action =
+                    alert.dataset.adminAlertAction ||
+                    "";
+
+                if (
+                    action === "exceptions"
+                ) {
+                    adminCommandCenterOpenShipments();
+                    return;
+                }
+
+                if (
+                    action === "missing-destination" ||
+                    action === "missing-recipient"
+                ) {
+                    adminCommandCenterOpenShipments();
+                }
+            };
+
+            alert.addEventListener(
+                "click",
+                activate
+            );
+
+            alert.addEventListener(
+                "keydown",
+                function(event) {
+                    if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                    ) {
+                        event.preventDefault();
+                        activate();
+                    }
+                }
+            );
+        });
+}
+
 function renderAdminOperationalAlerts(shipments) {
     const container = document.getElementById('admin-operational-alerts');
     if (!container) return;
@@ -7757,15 +7871,40 @@ function renderAdminOperationalAlerts(shipments) {
         });
     }
 
-    container.innerHTML = alerts.slice(0, 5).map(alert => `
-        <div class="admin-alert-item alert-${alert.type}">
+    container.innerHTML = alerts.slice(0, 5).map(alert => {
+        const action =
+            alert.type === 'danger'
+                ? 'exceptions'
+                : alert.title.includes('missing destination')
+                    ? 'missing-destination'
+                    : alert.title.includes('missing recipient')
+                        ? 'missing-recipient'
+                        : '';
+
+        const actionAttrs = action
+            ? `
+                role="button"
+                tabindex="0"
+                data-admin-alert-action="${action}"
+                aria-label="Open shipments for ${escapeHtml(alert.title)}"
+              `
+            : '';
+
+        return `
+        <div
+            class="admin-alert-item alert-${alert.type}"
+            ${actionAttrs}
+        >
             <span class="admin-alert-dot"></span>
             <div class="admin-alert-body">
                 <strong>${escapeHtml(alert.title)}</strong>
                 <span>${escapeHtml(alert.detail)}</span>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
+
+    adminCommandCenterBindAlertActions();
 }
 
 function renderAdminRecentShipments(shipments) {
