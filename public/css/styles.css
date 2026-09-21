@@ -4232,3 +4232,23 @@ body.admin-sidebar-collapsed .admin-nav-count {
 .public-service-action {
   margin-top: 1rem;
 }
+
+/* =========================================================
+   MESSAGE TABS — FLAT / NO WHITE BOX
+========================================================= */
+
+.admin-message-tabs {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.admin-message-tab,
+.admin-message-tab:hover,
+.admin-message-tab:focus,
+.admin-message-tab:focus-visible,
+.admin-message-tab.is-active {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}

@@ -361,7 +361,10 @@ app.use(
 
 app.use(
   cors({
-    origin: "https://uscourier.app",
+    origin: [
+      "https://uscourier.app",
+      "https://account.uscourier.app"
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -455,7 +458,11 @@ app.get(
   "/admin",
   adminPageMiddleware,
   (req, res) => {
-    res.sendFile(
+    if (req.hostname !== "account.uscourier.app") {
+      return res.status(404).send("Not Found");
+    }
+
+    return res.sendFile(
       path.join(
         __dirname,
         "public",
@@ -470,7 +477,11 @@ app.get(
   "/admin/",
   adminPageMiddleware,
   (req, res) => {
-    res.sendFile(
+    if (req.hostname !== "account.uscourier.app") {
+      return res.status(404).send("Not Found");
+    }
+
+    return res.sendFile(
       path.join(
         __dirname,
         "public",
@@ -3734,7 +3745,13 @@ app.post(
 
 
 app.get("*", (req, res) => {
-  res.sendFile(
+  // The admin subdomain must never fall through to the public portal.
+  if (req.hostname === "account.uscourier.app") {
+    return res.status(404).send("Not Found");
+  }
+
+  // Public portal is served only from the main domain.
+  return res.sendFile(
     path.join(
       __dirname,
       "public",
