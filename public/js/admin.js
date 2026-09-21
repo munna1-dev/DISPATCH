@@ -3528,6 +3528,62 @@ if (
    CREATE NEW SHIPMENT
 ========================================================= */
 
+async function verifyPublicTrackingRecord(trackingNumber) {
+
+  const value = String(trackingNumber || '').trim();
+
+  if (!value) {
+    throw new Error('Tracking number is missing.');
+  }
+
+  const response = await fetch(
+    '/api/tracking/' +
+    encodeURIComponent(value),
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json'
+      }
+    }
+  );
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (
+    !response.ok ||
+    data.success !== true ||
+    !data.shipment
+  ) {
+    throw new Error(
+      data.message ||
+      data.error ||
+      'The new shipment could not be verified through public tracking.'
+    );
+  }
+
+  const verifiedTrackingNumber =
+    String(
+      data.shipment.tracking_number || ''
+    ).trim();
+
+  if (
+    verifiedTrackingNumber !== value
+  ) {
+    throw new Error(
+      'Public tracking verification returned an unexpected tracking number.'
+    );
+  }
+
+  return data;
+}
+
+
 async function handleCreateShipmentSubmit(e) {
 
   e.preventDefault();
@@ -3734,6 +3790,37 @@ async function handleCreateShipmentSubmit(e) {
 
 
     /* -----------------------------------------------------
+       VERIFY PUBLIC TRACKING
+    ----------------------------------------------------- */
+
+    let publicTrackingVerified = false;
+
+    try {
+
+      await verifyPublicTrackingRecord(
+        trackingNumber
+      );
+
+      publicTrackingVerified = true;
+
+    } catch (verificationError) {
+
+      console.error(
+        '[CREATE PARCEL] Public tracking verification failed:',
+        verificationError
+      );
+
+      await refreshAdminShipmentWorkspace();
+
+      alert(
+        `Shipment was created successfully, but public tracking could not be verified yet.\n\nTracking Number: ${trackingNumber}\n\nPlease verify this tracking number from the public Track Parcel page before relying on the public result.`
+      );
+
+      return;
+    }
+
+
+    /* -----------------------------------------------------
        GENERATE OFFICIAL RECEIPT
     ----------------------------------------------------- */
 
@@ -3802,7 +3889,9 @@ async function handleCreateShipmentSubmit(e) {
     ----------------------------------------------------- */
 
     alert(
-      `Waybill Created Successfully!\n\nTracking Number: ${trackingNumber}`
+      publicTrackingVerified
+        ? `Waybill Created & Public Tracking Verified!\n\nTracking Number: ${trackingNumber}`
+        : `Waybill Created Successfully!\n\nTracking Number: ${trackingNumber}`
     );
 
 
@@ -7379,9 +7468,8 @@ function handleAdminSessionExpired() {
     'Your admin session has expired. Please sign in again.'
   );
 
-
-  showSection(
-    'admin-login'
+  window.location.replace(
+    '/admin-login.html'
   );
 }
 
