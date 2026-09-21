@@ -792,6 +792,70 @@ tbody tr:last-child td {
 }
 
 /* =========================================================
+   PUBLIC TRACKING RECEIPT
+========================================================= */
+
+.public-tracking-receipt {
+  margin: 1rem auto;
+}
+
+.public-receipt-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .65rem 1.25rem;
+  margin-top: 1rem;
+}
+
+.public-receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .65rem .75rem;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  font-size: .85rem;
+}
+
+.public-receipt-row strong {
+  color: #333;
+}
+
+.public-receipt-row span {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.public-receipt-timeline {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ccc;
+}
+
+.public-receipt-timeline h3 {
+  margin-bottom: .75rem;
+  color: #111;
+}
+
+#public-print-receipt {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .public-receipt-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .public-receipt-row {
+    flex-direction: column;
+    gap: .25rem;
+  }
+
+  .public-receipt-row span {
+    text-align: left;
+  }
+}
+
+/* =========================================================
    PRINT
 ========================================================= */
 
@@ -801,11 +865,14 @@ tbody tr:last-child td {
   }
 
   #printable-receipt-container,
-  #printable-receipt-container * {
+  #printable-receipt-container *,
+  #public-print-receipt,
+  #public-print-receipt * {
     visibility: visible;
   }
 
-  #printable-receipt-container {
+  #printable-receipt-container,
+  #public-print-receipt {
     position: absolute;
     inset: 0;
 
@@ -813,6 +880,12 @@ tbody tr:last-child td {
 
     color: #000 !important;
     background: #fff !important;
+  }
+
+  #public-print-receipt .official-receipt-sheet {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 auto;
   }
 }
 

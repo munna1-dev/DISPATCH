@@ -1088,7 +1088,27 @@ function openQrScannerModal(inputId) {
       qrbox: { width: 250, height: 250 }
     },
     async (decodedText) => {
-      const trackingNumber = String(decodedText || "").trim();
+      const decodedValue = String(decodedText || "").trim();
+
+      if (!decodedValue) {
+        return;
+      }
+
+      let trackingNumber = decodedValue;
+
+      try {
+        const decodedUrl = new URL(decodedValue);
+        const urlTrackingNumber =
+          decodedUrl.searchParams.get("trk");
+
+        if (urlTrackingNumber) {
+          trackingNumber = urlTrackingNumber.trim();
+        }
+      } catch {
+        // QR contains a raw tracking number rather than a URL.
+      }
+
+      trackingNumber = trackingNumber.trim();
 
       if (!trackingNumber) {
         return;
@@ -1161,6 +1181,116 @@ function closeQrScannerModal() {
 // ============================================================
 // TRACK SHIPMENT
 // ============================================================
+
+
+function triggerPrintOfficialReceipt() {
+  const getText = (id) => {
+    const el = document.getElementById(id);
+    return el ? String(el.textContent || "").trim() : "-";
+  };
+
+  const tracking = getText("trk-number-val");
+
+  if (!tracking || tracking === "-") {
+    alert("Please track a parcel before printing the receipt.");
+    return;
+  }
+
+  const existing = document.getElementById("public-print-receipt");
+  if (existing) {
+    existing.remove();
+  }
+
+  const receipt = document.createElement("div");
+  receipt.id = "public-print-receipt";
+
+  const rows = [
+    ["Tracking Number", tracking],
+    ["Reference", getText("trk-reference-val")],
+    ["Service Level", getText("trk-service-val")],
+    ["Priority", getText("trk-priority-val")],
+    ["Status", getText("trk-detail-status-val")],
+    ["Origin Gateway", getText("trk-origin-val")],
+    ["Current Location", getText("trk-current-val")],
+    ["Destination Gateway", getText("trk-destination-val")],
+    ["Estimated Delivery", getText("trk-eta-val")],
+    ["Package Count / Weight", getText("trk-pkg-val")]
+  ];
+
+  receipt.innerHTML = `
+    <div class="official-receipt-sheet public-tracking-receipt">
+      <div class="receipt-header">
+        <div>
+          <h1 style="font-size:1.8rem;color:#111;margin-bottom:.2rem;">
+            <span class="icon icon-truck"></span> US COURIER
+          </h1>
+          <p style="font-size:.8rem;color:#555;">
+            ENTERPRISE LOGISTICS & GLOBAL FREIGHT SERVICES
+          </p>
+        </div>
+
+        <div style="text-align:right;">
+          <h2 style="font-size:1.1rem;color:#b30000;">
+            OFFICIAL TRACKING RECEIPT
+          </h2>
+          <p style="font-size:.8rem;color:#555;">
+            Date: ${new Date().toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      <div class="public-receipt-summary">
+        ${rows.map(([label, value]) => `
+          <div class="public-receipt-row">
+            <strong>${escapeTrackingHtml(label)}</strong>
+            <span>${escapeTrackingHtml(value)}</span>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="public-receipt-timeline">
+        <h3>Shipment Chronology & Event Log</h3>
+        <div id="public-print-timeline"></div>
+      </div>
+
+      <div style="margin-top:2rem;text-align:center;">
+        <div style="border-bottom:1px solid #111;width:200px;margin:0 auto .3rem;"></div>
+        <p style="font-size:.75rem;color:#555;">
+          Public Tracking Verification
+        </p>
+      </div>
+
+      <div class="receipt-stamp">
+        <span>US COURIER</span>
+        <span>VERIFIED</span>
+        <span>TRACKING RECORD</span>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(receipt);
+
+  const timeline = document.getElementById("public-print-timeline");
+  const sourceTimeline = document.getElementById("timeline-container");
+
+  if (timeline && sourceTimeline) {
+    timeline.innerHTML = sourceTimeline.innerHTML;
+  }
+
+  receipt.style.display = "block";
+
+  const cleanup = () => {
+    receipt.style.display = "none";
+    receipt.remove();
+    window.removeEventListener("afterprint", cleanup);
+  };
+
+  window.addEventListener("afterprint", cleanup);
+
+  window.setTimeout(() => {
+    window.print();
+  }, 250);
+}
 
 async function handleTrackSubmit(
   event,
@@ -1406,21 +1536,6 @@ async function handleTrackSubmit(
     }
 
     // ========================================================
-    // QR CODE
-    // ========================================================
-
-    try {
-      generateTrackingQr(
-        shipment.tracking_number
-      );
-    } catch (qrError) {
-      console.warn(
-        "[TRACKING] QR generation failed:",
-        qrError
-      );
-    }
-
-    // ========================================================
     // MAP
     // ========================================================
 
@@ -1513,15 +1628,6 @@ async function handleTrackSubmit(
     }
   }
 }
-
-// ============================================================
-// GENERATE TRACKING RESULT QR
-// ============================================================
-
-function generateTrackingQr(trackingNumber) {
-  return trackingNumber || null;
-}
-
 
 // ============================================================
 // VIEW / DOWNLOAD PUBLIC TRACKING QR
