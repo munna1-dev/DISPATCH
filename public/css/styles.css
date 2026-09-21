@@ -4221,3 +4221,14 @@ body.admin-sidebar-collapsed .admin-nav-count {
   }
 }
 
+
+/* Public home service cards */
+.public-service-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.public-service-action {
+  margin-top: 1rem;
+}
