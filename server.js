@@ -243,6 +243,7 @@ function requireSameOrigin(req, res, next) {
 
   const allowedOrigins = new Set([
     "https://uscourier.app",
+    "https://account.uscourier.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
   ]);
@@ -904,6 +905,24 @@ app.post(
     });
   }
 );
+
+// ============================================================
+// ADMIN SUBDOMAIN ROOT
+// ============================================================
+
+app.get("/", (req, res, next) => {
+  if (req.hostname === "account.uscourier.app") {
+    return res.sendFile(
+      path.join(
+        __dirname,
+        "public",
+        "admin-login.html"
+      )
+    );
+  }
+
+  next();
+});
 
 // ============================================================
 // ADMIN DASHBOARD
