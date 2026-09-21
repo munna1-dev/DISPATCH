@@ -921,7 +921,25 @@ app.post(
 // ADMIN SUBDOMAIN ROOT
 // ============================================================
 
+// account.uscourier.app is dedicated to the Admin Portal.
+// Never serve the public index.html from this hostname.
 app.get("/", (req, res, next) => {
+  if (req.hostname === "account.uscourier.app") {
+    return res.sendFile(
+      path.join(
+        __dirname,
+        "public",
+        "admin-login.html"
+      )
+    );
+  }
+
+  next();
+});
+
+// Explicitly prevent the public homepage from being opened
+// through account.uscourier.app/index.html.
+app.get("/index.html", (req, res, next) => {
   if (req.hostname === "account.uscourier.app") {
     return res.sendFile(
       path.join(
