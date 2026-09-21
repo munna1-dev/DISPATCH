@@ -8148,103 +8148,76 @@ function adminCommandCenterNavigate(action, shipmentId = null) {
     }
 
     if (
-        normalizedAction !== "shipments" &&
-        normalizedAction !== "shipment"
+        normalizedAction === "shipments" ||
+        normalizedAction === "shipment"
     ) {
-        return;
-    }
-
-    if (!adminActionAllowed("shipments.view")) {
-        return;
-    }
-
-    const shipmentNav =
-        document.querySelector('[data-admin-nav="shipments"]');
-
-    if (shipmentNav && !shipmentNav.hidden) {
-        shipmentNav.click();
-    }
-
-    if (
-        normalizedAction !== "shipment" ||
-        !shipmentId
-    ) {
-        return;
-    }
-
-    const openShipment = function() {
-        const controller =
-            window.__adminShipmentFilterController;
-
-        let shipments = [];
-
-        if (
-            controller &&
-            typeof controller.getAll === "function"
-        ) {
-            shipments = controller.getAll() || [];
-        }
-
-        if (
-            !shipments.length &&
-            Array.isArray(window.__adminShipments)
-        ) {
-            shipments = window.__adminShipments;
-        }
-
-        const targetId = String(shipmentId);
-
-        const shipment = shipments.find(function(item) {
-            return String(
-                item?.id ??
-                item?.shipment_id ??
-                ""
-            ) === targetId;
-        });
-
-        if (
-            shipment &&
-            typeof openViewShipmentModal === "function"
-        ) {
-            openViewShipmentModal(shipment);
-            return true;
-        }
-
-        return false;
-    };
-
-    if (openShipment()) {
-        return;
-    }
-
-    window.setTimeout(function() {
-        if (openShipment()) {
+        if (!adminActionAllowed("shipments.view")) {
             return;
         }
 
-        const row = document.querySelector(
-            '#admin-shipments-tbody tr[data-shipment-id="' +
-            CSS.escape(String(shipmentId)) +
-            '"]'
-        );
+        const shipmentNav =
+            document.querySelector('[data-admin-nav="shipments"]');
 
-        if (row) {
-            row.scrollIntoView({
-                behavior: "smooth",
-                block: "center"
+        if (shipmentNav && !shipmentNav.hidden) {
+            shipmentNav.click();
+        }
+
+        if (
+            normalizedAction === "shipment" &&
+            shipmentId
+        ) {
+            const targetId = String(shipmentId);
+
+            const shipments =
+                Array.isArray(window.__adminShipments)
+                    ? window.__adminShipments
+                    : [];
+
+            const shipment = shipments.find(function(item) {
+                return String(
+                    item?.id ??
+                    item?.shipment_id ??
+                    ""
+                ) === targetId;
             });
 
-            row.classList.add(
-                "admin-command-target-highlight"
-            );
+            if (
+                shipment &&
+                typeof openViewShipmentModal === "function"
+            ) {
+                window.setTimeout(function() {
+                    openViewShipmentModal(shipment);
+                }, 120);
+
+                return;
+            }
 
             window.setTimeout(function() {
-                row.classList.remove(
-                    "admin-command-target-highlight"
+                const row = document.querySelector(
+                    '#admin-shipments-tbody tr[data-shipment-id="' +
+                    CSS.escape(targetId) +
+                    '"]'
                 );
-            }, 1600);
+
+                if (row) {
+                    row.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                    row.classList.add(
+                        "admin-command-target-highlight"
+                    );
+
+                    window.setTimeout(function() {
+                        row.classList.remove(
+                            "admin-command-target-highlight"
+                        );
+                    }, 1600);
+                }
+            }, 120);
         }
-    }, 180);
+    }
 }
 
 function setupAdminCommandCenter() {

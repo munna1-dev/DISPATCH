@@ -382,6 +382,36 @@ app.use(
 
 app.use(cookieParser());
 
+// ============================================================
+// STANDALONE ADMIN PORTAL
+// ============================================================
+
+app.get("/admin", (req, res) => {
+  res.sendFile(
+    path.join(
+      __dirname,
+      "public",
+      "admin",
+      "index.html"
+    )
+  );
+});
+
+app.get("/admin/", (req, res) => {
+  res.sendFile(
+    path.join(
+      __dirname,
+      "public",
+      "admin",
+      "index.html"
+    )
+  );
+});
+
+// ============================================================
+// FALLBACK
+// ============================================================
+
 app.use(
   express.static(path.join(__dirname, "public"))
 );
@@ -3611,9 +3641,6 @@ app.post(
   }
 );
 
-// ============================================================
-// FALLBACK
-// ============================================================
 
 app.get("*", (req, res) => {
   res.sendFile(

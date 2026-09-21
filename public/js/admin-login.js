@@ -99,7 +99,7 @@
         "success"
       );
 
-      window.location.replace("/?admin=1");
+      window.location.replace("/admin");
     } catch (error) {
       console.error(
         "Standalone admin login error:",
