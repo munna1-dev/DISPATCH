@@ -384,101 +384,29 @@ app.use(cookieParser());
 
 // ============================================================
 // STANDALONE ADMIN PORTAL
-// SERVER-SIDE PAGE AUTHORIZATION
 // ============================================================
 
-async function adminPageMiddleware(req, res, next) {
-  let token = req.cookies.us_courier_token;
+app.get("/admin", (req, res) => {
+  res.sendFile(
+    path.join(
+      __dirname,
+      "public",
+      "admin",
+      "index.html"
+    )
+  );
+});
 
-  if (!token) {
-    const header = req.headers.authorization || "";
-
-    if (header.startsWith("Bearer ")) {
-      token = header.slice(7);
-    }
-  }
-
-  if (!token) {
-    return res.redirect("/admin-login.html");
-  }
-
-  try {
-    const decoded = jwt.verify(
-      token,
-      JWT_SECRET
-    );
-
-    if (!decoded || !decoded.id) {
-      return res.redirect("/admin-login.html");
-    }
-
-    /*
-     * Never trust the role stored in the JWT alone.
-     * Re-check the current account in PostgreSQL.
-     */
-    const result = await queryWithRetry(
-      `
-      SELECT id, email, role
-      FROM users
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [decoded.id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.redirect("/admin-login.html");
-    }
-
-    const user = result.rows[0];
-
-    if (!ADMIN_ALLOWED_ROLES.has(user.role)) {
-      return res.redirect("/admin-login.html");
-    }
-
-    req.user = decoded;
-    req.admin = user;
-
-    next();
-  } catch (error) {
-    console.warn(
-      "[ADMIN PAGE AUTH]",
-      error.message
-    );
-
-    return res.redirect("/admin-login.html");
-  }
-}
-
-app.get(
-  "/admin",
-  adminPageMiddleware,
-  (req, res) => {
-    res.sendFile(
-      path.join(
-        __dirname,
-        "public",
-        "admin",
-        "index.html"
-      )
-    );
-  }
-);
-
-app.get(
-  "/admin/",
-  adminPageMiddleware,
-  (req, res) => {
-    res.sendFile(
-      path.join(
-        __dirname,
-        "public",
-        "admin",
-        "index.html"
-      )
-    );
-  }
-);
+app.get("/admin/", (req, res) => {
+  res.sendFile(
+    path.join(
+      __dirname,
+      "public",
+      "admin",
+      "index.html"
+    )
+  );
+});
 
 // ============================================================
 // FALLBACK
