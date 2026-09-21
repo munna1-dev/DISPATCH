@@ -1900,10 +1900,29 @@ async function handleContactSubmit(
     event.preventDefault();
   }
 
+  const form =
+    document.querySelector(
+      "#view-contact form"
+    );
+
   const alertBox =
     document.getElementById(
       "contact-alert"
     );
+
+  const submitButton =
+    form
+      ? form.querySelector(
+          'button[type="submit"]'
+        )
+      : null;
+
+  if (
+    form &&
+    form.dataset.contactSubmitting === "true"
+  ) {
+    return;
+  }
 
   const nameEl =
     document.getElementById(
@@ -1947,6 +1966,51 @@ async function handleContactSubmit(
         : ""
   };
 
+  if (
+    !payload.name ||
+    !payload.email ||
+    !payload.subject ||
+    !payload.message
+  ) {
+    if (alertBox) {
+      alertBox.textContent =
+        "Please complete all required fields.";
+
+      alertBox.style.display =
+        "block";
+    }
+
+    return;
+  }
+
+  if (form) {
+    form.dataset.contactSubmitting =
+      "true";
+  }
+
+  if (submitButton) {
+    submitButton.disabled = true;
+
+    submitButton.setAttribute(
+      "aria-busy",
+      "true"
+    );
+
+    submitButton.dataset.originalText =
+      submitButton.textContent;
+
+    submitButton.textContent =
+      "Sending…";
+  }
+
+  if (alertBox) {
+    alertBox.textContent =
+      "Sending your message…";
+
+    alertBox.style.display =
+      "block";
+  }
+
   try {
     const response =
       await fetch(
@@ -1989,16 +2053,12 @@ async function handleContactSubmit(
 
     if (alertBox) {
       alertBox.textContent =
-        "Your message has been sent successfully.";
+        data.message ||
+        "Your message has been received successfully.";
 
       alertBox.style.display =
         "block";
     }
-
-    const form =
-      document.querySelector(
-        "#view-contact form"
-      );
 
     if (form) {
       form.reset();
@@ -2018,11 +2078,31 @@ async function handleContactSubmit(
       alertBox.style.display =
         "block";
     }
+
+  } finally {
+    if (form) {
+      delete form.dataset.contactSubmitting;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = false;
+
+      submitButton.removeAttribute(
+        "aria-busy"
+      );
+
+      submitButton.textContent =
+        submitButton.dataset.originalText ||
+        "Send Message";
+
+      delete submitButton.dataset.originalText;
+    }
   }
 }
 
 
 // ============================================================
+
 // MODAL FUNCTIONS
 // ============================================================
 
