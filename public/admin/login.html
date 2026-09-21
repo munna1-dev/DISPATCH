@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="robots"
+    content="noindex,nofollow,noarchive"
+  >
+
+  <meta
+    name="description"
+    content="US Courier secure operations authentication."
+  >
+
+  <title>US Courier — Secure Operations Login</title>
+
+  <link rel="stylesheet" href="/css/styles.css">
+
+  <style>
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body.admin-login-page {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(
+          circle at 15% 15%,
+          rgba(212,175,55,.09),
+          transparent 30%
+        ),
+        radial-gradient(
+          circle at 85% 85%,
+          rgba(55,95,135,.12),
+          transparent 34%
+        ),
+        #070a0f;
+      color: #f4f6f8;
+      font-family: var(--font-family, Inter, Arial, sans-serif);
+    }
+
+    .admin-auth-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 480px);
+      align-items: stretch;
+    }
+
+    .admin-auth-brand-panel {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: clamp(32px, 7vw, 96px);
+      overflow: hidden;
+      border-right: 1px solid rgba(255,255,255,.07);
+    }
+
+    .admin-auth-brand-panel::before {
+      content: "";
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      left: -180px;
+      top: -180px;
+      border: 1px solid rgba(212,175,55,.10);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 70px rgba(212,175,55,.025),
+        0 0 0 140px rgba(212,175,55,.018);
+    }
+
+    .admin-auth-brand-content {
+      position: relative;
+      z-index: 1;
+      max-width: 620px;
+    }
+
+    .admin-auth-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 24px;
+      color: #d4af37;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .admin-auth-eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 1px;
+      background: #d4af37;
+    }
+
+    .admin-auth-brand-title {
+      margin: 0;
+      max-width: 600px;
+      font-size: clamp(2.2rem, 5vw, 4.8rem);
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+
+    .admin-auth-brand-title span {
+      color: #d4af37;
+    }
+
+    .admin-auth-brand-description {
+      max-width: 540px;
+      margin: 24px 0 0;
+      color: #8f9baa;
+      font-size: .98rem;
+      line-height: 1.8;
+    }
+
+    .admin-auth-status-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 38px;
+    }
+
+    .admin-auth-status-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 999px;
+      background: rgba(255,255,255,.025);
+      color: #aeb8c5;
+      font-size: .7rem;
+      font-weight: 700;
+    }
+
+    .admin-auth-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #73c98c;
+      box-shadow: 0 0 0 4px rgba(115,201,140,.08);
+    }
+
+    .admin-auth-form-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: rgba(8,11,16,.76);
+    }
+
+    .admin-auth-card {
+      width: min(100%, 390px);
+    }
+
+    .admin-auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 34px;
+    }
+
+    .admin-auth-mark {
+      width: 48px;
+      height: 48px;
+      flex: 0 0 48px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(212,175,55,.34);
+      border-radius: 13px;
+      background: rgba(212,175,55,.09);
+      color: #d4af37;
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+
+    .admin-auth-brand-text strong {
+      display: block;
+      color: #f4f6f8;
+      font-size: .96rem;
+      letter-spacing: .02em;
+    }
+
+    .admin-auth-brand-text span {
+      display: block;
+      margin-top: 3px;
+      color: #778292;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .admin-auth-heading {
+      margin-bottom: 26px;
+    }
+
+    .admin-auth-heading h1 {
+      margin: 0;
+      color: #f4f6f8;
+      font-size: 1.65rem;
+      letter-spacing: -.025em;
+    }
+
+    .admin-auth-heading p {
+      margin: 8px 0 0;
+      color: #7f8a99;
+      font-size: .8rem;
+      line-height: 1.6;
+    }
+
+    .admin-auth-form {
+      display: grid;
+      gap: 18px;
+    }
+
+    .admin-auth-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .admin-auth-field label {
+      color: #b8c1cc;
+      font-size: .73rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .admin-auth-input-wrap {
+      position: relative;
+    }
+
+    .admin-auth-input {
+      width: 100%;
+      min-height: 50px;
+      box-sizing: border-box;
+      padding: 0 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 9px;
+      outline: none;
+      background: #0d1219;
+      color: #f4f6f8;
+      transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+    }
+
+    .admin-auth-input::placeholder {
+      color: #566170;
+    }
+
+    .admin-auth-input:focus {
+      border-color: rgba(212,175,55,.58);
+      background: #0f151d;
+      box-shadow: 0 0 0 3px rgba(212,175,55,.08);
+    }
+
+    .admin-auth-password-input {
+      padding-right: 72px;
+    }
+
+    .admin-auth-password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      min-width: 52px;
+      min-height: 36px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: #8994a3;
+      font-size: .68rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .admin-auth-password-toggle:hover,
+    .admin-auth-password-toggle:focus-visible {
+      color: #d4af37;
+      background: rgba(212,175,55,.07);
+      outline: none;
+    }
+
+    .admin-auth-submit {
+      width: 100%;
+      min-height: 51px;
+      margin-top: 4px;
+      border: 1px solid rgba(212,175,55,.35);
+      border-radius: 9px;
+      background: #d4af37;
+      color: #090b0f;
+      font-weight: 900;
+      letter-spacing: .025em;
+      cursor: pointer;
+      transition:
+        transform .15s ease,
+        filter .15s ease,
+        opacity .15s ease;
+    }
+
+    .admin-auth-submit:hover:not(:disabled) {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    .admin-auth-submit:disabled {
+      opacity: .65;
+      cursor: wait;
+    }
+
+    .admin-auth-status {
+      min-height: 22px;
+      color: #8994a3;
+      font-size: .74rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .admin-auth-status.error {
+      color: #efaaaa;
+    }
+
+    .admin-auth-status.success {
+      color: #9dd6af;
+    }
+
+    .admin-auth-security {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 26px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.065);
+      border-radius: 9px;
+      background: rgba(255,255,255,.018);
+      color: #727d8c;
+      font-size: .68rem;
+      line-height: 1.55;
+    }
+
+    .admin-auth-security-icon {
+      flex: 0 0 auto;
+      color: #d4af37;
+      font-weight: 900;
+    }
+
+    .admin-auth-footer {
+      margin-top: 22px;
+      color: #4f5967;
+      font-size: .62rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (max-width: 860px) {
+      .admin-auth-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-auth-brand-panel {
+        min-height: 250px;
+        padding: 42px 28px 34px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.07);
+      }
+
+      .admin-auth-brand-title {
+        font-size: clamp(2rem, 9vw, 3.3rem);
+      }
+
+      .admin-auth-brand-description {
+        margin-top: 15px;
+        font-size: .82rem;
+      }
+
+      .admin-auth-status-strip {
+        margin-top: 22px;
+      }
+
+      .admin-auth-form-panel {
+        padding: 42px 22px 48px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .admin-auth-brand-panel {
+        min-height: 220px;
+        padding: 30px 20px;
+      }
+
+      .admin-auth-form-panel {
+        padding: 32px 18px 40px;
+      }
+
+      .admin-auth-brand-description {
+        display: none;
+      }
+
+      .admin-auth-status-item {
+        font-size: .62rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .admin-auth-input,
+      .admin-auth-submit {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body class="admin-login-page">
+
+  <main
+    class="admin-auth-shell"
+    aria-labelledby="admin-auth-title"
+  >
+
+    <section
+      class="admin-auth-brand-panel"
+      aria-label="US Courier operations"
+    >
+      <div class="admin-auth-brand-content">
+
+        <div class="admin-auth-eyebrow">
+          Secure Operations Environment
+        </div>
+
+        <h2 class="admin-auth-brand-title">
+          Move every shipment with
+          <span>confidence.</span>
+        </h2>
+
+        <p class="admin-auth-brand-description">
+          DISPATCH is the protected operations environment
+          for shipment management, live tracking, customer
+          communications and authorized logistics control.
+        </p>
+
+        <div class="admin-auth-status-strip">
+          <div class="admin-auth-status-item">
+            <span class="admin-auth-status-dot"></span>
+            Operations System
+          </div>
+
+          <div class="admin-auth-status-item">
+            <span class="admin-auth-status-dot"></span>
+            PostgreSQL Connected
+          </div>
+
+          <div class="admin-auth-status-item">
+            <span class="admin-auth-status-dot"></span>
+            Protected Access
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section
+      class="admin-auth-form-panel"
+      aria-label="Administrator authentication"
+    >
+      <div class="admin-auth-card">
+
+        <div class="admin-auth-brand">
+          <div
+            class="admin-auth-mark"
+            aria-hidden="true"
+          >
+            D
+          </div>
+
+          <div class="admin-auth-brand-text">
+            <strong>US COURIER</strong>
+            <span>DISPATCH Operations</span>
+          </div>
+        </div>
+
+        <div class="admin-auth-heading">
+          <h1 id="admin-auth-title">
+            Operator Sign In
+          </h1>
+
+          <p>
+            Authenticate to access the operations dashboard.
+          </p>
+        </div>
+
+        <form
+          id="standalone-admin-login-form"
+          class="admin-auth-form"
+          autocomplete="on"
+          novalidate
+        >
+
+          <div class="admin-auth-field">
+            <label for="standalone-login-email">
+              Operator Email
+            </label>
+
+            <input
+              type="email"
+              id="standalone-login-email"
+              name="email"
+              class="admin-auth-input"
+              autocomplete="username"
+              inputmode="email"
+              maxlength="254"
+              placeholder="operator@uscourier.app"
+              required
+            >
+          </div>
+
+          <div class="admin-auth-field">
+            <label for="standalone-login-password">
+              Password
+            </label>
+
+            <div class="admin-auth-input-wrap">
+              <input
+                type="password"
+                id="standalone-login-password"
+                name="password"
+                class="admin-auth-input admin-auth-password-input"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                required
+              >
+
+              <button
+                type="button"
+                id="admin-password-toggle"
+                class="admin-auth-password-toggle"
+                aria-label="Show password"
+                aria-pressed="false"
+              >
+                SHOW
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            id="standalone-admin-login-submit"
+            class="admin-auth-submit"
+          >
+            Sign In Securely
+          </button>
+
+          <div
+            id="standalone-admin-login-status"
+            class="admin-auth-status"
+            role="status"
+            aria-live="polite"
+          ></div>
+
+        </form>
+
+        <div class="admin-auth-security">
+          <span
+            class="admin-auth-security-icon"
+            aria-hidden="true"
+          >◆</span>
+
+          <span>
+            Authorized personnel only. Authentication is
+            verified server-side and protected by a secure
+            HttpOnly session cookie. Your password is never
+            stored in browser storage.
+          </span>
+        </div>
+
+        <div class="admin-auth-footer">
+          US COURIER · DISPATCH OPERATIONS · SECURE ACCESS
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/admin/js/admin-login.js"></script>
+</body>
+</html>

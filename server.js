@@ -391,6 +391,27 @@ app.use(cookieParser());
 // SERVER-SIDE PAGE AUTHORIZATION
 // ============================================================
 
+function getRequestHostname(req) {
+  return String(
+    req.headers["x-forwarded-host"] ||
+    req.headers.host ||
+    req.hostname ||
+    ""
+  )
+    .split(",")[0]
+    .split(":")[0]
+    .trim()
+    .toLowerCase();
+}
+
+function adminSubdomainOnly(req, res, next) {
+  if (getRequestHostname(req) !== "account.uscourier.app") {
+    return res.status(404).send("Not Found");
+  }
+
+  next();
+}
+
 async function adminPageMiddleware(req, res, next) {
   let token = req.cookies.us_courier_token;
 
@@ -403,7 +424,7 @@ async function adminPageMiddleware(req, res, next) {
   }
 
   if (!token) {
-    return res.redirect("/admin-login.html");
+    return res.redirect("/admin/login.html");
   }
 
   try {
@@ -413,7 +434,7 @@ async function adminPageMiddleware(req, res, next) {
     );
 
     if (!decoded || !decoded.id) {
-      return res.redirect("/admin-login.html");
+      return res.redirect("/admin/login.html");
     }
 
     /*
@@ -431,13 +452,13 @@ async function adminPageMiddleware(req, res, next) {
     );
 
     if (result.rows.length === 0) {
-      return res.redirect("/admin-login.html");
+      return res.redirect("/admin/login.html");
     }
 
     const user = result.rows[0];
 
     if (!ADMIN_ALLOWED_ROLES.has(user.role)) {
-      return res.redirect("/admin-login.html");
+      return res.redirect("/admin/login.html");
     }
 
     req.user = decoded;
@@ -450,15 +471,16 @@ async function adminPageMiddleware(req, res, next) {
       error.message
     );
 
-    return res.redirect("/admin-login.html");
+    return res.redirect("/admin/login.html");
   }
 }
 
 app.get(
   "/admin",
+  adminSubdomainOnly,
   adminPageMiddleware,
   (req, res) => {
-    if (req.hostname !== "account.uscourier.app") {
+    if (getRequestHostname(req) !== "account.uscourier.app") {
       return res.status(404).send("Not Found");
     }
 
@@ -475,9 +497,10 @@ app.get(
 
 app.get(
   "/admin/",
+  adminSubdomainOnly,
   adminPageMiddleware,
   (req, res) => {
-    if (req.hostname !== "account.uscourier.app") {
+    if (getRequestHostname(req) !== "account.uscourier.app") {
       return res.status(404).send("Not Found");
     }
 
@@ -495,6 +518,31 @@ app.get(
 // ============================================================
 // FALLBACK
 // ============================================================
+
+// Admin Portal is available only through account.uscourier.app.
+app.use("/admin", adminSubdomainOnly);
+
+// The admin subdomain root must never be handled by public/index.html.
+app.get("/", (req, res, next) => {
+  if (getRequestHostname(req) === "account.uscourier.app") {
+    return res.sendFile(
+      path.join(__dirname, "public", "admin", "login.html")
+    );
+  }
+
+  next();
+});
+
+app.get("/index.html", (req, res, next) => {
+  if (getRequestHostname(req) === "account.uscourier.app") {
+    return res.sendFile(
+      path.join(__dirname, "public", "admin", "login.html")
+    );
+  }
+
+  next();
+});
+
 
 app.use(
   express.static(path.join(__dirname, "public"))
@@ -924,23 +972,15 @@ app.post(
 // account.uscourier.app is dedicated to the Admin Portal.
 // Never serve the public index.html from this hostname.
 app.get("/", (req, res, next) => {
-  const hostname = String(
-    req.headers["x-forwarded-host"] ||
-    req.headers.host ||
-    req.hostname ||
-    ""
-  )
-    .split(",")[0]
-    .split(":")[0]
-    .trim()
-    .toLowerCase();
+  const hostname = getRequestHostname(req);
 
   if (hostname === "account.uscourier.app") {
     return res.sendFile(
       path.join(
         __dirname,
         "public",
-        "admin-login.html"
+        "admin",
+        "login.html"
       )
     );
   }
@@ -951,12 +991,13 @@ app.get("/", (req, res, next) => {
 // Explicitly prevent the public homepage from being opened
 // through account.uscourier.app/index.html.
 app.get("/index.html", (req, res, next) => {
-  if (req.hostname === "account.uscourier.app") {
+  if (getRequestHostname(req) === "account.uscourier.app") {
     return res.sendFile(
       path.join(
         __dirname,
         "public",
-        "admin-login.html"
+        "admin",
+        "login.html"
       )
     );
   }
@@ -3775,7 +3816,7 @@ app.post(
 
 app.get("*", (req, res) => {
   // The admin subdomain must never fall through to the public portal.
-  if (req.hostname === "account.uscourier.app") {
+  if (getRequestHostname(req) === "account.uscourier.app") {
     return res.status(404).send("Not Found");
   }
 
