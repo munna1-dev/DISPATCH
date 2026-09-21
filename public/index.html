@@ -319,5 +319,21 @@
 
   </main>
 
+
+  <!-- Modal: Camera QR Code Scanner -->
+  <div id="modal-qr-scanner" class="modal-overlay">
+    <div class="card" style="max-width: 500px; width: 90%;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3><span class="icon icon-qr" style="color: var(--accent-gold);"></span> Scan Parcel QR Code</h3>
+        <button onclick="closeQrScannerModal()" class="btn-outline" style="padding: 0.2rem 0.6rem;">&times;</button>
+      </div>
+      <div id="qr-reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
+      <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+        Point your camera at a US Courier QR Code to parse tracking waybill.
+      </p>
+    </div>
+  </div>
+
+
 </body>
 </html>
