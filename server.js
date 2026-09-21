@@ -924,7 +924,18 @@ app.post(
 // account.uscourier.app is dedicated to the Admin Portal.
 // Never serve the public index.html from this hostname.
 app.get("/", (req, res, next) => {
-  if (req.hostname === "account.uscourier.app") {
+  const hostname = String(
+    req.headers["x-forwarded-host"] ||
+    req.headers.host ||
+    req.hostname ||
+    ""
+  )
+    .split(",")[0]
+    .split(":")[0]
+    .trim()
+    .toLowerCase();
+
+  if (hostname === "account.uscourier.app") {
     return res.sendFile(
       path.join(
         __dirname,
