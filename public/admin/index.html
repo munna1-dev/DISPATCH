@@ -31,7 +31,7 @@
   </script>
 </head>
 
-<body class="admin-standalone-page">
+<body class="admin-standalone-page admin-portal-active">
       <div id="admin-portal-shell" class="admin-portal-shell">
 
         <aside id="admin-sidebar" class="admin-sidebar">
@@ -301,7 +301,7 @@
           </section>
 
         </div>
-
+</section>
 
       <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -481,7 +481,7 @@
         </section>
 
         <!-- Admin Parcel Details Workspace -->
-        <div class="card admin-parcel-workspace">
+        <div id="admin-shipments-workspace" class="card admin-parcel-workspace">
 
           <div class="admin-parcel-workspace-header">
             <div>
@@ -602,7 +602,6 @@
 
         </div>
       </div>
-    </section>
 
 
 <!-- =========================================================
@@ -1005,7 +1004,7 @@
           </div>
 
           <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" onclick="loadAdminDashboard()" class="btn-outline">
+            <button type="button" data-admin-internal-nav="dashboard" class="btn-outline">
               <span class="icon icon-arrow-left"></span> Dashboard
             </button>
             <button type="button" onclick="saveAdminSettings()" class="btn-gold">

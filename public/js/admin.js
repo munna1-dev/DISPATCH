@@ -684,203 +684,152 @@ function initAdminMessageCenter() {
    ADMIN DASHBOARD
 ========================================================= */
 
-async function loadAdminDashboard() {
+
+/* =========================================================
+   ADMIN SHARED WORKSPACE DATA LOADERS
+   Each workspace loads its own authenticated PostgreSQL data.
+========================================================= */
+
+async function loadAdminMessages() {
 
   if (
     typeof adminActionAllowed === "function" &&
-    !adminActionAllowed("dashboard.view")
+    !adminActionAllowed("messages.view")
   ) {
-    console.warn(
-      "[ADMIN RBAC] Dashboard access blocked."
-    );
-    return;
+    return [];
   }
 
-  showSection(
-    'admin-dashboard'
+  const response = await fetch(
+    "/api/admin/messages",
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Accept": "application/json"
+      }
+    }
   );
 
+  if (
+    response.status === 401 ||
+    response.status === 403
+  ) {
+    handleAdminSessionExpired();
+    return [];
+  }
+
+  let payload = {};
+
   try {
+    payload = await response.json();
+  } catch {
+    payload = {};
+  }
 
-    /* -----------------------------------------------------
-       DASHBOARD STATISTICS
-    ----------------------------------------------------- */
+  if (!response.ok) {
+    throw new Error(
+      payload.error ||
+      "Unable to load customer messages."
+    );
+  }
 
-    const resStats =
-      await fetch(
-        '/api/admin/dashboard',
-        {
-          method: 'GET',
+  const records =
+    Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload.messages)
+        ? payload.messages
+        : [];
 
-          credentials: 'include'
-        }
-      );
+  adminMessageRecords = records;
 
-    if (
-      resStats.status === 401 ||
-      resStats.status === 403
-    ) {
+  renderAdminMessageCenter();
 
-      handleAdminSessionExpired();
-
-      return;
-    }
-
-    if (!resStats.ok) {
-
-      throw new Error(
-        'Unable to load dashboard statistics.'
-      );
-    }
-
-    let stats = {};
-
-    try {
-
-      stats =
-        await resStats.json();
-
-    } catch {
-
-      stats = {};
-    }
+  return records;
+}
 
 
-    const counts =
-      stats.counts || {};
-/* -----------------------------------------------------
-       LOAD CUSTOMER MESSAGES
-    ----------------------------------------------------- */
+async function loadAdminShipments() {
 
-    if (
-      typeof adminActionAllowed === "function" &&
-      adminActionAllowed("messages.view")
-    ) {
+  if (
+    typeof adminActionAllowed === "function" &&
+    !adminActionAllowed("shipments.view")
+  ) {
+    return [];
+  }
 
-      const resMessages =
-        await fetch(
-          '/api/admin/messages',
-          {
-            method: 'GET',
-            credentials: 'include'
-          }
-        );
-
-      if (
-        resMessages.status === 401 ||
-        resMessages.status === 403
-      ) {
-
-        handleAdminSessionExpired();
-
-        return;
+  const response = await fetch(
+    "/api/admin/shipments",
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Accept": "application/json"
       }
-
-      if (!resMessages.ok) {
-
-        throw new Error(
-          'Unable to load customer messages.'
-        );
-      }
-
-      let messagesPayload = {};
-
-      try {
-
-        messagesPayload =
-          await resMessages.json();
-
-      } catch {
-
-        messagesPayload = {};
-      }
-
-      adminMessageRecords =
-        Array.isArray(messagesPayload)
-          ? messagesPayload
-          : Array.isArray(messagesPayload.messages)
-            ? messagesPayload.messages
-            : [];
-
-      initAdminMessageCenter();
-
-    } else {
-
-      adminMessageRecords = [];
-
     }
+  );
 
-    /* -----------------------------------------------------
-       LOAD SHIPMENTS
-    ----------------------------------------------------- */
+  if (
+    response.status === 401 ||
+    response.status === 403
+  ) {
+    handleAdminSessionExpired();
+    return [];
+  }
 
-    const resShipments =
-      await fetch(
-        '/api/admin/shipments',
-        {
-          method: 'GET',
+  let payload = {};
 
-          credentials: 'include'
-        }
-      );
+  try {
+    payload = await response.json();
+  } catch {
+    payload = {};
+  }
 
+  if (!response.ok) {
+    throw new Error(
+      payload.error ||
+      "Unable to load shipments."
+    );
+  }
 
-    if (
-      resShipments.status === 401 ||
-      resShipments.status === 403
-    ) {
+  const shipments =
+    Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload.shipments)
+        ? payload.shipments
+        : [];
 
-      handleAdminSessionExpired();
+  window.__adminShipments = shipments;
 
-      return;
-    }
-
-
-    if (!resShipments.ok) {
-
-      throw new Error(
-        'Unable to load shipments.'
-      );
-    }
+  return shipments;
+}
 
 
-    let shipmentsPayload = {};
+async function loadAdminSettingsWorkspace() {
 
-    try {
+  if (
+    typeof loadAdminSettings === "function"
+  ) {
+    await loadAdminSettings();
+  }
+}
 
-      shipmentsPayload =
-        await resShipments.json();
 
-    } catch {
+/* =========================================================
+   ADMIN SHIPMENT WORKSPACE RENDERER
+   Uses the shared authenticated shipment collection.
+========================================================= */
 
-      shipmentsPayload = {};
-    }
-
+  function renderAdminShipmentWorkspace() {
 
     const shipments =
-      Array.isArray(
-        shipmentsPayload
-      )
-        ? shipmentsPayload
-        : Array.isArray(
-            shipmentsPayload.shipments
-          )
-          ? shipmentsPayload.shipments
-          : [];
-
+      Array.isArray(window.__adminShipments)
+        ? window.__adminShipments
+        : [];
 
     const tbody =
       document.getElementById(
         'admin-shipments-tbody'
       );
-
-    /*
-     * Parcel Details workspace
-     * The API already returns the latest 100 real shipments.
-     * Search/filtering is performed client-side against that
-     * authenticated PostgreSQL result so no duplicate API is needed.
-     */
-    window.__adminShipments = shipments;
 
     const searchInput =
       document.getElementById(
@@ -1471,6 +1420,167 @@ async function loadAdminDashboard() {
     }
 
     renderParcelWorkspace();
+  }
+
+
+
+async function refreshAdminShipmentWorkspace() {
+
+  const dashboard =
+    document.getElementById(
+      'view-admin-dashboard'
+    );
+
+  const shipments =
+    document.getElementById(
+      'admin-shipments-workspace'
+    );
+
+  const tracking =
+    document.getElementById(
+      'admin-tracking-workspace'
+    );
+
+  const isVisible = function(element) {
+    return (
+      element &&
+      element.style.display !== 'none'
+    );
+  };
+
+  /*
+   * Keep the currently selected workspace active.
+   * Only refresh the data that belongs to it.
+   */
+  if (isVisible(shipments)) {
+
+    const records =
+      await loadAdminShipments();
+
+    window.__adminShipments =
+      Array.isArray(records)
+        ? records
+        : [];
+
+    if (
+      typeof renderAdminShipmentWorkspace ===
+      'function'
+    ) {
+      renderAdminShipmentWorkspace();
+    }
+
+    return;
+  }
+
+  if (isVisible(tracking)) {
+
+    const records =
+      await loadAdminShipments();
+
+    window.__adminShipments =
+      Array.isArray(records)
+        ? records
+        : [];
+
+    if (
+      typeof initAdminTrackingCenter ===
+      'function'
+    ) {
+      initAdminTrackingCenter();
+    }
+
+    return;
+  }
+
+  /*
+   * If the operation was performed from the
+   * Command Center, refresh the Command Center.
+   */
+  if (isVisible(dashboard)) {
+
+    await loadAdminDashboard();
+  }
+
+}
+
+async function loadAdminDashboard() {
+
+  if (
+    typeof adminActionAllowed === "function" &&
+    !adminActionAllowed("dashboard.view")
+  ) {
+    console.warn(
+      "[ADMIN RBAC] Dashboard access blocked."
+    );
+    return;
+  }
+
+  showSection(
+    'admin-dashboard'
+  );
+
+  try {
+
+    /* -----------------------------------------------------
+       DASHBOARD STATISTICS
+    ----------------------------------------------------- */
+
+    const resStats =
+      await fetch(
+        '/api/admin/dashboard',
+        {
+          method: 'GET',
+
+          credentials: 'include'
+        }
+      );
+
+    if (
+      resStats.status === 401 ||
+      resStats.status === 403
+    ) {
+
+      handleAdminSessionExpired();
+
+      return;
+    }
+
+    if (!resStats.ok) {
+
+      throw new Error(
+        'Unable to load dashboard statistics.'
+      );
+    }
+
+    let stats = {};
+
+    try {
+
+      stats =
+        await resStats.json();
+
+    } catch {
+
+      stats = {};
+    }
+
+
+    const counts =
+      stats.counts || {};
+    /* -----------------------------------------------------
+       LOAD SHIPMENTS
+       Use the shared authenticated shipment loader so
+       Dashboard, Shipments and Live Tracking use the same
+       PostgreSQL-backed data source.
+    ----------------------------------------------------- */
+
+    const shipments =
+      await loadAdminShipments();
+
+    window.__adminShipments =
+      Array.isArray(shipments)
+        ? shipments
+        : [];
 
     /* -----------------------------------------------------
        RENDER COMMAND CENTER
@@ -2822,9 +2932,11 @@ async function handleTrackingEventEditSubmit(e) {
     }
 
     /*
-     * Refresh the shipment table as well.
+     * Refresh only the active admin workspace.
+     * The tracking event itself was already refreshed
+     * through loadAdminShipmentEvents().
      */
-    await loadAdminDashboard();
+    await refreshAdminShipmentWorkspace();
 
   } catch (error) {
 
@@ -3615,7 +3727,7 @@ async function handleCreateShipmentSubmit(e) {
       );
 
 
-      await loadAdminDashboard();
+      await refreshAdminShipmentWorkspace();
 
       return;
     }
@@ -3679,10 +3791,10 @@ async function handleCreateShipmentSubmit(e) {
 
 
     /* -----------------------------------------------------
-       REFRESH ADMIN DASHBOARD
+       REFRESH ACTIVE ADMIN WORKSPACE
     ----------------------------------------------------- */
 
-    await loadAdminDashboard();
+    await refreshAdminShipmentWorkspace();
 
 
     /* -----------------------------------------------------
@@ -4426,17 +4538,7 @@ async function deleteAdminShipment(
     );
 
 
-    if (
-      typeof loadAdminDashboard ===
-      'function'
-    ) {
-
-      await loadAdminDashboard();
-
-    } else {
-
-      window.location.reload();
-    }
+    await refreshAdminShipmentWorkspace();
 
 
   } catch (error) {
@@ -5140,7 +5242,7 @@ async function handleUpdateShipmentSubmit(e) {
       'modal-update-shipment'
     );
 
-    await loadAdminDashboard();
+    await refreshAdminShipmentWorkspace();
 
     alert(
       'Parcel updated successfully.'
@@ -6003,7 +6105,7 @@ async function sendMessageReply() {
 
         closeMessageReply();
 
-        await loadAdminDashboard();
+        await loadAdminMessages();
 
       },
       900
@@ -6116,7 +6218,7 @@ async function markMessageRead(
     }
 
 
-    await loadAdminDashboard();
+    await loadAdminMessages();
 
   } catch (err) {
 
@@ -6214,7 +6316,7 @@ async function deleteMessage(
     }
 
 
-    await loadAdminDashboard();
+    await loadAdminMessages();
 
   } catch (err) {
 
@@ -9144,8 +9246,8 @@ function initAdminStaffManagement() {
     dashboard.addEventListener(
       'click',
       () => {
-        if (typeof loadAdminDashboard === 'function') {
-          loadAdminDashboard();
+        if (typeof handleNav === 'function') {
+          handleNav('dashboard');
         }
       }
     );
@@ -9425,116 +9527,291 @@ window.initAdminStaffManagement = initAdminStaffManagement;
     return workspace;
   }
 
+  /*
+   * Admin workspace isolation.
+   * Only the selected workspace may remain visible.
+   */
+  function hideAllAdminWorkspaces() {
+
+    [
+      'view-admin-dashboard',
+      'admin-shipments-workspace',
+      'admin-messages',
+      'admin-staff-management',
+      'view-admin-settings',
+      'admin-tracking-workspace'
+    ].forEach(function(id) {
+
+      const workspace =
+        document.getElementById(id);
+
+      if (workspace) {
+        workspace.style.display = 'none';
+      }
+
+    });
+
+  }
+
+
+  function showOnlyAdminWorkspace(id) {
+
+    hideAllAdminWorkspaces();
+
+    const workspace =
+      document.getElementById(id);
+
+    if (!workspace) {
+      return null;
+    }
+
+    workspace.style.display = 'block';
+
+    return workspace;
+  }
+
   function handleNav(name) {
 
     setActiveNav(name);
 
     if (name === 'dashboard') {
 
-      hideAdminSecondaryWorkspaces();
+      const dashboard =
+        showOnlyAdminWorkspace(
+          'view-admin-dashboard'
+        );
 
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+      if (dashboard) {
+
+        if (
+          typeof loadAdminDashboard === 'function'
+        ) {
+          loadAdminDashboard();
+        }
+
+        closeMobileSidebar();
+
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+
+      }
 
       return;
     }
 
-    /*
-     * These sections already exist elsewhere in the
-     * application. We use existing controls/functions
-     * where possible instead of creating duplicate views.
-     */
 
     if (name === 'shipments') {
 
       const target =
-        document.getElementById(
-          'admin-shipments-table'
-        ) ||
-        document.querySelector(
-          '[data-admin-shipments]'
+        showOnlyAdminWorkspace(
+          'admin-shipments-workspace'
         );
 
-      if (target) {
-        scrollToDashboardArea(
-          '#admin-shipments-table'
-        );
+      if (!target) {
+        return;
       }
+
+      closeMobileSidebar();
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+
+      loadAdminShipments()
+        .then(function() {
+
+          if (
+            typeof renderAdminShipmentWorkspace ===
+            'function'
+          ) {
+            renderAdminShipmentWorkspace();
+          }
+
+        })
+        .catch(function(error) {
+
+          console.error(
+            '[ADMIN SHIPMENTS LOAD]',
+            error
+          );
+
+          alert(
+            error.message ||
+            'Unable to load shipments.'
+          );
+
+        });
 
       return;
     }
+
 
     if (name === 'tracking') {
 
-      activateAdminTrackingWorkspace();
-
-      return;
-    }
-
-    if (name === 'staff') {
+      hideAllAdminWorkspaces();
 
       const target =
-        showAdminWorkspace(
-          'admin-staff-management'
+        document.getElementById(
+          'admin-tracking-workspace'
         );
 
-      if (target) {
-
-        initAdminStaffManagement();
-        loadAdminStaff();
-
-        closeMobileSidebar();
-
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-
+      if (!target) {
+        return;
       }
+
+      closeMobileSidebar();
+
+      loadAdminShipments()
+        .then(function() {
+
+          activateAdminTrackingWorkspace();
+
+        })
+        .catch(function(error) {
+
+          console.error(
+            '[ADMIN TRACKING LOAD]',
+            error
+          );
+
+          alert(
+            error.message ||
+            'Unable to load tracking data.'
+          );
+
+        });
 
       return;
     }
+
 
     if (name === 'messages') {
 
       const target =
-        document.getElementById(
+        showOnlyAdminWorkspace(
           'admin-messages'
         );
 
-      if (target) {
-        scrollToDashboardArea(
-          '#admin-messages'
-        );
+      if (!target) {
+        return;
       }
+
+      closeMobileSidebar();
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+
+      initAdminMessageCenter();
+
+      loadAdminMessages()
+        .catch(function(error) {
+
+          console.error(
+            '[ADMIN MESSAGES LOAD]',
+            error
+          );
+
+          alert(
+            error.message ||
+            'Unable to load customer messages.'
+          );
+
+        });
 
       return;
     }
 
+
+    if (name === 'staff') {
+
+      const target =
+        showOnlyAdminWorkspace(
+          'admin-staff-management'
+        );
+
+      if (!target) {
+        return;
+      }
+
+      closeMobileSidebar();
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+
+      initAdminStaffManagement();
+      loadAdminStaff();
+
+      return;
+    }
+
+
     if (name === 'settings') {
 
       const target =
-        showAdminWorkspace(
+        showOnlyAdminWorkspace(
           'view-admin-settings'
         );
 
-      if (target) {
-
-        closeMobileSidebar();
-
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-
+      if (!target) {
+        return;
       }
+
+      closeMobileSidebar();
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+
+      loadAdminSettingsWorkspace()
+        .catch(function(error) {
+
+          console.error(
+            '[ADMIN SETTINGS LOAD]',
+            error
+          );
+
+        });
 
       return;
     }
 
   }
+
+  document
+    .querySelectorAll(
+      '[data-admin-internal-nav]'
+    )
+    .forEach(function(button) {
+
+      button.addEventListener(
+        'click',
+        function() {
+
+          const destination =
+            button.getAttribute(
+              'data-admin-internal-nav'
+            );
+
+          if (
+            destination &&
+            typeof handleNav === 'function'
+          ) {
+            handleNav(destination);
+          }
+
+        }
+      );
+
+    });
+
 
   if (sidebarToggle) {
     sidebarToggle.addEventListener(
