@@ -1342,8 +1342,8 @@ app.post(
   }
 );
 
-// Explicitly prevent the public homepage from being opened
-// through account.uscourier.app/index.html.
+// Keep the admin hostname's legacy /index.html entry point
+// on the dedicated admin login page.
 app.get("/index.html", (req, res, next) => {
   if (getRequestHostname(req) === "account.uscourier.app") {
     return res.sendFile(
