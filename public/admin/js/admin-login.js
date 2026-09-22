@@ -35,7 +35,6 @@
     return;
   }
 
-  let authenticationCheckInProgress = false;
   let loginInProgress = false;
 
   function setStatus(message, type) {
@@ -84,54 +83,6 @@
         );
       }
     );
-  }
-
-  async function checkExistingSession() {
-    if (authenticationCheckInProgress) {
-      return;
-    }
-
-    authenticationCheckInProgress = true;
-
-    try {
-      const response = await fetch(
-        "/api/admin/profile",
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Accept: "application/json"
-          },
-          cache: "no-store"
-        }
-      );
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data =
-        await response.json();
-
-      if (
-        data?.success &&
-        (data?.profile || data?.user)
-      ) {
-        setStatus(
-          "Active operator session detected. Opening operations portal…",
-          "success"
-        );
-
-        window.location.replace("/admin");
-      }
-    } catch (error) {
-      console.warn(
-        "[ADMIN LOGIN SESSION CHECK]",
-        error
-      );
-    } finally {
-      authenticationCheckInProgress = false;
-    }
   }
 
   form.addEventListener(
@@ -294,6 +245,5 @@
    * If an authenticated operator manually opens the
    * login page, return them to the protected portal.
    */
-  checkExistingSession();
 
 })();
