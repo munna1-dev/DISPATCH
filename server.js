@@ -530,7 +530,7 @@ async function adminPageMiddleware(req, res, next) {
   }
 
   if (!token) {
-    return res.redirect("https://account.uscourier.app/admin/login.html");
+    return res.redirect("https://account.uscourier.app/login.html");
   }
 
   try {
@@ -540,7 +540,7 @@ async function adminPageMiddleware(req, res, next) {
     );
 
     if (!decoded || !decoded.id || !decoded.sid) {
-      return res.redirect("https://account.uscourier.app/admin/login.html");
+      return res.redirect("https://account.uscourier.app/login.html");
     }
 
     /*
@@ -554,7 +554,7 @@ async function adminPageMiddleware(req, res, next) {
     const session = await validateStaffSession(decoded);
 
     if (!session) {
-      return res.redirect("https://account.uscourier.app/admin/login.html");
+      return res.redirect("https://account.uscourier.app/login.html");
     }
 
     /*
@@ -563,7 +563,7 @@ async function adminPageMiddleware(req, res, next) {
      * directly from PostgreSQL.
      */
     if (!ADMIN_ALLOWED_ROLES.has(session.role)) {
-      return res.redirect("https://account.uscourier.app/admin/login.html");
+      return res.redirect("https://account.uscourier.app/login.html");
     }
 
     req.user = decoded;
@@ -584,49 +584,25 @@ async function adminPageMiddleware(req, res, next) {
       error.message
     );
 
-    return res.redirect("https://account.uscourier.app/admin/login.html");
+    return res.redirect("https://account.uscourier.app/login.html");
   }
 }
 
-app.get(
-  "/admin",
-  adminSubdomainOnly,
-  adminPageMiddleware,
-  (req, res) => {
-    if (getRequestHostname(req) !== "account.uscourier.app") {
-      return res.status(404).send("Not Found");
-    }
-
-    return res.sendFile(
-      path.join(
-        __dirname,
-        "public",
-        "admin",
-        "index.html"
-      )
-    );
+app.get("/admin", adminSubdomainOnly, (req, res) => {
+  if (getRequestHostname(req) !== "account.uscourier.app") {
+    return res.status(404).send("Not Found");
   }
-);
 
-app.get(
-  "/admin/",
-  adminSubdomainOnly,
-  adminPageMiddleware,
-  (req, res) => {
-    if (getRequestHostname(req) !== "account.uscourier.app") {
-      return res.status(404).send("Not Found");
-    }
+  return res.redirect(302, "/");
+});
 
-    return res.sendFile(
-      path.join(
-        __dirname,
-        "public",
-        "admin",
-        "index.html"
-      )
-    );
+app.get("/admin/", adminSubdomainOnly, (req, res) => {
+  if (getRequestHostname(req) !== "account.uscourier.app") {
+    return res.status(404).send("Not Found");
   }
-);
+
+  return res.redirect(302, "/");
+});
 
 // ============================================================
 // FALLBACK
@@ -636,14 +612,24 @@ app.get(
 app.use("/admin", adminSubdomainOnly);
 
 // The admin subdomain root must never be handled by public/index.html.
-app.get("/", (req, res, next) => {
-  if (getRequestHostname(req) === "account.uscourier.app") {
-    return res.sendFile(
-      path.join(__dirname, "public", "admin", "login.html")
-    );
+app.get("/", adminPageMiddleware, (req, res) => {
+  if (getRequestHostname(req) !== "account.uscourier.app") {
+    return res.status(404).send("Not Found");
   }
 
-  next();
+  return res.sendFile(
+    path.join(__dirname, "public", "admin", "index.html")
+  );
+});
+
+app.get("/login.html", (req, res) => {
+  if (getRequestHostname(req) !== "account.uscourier.app") {
+    return res.status(404).send("Not Found");
+  }
+
+  return res.sendFile(
+    path.join(__dirname, "public", "admin", "login.html")
+  );
 });
 
 app.get("/index.html", (req, res, next) => {
