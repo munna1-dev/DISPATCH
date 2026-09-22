@@ -10957,6 +10957,7 @@ window.initAdminStaffManagement = initAdminStaffManagement;
       !state ||
       !state.workspace
     ) {
+      handleNav('dashboard');
       return;
     }
 
