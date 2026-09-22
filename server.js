@@ -652,6 +652,18 @@ app.get("/login.html", (req, res) => {
   return res.status(404).send("Not Found");
 });
 
+app.get("/dashboard.html", (req, res, next) => {
+  if (getRequestHostname(req) !== "account.uscourier.app") {
+    return res.status(404).send("Not Found");
+  }
+
+  return adminPageMiddleware(req, res, () => {
+    return res.sendFile(
+      path.join(__dirname, "public", "admin", "index.html")
+    );
+  });
+});
+
 app.get("/index.html", (req, res, next) => {
   if (getRequestHostname(req) === "account.uscourier.app") {
     return res.sendFile(
