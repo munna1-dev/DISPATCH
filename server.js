@@ -405,11 +405,31 @@ function getRequestHostname(req) {
 }
 
 function adminSubdomainOnly(req, res, next) {
-  if (getRequestHostname(req) !== "account.uscourier.app") {
-    return res.status(404).send("Not Found");
+  const hostname = getRequestHostname(req);
+
+  if (hostname === "account.uscourier.app") {
+    return next();
   }
 
-  next();
+  /*
+   * The admin portal has one canonical hostname.
+   * Browser page/static requests sent to /admin from the
+   * public hostname are moved to the dedicated account host.
+   *
+   * Never redirect non-GET admin requests across origins.
+   * API authorization remains server-side and must not be
+   * weakened by a cross-origin redirect.
+   */
+  if (req.method === "GET" || req.method === "HEAD") {
+    const originalUrl = req.originalUrl || "/admin";
+
+    return res.redirect(
+      302,
+      "https://account.uscourier.app" + originalUrl
+    );
+  }
+
+  return res.status(404).send("Not Found");
 }
 
 
@@ -510,7 +530,7 @@ async function adminPageMiddleware(req, res, next) {
   }
 
   if (!token) {
-    return res.redirect("/admin/login.html");
+    return res.redirect("https://account.uscourier.app/admin/login.html");
   }
 
   try {
@@ -520,7 +540,7 @@ async function adminPageMiddleware(req, res, next) {
     );
 
     if (!decoded || !decoded.id || !decoded.sid) {
-      return res.redirect("/admin/login.html");
+      return res.redirect("https://account.uscourier.app/admin/login.html");
     }
 
     /*
@@ -534,7 +554,7 @@ async function adminPageMiddleware(req, res, next) {
     const session = await validateStaffSession(decoded);
 
     if (!session) {
-      return res.redirect("/admin/login.html");
+      return res.redirect("https://account.uscourier.app/admin/login.html");
     }
 
     /*
@@ -543,7 +563,7 @@ async function adminPageMiddleware(req, res, next) {
      * directly from PostgreSQL.
      */
     if (!ADMIN_ALLOWED_ROLES.has(session.role)) {
-      return res.redirect("/admin/login.html");
+      return res.redirect("https://account.uscourier.app/admin/login.html");
     }
 
     req.user = decoded;
@@ -564,7 +584,7 @@ async function adminPageMiddleware(req, res, next) {
       error.message
     );
 
-    return res.redirect("/admin/login.html");
+    return res.redirect("https://account.uscourier.app/admin/login.html");
   }
 }
 
@@ -895,6 +915,17 @@ async function adminMiddleware(req, res, next) {
 
 async function adminPortalMiddleware(req, res, next) {
   try {
+    /*
+     * The Admin API has the same canonical hostname as the
+     * Admin Portal. Never allow an authenticated admin request
+     * to operate through the public hostname.
+     */
+    if (getRequestHostname(req) !== "account.uscourier.app") {
+      return res.status(404).json({
+        error: "Not Found"
+      });
+    }
+
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         error: "Authentication required"
