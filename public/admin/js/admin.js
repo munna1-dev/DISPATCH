@@ -1619,6 +1619,8 @@ let adminTrackingShipment = null;
 
 function initAdminTrackingCenter() {
 
+  resetAdminTrackingCenter();
+
   const select =
     document.getElementById(
       'admin-tracking-shipment-select'
@@ -2718,6 +2720,12 @@ function openEditTrackingEventModal(event) {
   const referenceEl =
     document.getElementById('edit-event-reference');
 
+  const latitudeEl =
+    document.getElementById('edit-event-latitude');
+
+  const longitudeEl =
+    document.getElementById('edit-event-longitude');
+
   if (
     !idEl ||
     !statusEl ||
@@ -2744,6 +2752,22 @@ function openEditTrackingEventModal(event) {
 
   timeEl.value =
     toAdminDateTimeLocal(event.event_time);
+
+  if (latitudeEl) {
+    latitudeEl.value =
+      event.latitude !== null &&
+      event.latitude !== undefined
+        ? String(event.latitude)
+        : '';
+  }
+
+  if (longitudeEl) {
+    longitudeEl.value =
+      event.longitude !== null &&
+      event.longitude !== undefined
+        ? String(event.longitude)
+        : '';
+  }
 
   referenceEl.textContent =
     'Update #' +
@@ -2791,6 +2815,16 @@ async function handleTrackingEventEditSubmit(e) {
     document.getElementById(
       'edit-event-time'
     )?.value;
+
+  const latitude =
+    document.getElementById(
+      'edit-event-latitude'
+    )?.value.trim();
+
+  const longitude =
+    document.getElementById(
+      'edit-event-longitude'
+    )?.value.trim();
 
   const saveButton =
     document.getElementById(
@@ -2840,7 +2874,15 @@ async function handleTrackingEventEditSubmit(e) {
             event_time:
               eventTime
                 ? new Date(eventTime).toISOString()
-                : null
+                : null,
+            latitude:
+              latitude === ''
+                ? null
+                : Number(latitude),
+            longitude:
+              longitude === ''
+                ? null
+                : Number(longitude)
           })
         }
       );
@@ -9739,10 +9781,8 @@ window.initAdminStaffManagement = initAdminStaffManagement;
 
     if (name === 'tracking') {
 
-      hideAllAdminWorkspaces();
-
       const target =
-        document.getElementById(
+        showOnlyAdminWorkspace(
           'admin-tracking-workspace'
         );
 
@@ -9751,6 +9791,11 @@ window.initAdminStaffManagement = initAdminStaffManagement;
       }
 
       closeMobileSidebar();
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
 
       loadAdminShipments()
         .then(function() {
