@@ -221,7 +221,7 @@
           "success"
         );
 
-        window.location.replace("/admin");
+        window.location.replace("https://account.uscourier.app/");
 
       } catch (error) {
         console.error(
