@@ -1221,12 +1221,22 @@ function triggerPrintOfficialReceipt() {
     <div class="official-receipt-sheet public-tracking-receipt">
       <div class="receipt-header">
         <div>
-          <h1 style="font-size:1.8rem;color:#111;margin-bottom:.2rem;">
-            <span class="icon icon-truck"></span> US COURIER
-          </h1>
-          <p style="font-size:.8rem;color:#555;">
-            ENTERPRISE LOGISTICS & GLOBAL FREIGHT SERVICES
-          </p>
+          <div class="uc-brand uc-brand--receipt">
+            <span class="uc-brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 48 48" role="img">
+                <rect x="2.5" y="2.5" width="43" height="43" rx="12"></rect>
+                <path d="M9 27h19l5-7h6v12H9z"></path>
+                <path d="M12 16h15M12 21h10"></path>
+                <circle cx="17" cy="32" r="2.8"></circle>
+                <circle cx="34" cy="32" r="2.8"></circle>
+                <path d="M11 39h26"></path>
+              </svg>
+            </span>
+            <span class="uc-brand-copy">
+              <span class="uc-brand-name">US COURIER</span>
+              <small>ENTERPRISE LOGISTICS</small>
+            </span>
+          </div>
         </div>
 
         <div style="text-align:right;">

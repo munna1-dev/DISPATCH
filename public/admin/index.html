@@ -37,10 +37,19 @@
         <aside id="admin-sidebar" class="admin-sidebar">
 
           <div class="admin-sidebar-brand">
-            <a href="#" class="admin-sidebar-logo" data-admin-nav="dashboard">
-              <span class="admin-sidebar-logo-mark">D</span>
-              <span class="admin-sidebar-logo-text">
-                DISPATCH
+            <a href="#" class="admin-sidebar-logo uc-brand uc-brand--admin" data-admin-nav="dashboard">
+              <span class="uc-brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 48 48" role="img">
+                  <rect x="2.5" y="2.5" width="43" height="43" rx="12"></rect>
+                  <path d="M9 27h19l5-7h6v12H9z"></path>
+                  <path d="M12 16h15M12 21h10"></path>
+                  <circle cx="17" cy="32" r="2.8"></circle>
+                  <circle cx="34" cy="32" r="2.8"></circle>
+                  <path d="M11 39h26"></path>
+                </svg>
+              </span>
+              <span class="uc-brand-copy">
+                <span class="uc-brand-name">US COURIER</span>
                 <small>OPERATIONS</small>
               </span>
             </a>
@@ -629,20 +638,20 @@
     <div class="admin-staff-header-actions">
       <button
         type="button"
+        class="btn-outline"
+        id="admin-staff-dashboard"
+      >
+        <span class="icon icon-dashboard"></span>
+        Dashboard
+      </button>
+
+      <button
+        type="button"
         class="btn-gold"
         id="admin-staff-create-user"
       >
         <span class="icon icon-user-plus"></span>
         Create User
-      </button>
-
-      <button
-        type="button"
-        class="btn-outline"
-        id="admin-staff-dashboard"
-      >
-        <span class="icon icon-arrow-left"></span>
-        Dashboard
       </button>
 
       <button
@@ -765,6 +774,205 @@
 
   </div>
 
+</section>
+
+<!-- =========================================================
+     STAFF DASHBOARD / PROFILE PORTAL SELECTOR
+========================================================= -->
+<div
+  id="admin-staff-dashboard-modal"
+  class="admin-staff-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="admin-staff-dashboard-title"
+>
+  <div
+    class="admin-staff-modal-backdrop"
+    data-staff-dashboard-close
+  ></div>
+
+  <div class="admin-staff-modal-card admin-staff-dashboard-selector">
+
+    <div class="admin-staff-modal-header">
+      <div>
+        <span class="admin-section-eyebrow">USER PORTAL ACCESS</span>
+        <h3 id="admin-staff-dashboard-title">
+          Open User Dashboard
+        </h3>
+        <p class="admin-section-description">
+          Select an account to view its dashboard and profile portal.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="admin-staff-modal-close"
+        data-staff-dashboard-close
+        aria-label="Close user dashboard selector"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="admin-staff-dashboard-search">
+      <span class="icon icon-search" aria-hidden="true"></span>
+      <input
+        type="search"
+        id="admin-staff-dashboard-search"
+        class="form-control"
+        placeholder="Search name, email or role..."
+        autocomplete="off"
+        aria-label="Search users"
+      />
+    </div>
+
+    <div
+      id="admin-staff-dashboard-user-list"
+      class="admin-staff-dashboard-user-list"
+    >
+      <div class="admin-status-empty">
+        Loading user accounts...
+      </div>
+    </div>
+
+    <div class="admin-staff-modal-actions">
+      <button
+        type="button"
+        class="btn-outline"
+        data-staff-dashboard-close
+      >
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- =========================================================
+     ADMIN USER PROFILE PORTAL
+========================================================= -->
+<section
+  id="admin-view-user-portal"
+  class="admin-view-user-portal"
+  aria-label="User profile portal"
+  style="display:none;"
+>
+  <div class="admin-view-user-toolbar">
+    <button
+      type="button"
+      class="btn-outline"
+      id="admin-exit-user-portal"
+    >
+      <span class="icon icon-arrow-left"></span>
+      Back to Staff Management
+    </button>
+
+    <span class="admin-view-user-mode">
+      <span class="admin-live-dot"></span>
+      READ-ONLY USER VIEW
+    </span>
+  </div>
+
+  <div class="admin-view-user-hero">
+    <div class="admin-view-user-avatar" id="admin-view-user-avatar">U</div>
+
+    <div class="admin-view-user-identity">
+      <span class="admin-section-eyebrow">USER PROFILE PORTAL</span>
+      <h2 id="admin-view-user-name">User</h2>
+      <p id="admin-view-user-email">—</p>
+    </div>
+
+    <div class="admin-view-user-role" id="admin-view-user-role">
+      Customer
+    </div>
+  </div>
+
+  <div class="admin-view-user-grid">
+
+    <article class="admin-view-user-card">
+      <div class="admin-view-user-card-heading">
+        <span class="icon icon-user"></span>
+        <div>
+          <span class="admin-section-eyebrow">ACCOUNT</span>
+          <h3>Profile Details</h3>
+        </div>
+      </div>
+
+      <div class="admin-view-user-details">
+        <div>
+          <span>Full Name</span>
+          <strong id="admin-view-user-detail-name">—</strong>
+        </div>
+
+        <div>
+          <span>Email Address</span>
+          <strong id="admin-view-user-detail-email">—</strong>
+        </div>
+
+        <div>
+          <span>Role</span>
+          <strong id="admin-view-user-detail-role">—</strong>
+        </div>
+
+        <div>
+          <span>Account Created</span>
+          <strong id="admin-view-user-created">—</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="admin-view-user-card">
+      <div class="admin-view-user-card-heading">
+        <span class="icon icon-dashboard"></span>
+        <div>
+          <span class="admin-section-eyebrow">PORTAL</span>
+          <h3>Account Access</h3>
+        </div>
+      </div>
+
+      <div class="admin-view-user-access">
+        <div class="admin-view-user-access-row">
+          <span class="admin-view-user-access-icon">01</span>
+          <div>
+            <strong>Profile Portal</strong>
+            <span>Read-only administrative view of this account.</span>
+          </div>
+          <span class="admin-view-user-access-state">OPEN</span>
+        </div>
+
+        <div class="admin-view-user-access-row">
+          <span class="admin-view-user-access-icon">02</span>
+          <div>
+            <strong>Authentication</strong>
+            <span>Admin session remains active; no user impersonation is performed.</span>
+          </div>
+          <span class="admin-view-user-access-state">SECURE</span>
+        </div>
+
+        <div class="admin-view-user-access-row">
+          <span class="admin-view-user-access-icon">03</span>
+          <div>
+            <strong>Operational Data</strong>
+            <span>Shipment information remains available through the normal admin workspaces.</span>
+          </div>
+          <span class="admin-view-user-access-state">LIVE</span>
+        </div>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="admin-view-user-notice">
+    <span class="icon icon-shield"></span>
+    <div>
+      <strong>Administrative read-only view</strong>
+      <p>
+        This portal displays the selected account without replacing the
+        authenticated administrator session or exposing the user's password.
+      </p>
+    </div>
+  </div>
 </section>
 
 <!-- =========================================================
@@ -2348,7 +2556,22 @@
     <div class="official-receipt-sheet">
       <div class="receipt-header">
         <div>
-          <h1 style="font-size:1.8rem; color:#111; margin-bottom:0.2rem;"><span class="icon icon-truck"></span> US COURIER</h1>
+          <div class="uc-brand uc-brand--receipt">
+            <span class="uc-brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 48 48" role="img">
+                <rect x="2.5" y="2.5" width="43" height="43" rx="12"></rect>
+                <path d="M9 27h19l5-7h6v12H9z"></path>
+                <path d="M12 16h15M12 21h10"></path>
+                <circle cx="17" cy="32" r="2.8"></circle>
+                <circle cx="34" cy="32" r="2.8"></circle>
+                <path d="M11 39h26"></path>
+              </svg>
+            </span>
+            <span class="uc-brand-copy">
+              <span class="uc-brand-name">US COURIER</span>
+              <small>ENTERPRISE LOGISTICS</small>
+            </span>
+          </div>
           <p style="font-size:0.8rem; color:#555;">ENTERPRISE LOGISTICS & GLOBAL FREIGHT SERVICES</p>
         </div>
         <div style="text-align:right;">

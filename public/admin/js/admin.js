@@ -10135,7 +10135,333 @@ async function submitAdminStaffPassword(event) {
   }
 }
 
+function renderAdminStaffDashboardUsers() {
+  const list =
+    document.getElementById(
+      'admin-staff-dashboard-user-list'
+    );
+
+  const search =
+    document.getElementById(
+      'admin-staff-dashboard-search'
+    );
+
+  if (!list) {
+    return;
+  }
+
+  const term =
+    String(search?.value || '')
+      .trim()
+      .toLowerCase();
+
+  const records =
+    Array.isArray(adminStaffRecords)
+      ? adminStaffRecords
+      : [];
+
+  const filtered =
+    records.filter(user => {
+      const haystack = [
+        user.name,
+        user.email,
+        user.role
+      ]
+        .map(value => String(value || '').toLowerCase())
+        .join(' ');
+
+      return !term || haystack.includes(term);
+    });
+
+  if (!filtered.length) {
+    list.innerHTML = `
+      <div class="admin-status-empty">
+        No matching user accounts found.
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = filtered.map(user => {
+    const id = Number(user.id);
+
+    return `
+      <button
+        type="button"
+        class="admin-staff-dashboard-user"
+        data-dashboard-user-id="${id}"
+      >
+        <span class="admin-staff-dashboard-avatar">
+          ${escapeHtml(
+            String(user.name || '?')
+              .trim()
+              .charAt(0)
+              .toUpperCase()
+          )}
+        </span>
+
+        <span class="admin-staff-dashboard-user-copy">
+          <strong>
+            ${escapeHtml(user.name || 'Unnamed User')}
+          </strong>
+
+          <span>
+            ${escapeHtml(user.email || 'No email')}
+          </span>
+        </span>
+
+        <span class="admin-staff-dashboard-user-role">
+          ${escapeHtml(user.role || 'Customer')}
+        </span>
+
+        <span class="icon icon-arrow-right"></span>
+      </button>
+    `;
+  }).join('');
+
+  list.querySelectorAll(
+    '[data-dashboard-user-id]'
+  ).forEach(button => {
+    button.addEventListener('click', () => {
+      const id =
+        Number(button.dataset.dashboardUserId);
+
+      openAdminStaffProfilePortal(id);
+    });
+  });
+}
+
+async function openAdminStaffDashboardSelector() {
+  const modal =
+    document.getElementById(
+      'admin-staff-dashboard-modal'
+    );
+
+  if (!modal) {
+    return;
+  }
+
+  modal.hidden = false;
+
+  const search =
+    document.getElementById(
+      'admin-staff-dashboard-search'
+    );
+
+  if (search) {
+    search.value = '';
+  }
+
+  const list =
+    document.getElementById(
+      'admin-staff-dashboard-user-list'
+    );
+
+  if (list) {
+    list.innerHTML = `
+      <div class="admin-status-empty">
+        Loading user accounts...
+      </div>
+    `;
+  }
+
+  try {
+    if (
+      !Array.isArray(adminStaffRecords) ||
+      !adminStaffRecords.length
+    ) {
+      await loadAdminStaff();
+    }
+
+    renderAdminStaffDashboardUsers();
+
+    if (search && !search.dataset.bound) {
+      search.dataset.bound = 'true';
+
+      search.addEventListener(
+        'input',
+        renderAdminStaffDashboardUsers
+      );
+    }
+  } catch (error) {
+    console.error(
+      '[STAFF DASHBOARD SELECTOR]',
+      error
+    );
+
+    if (list) {
+      list.innerHTML = `
+        <div class="admin-status-empty">
+          Unable to load user accounts.
+        </div>
+      `;
+    }
+  }
+}
+
+function closeAdminStaffDashboardSelector() {
+  const modal =
+    document.getElementById(
+      'admin-staff-dashboard-modal'
+    );
+
+  if (modal) {
+    modal.hidden = true;
+  }
+}
+
+function openAdminStaffProfilePortal(id) {
+  const user =
+    Array.isArray(adminStaffRecords)
+      ? adminStaffRecords.find(
+          record => Number(record.id) === Number(id)
+        )
+      : null;
+
+  if (!user) {
+    showAdminStaffFeedback(
+      'The selected user is no longer available. Refresh the staff list.',
+      'error'
+    );
+    return;
+  }
+
+  closeAdminStaffDashboardSelector();
+
+  window.__adminViewedUser = user;
+
+  const management =
+    document.getElementById('admin-staff-management');
+
+  const portal =
+    document.getElementById('admin-view-user-portal');
+
+  if (!portal) {
+    showAdminStaffFeedback(
+      'User profile portal is unavailable.',
+      'error'
+    );
+    return;
+  }
+
+  if (management) {
+    management.style.display = 'none';
+  }
+
+  document.querySelectorAll(
+    'section[id^="view-admin-"]'
+  ).forEach(section => {
+    section.style.display = 'none';
+  });
+
+  portal.style.display = 'block';
+
+  const name =
+    String(user.name || 'Unnamed User').trim();
+
+  const email =
+    String(user.email || 'No email').trim();
+
+  const role =
+    String(user.role || 'Customer').trim();
+
+  const avatar =
+    name.charAt(0).toUpperCase() || 'U';
+
+  const created =
+    user.created_at
+      ? new Date(user.created_at).toLocaleString()
+      : '—';
+
+  const setText = (elementId, value) => {
+    const element =
+      document.getElementById(elementId);
+
+    if (element) {
+      element.textContent = value;
+    }
+  };
+
+  setText('admin-view-user-avatar', avatar);
+  setText('admin-view-user-name', name);
+  setText('admin-view-user-email', email);
+  setText('admin-view-user-role', role);
+  setText('admin-view-user-detail-name', name);
+  setText('admin-view-user-detail-email', email);
+  setText('admin-view-user-detail-role', role);
+  setText('admin-view-user-created', created);
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+function exitAdminStaffProfilePortal() {
+  window.__adminViewedUser = null;
+
+  const portal =
+    document.getElementById('admin-view-user-portal');
+
+  if (portal) {
+    portal.style.display = 'none';
+  }
+
+  const management =
+    document.getElementById('admin-staff-management');
+
+  if (management) {
+    management.style.display = 'block';
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+document.addEventListener(
+  'click',
+  event => {
+  const exitUserPortal =
+    event.target.closest('#admin-exit-user-portal');
+
+  if (exitUserPortal) {
+    event.preventDefault();
+    exitAdminStaffProfilePortal();
+    return;
+  }
+
+  const closeDashboardSelector =
+    event.target.closest('[data-staff-dashboard-close]');
+
+  if (closeDashboardSelector) {
+    event.preventDefault();
+    closeAdminStaffDashboardSelector();
+    return;
+  }
+  }
+);
+
 function initAdminStaffManagement() {
+  const dashboardButton =
+    document.getElementById('admin-staff-dashboard');
+
+  if (
+    dashboardButton &&
+    !dashboardButton.dataset.bound
+  ) {
+    dashboardButton.dataset.bound = 'true';
+
+    dashboardButton.addEventListener(
+      'click',
+      event => {
+        event.preventDefault();
+        openAdminStaffDashboardSelector();
+      }
+    );
+  }
+
   if (adminStaffInitialized) {
     renderAdminStaffTable();
     return;
@@ -10193,11 +10519,7 @@ function initAdminStaffManagement() {
   if (dashboard) {
     dashboard.addEventListener(
       'click',
-      () => {
-        if (typeof handleNav === 'function') {
-          handleNav('dashboard');
-        }
-      }
+      openAdminStaffDashboardSelector
     );
   }
 
