@@ -1710,14 +1710,59 @@ function initAdminTrackingCenter() {
 
   if (refresh) {
 
-    refresh.onclick = () => {
+    refresh.onclick = async () => {
 
-      if (adminTrackingShipment) {
-        loadAdminTrackingCenter(
-          adminTrackingShipment
-        );
-      } else {
+      if (!adminTrackingShipment) {
         initAdminTrackingCenter();
+        return;
+      }
+
+      const selectedId =
+        String(adminTrackingShipment.id);
+
+      try {
+
+        const records =
+          await loadAdminShipments();
+
+        const freshRecords =
+          Array.isArray(records)
+            ? records
+            : [];
+
+        const freshShipment =
+          freshRecords.find(
+            item =>
+              String(item.id) ===
+              selectedId
+          );
+
+        if (!freshShipment) {
+          resetAdminTrackingCenter();
+          return;
+        }
+
+        const currentSelect =
+          document.getElementById(
+            'admin-tracking-shipment-select'
+          );
+
+        if (currentSelect) {
+          currentSelect.value =
+            selectedId;
+        }
+
+        await loadAdminTrackingCenter(
+          freshShipment
+        );
+
+      } catch (error) {
+
+        console.error(
+          '[ADMIN TRACKING REFRESH]',
+          error
+        );
+
       }
     };
   }
@@ -1885,6 +1930,96 @@ function renderAdminTrackingCenter(
           value || '—';
       }
     };
+
+  setText(
+    'admin-tracking-reference',
+    shipment.reference
+  );
+
+  setText(
+    'admin-tracking-service-type',
+    shipment.service_type
+  );
+
+  setText(
+    'admin-tracking-priority',
+    shipment.priority
+  );
+
+  setText(
+    'admin-tracking-eta',
+    shipment.estimated_delivery
+      ? formatAdminTrackingDate(shipment.estimated_delivery)
+      : '—'
+  );
+
+  setText(
+    'admin-tracking-created-at',
+    shipment.created_at
+      ? formatAdminTrackingDate(shipment.created_at)
+      : '—'
+  );
+
+  setText(
+    'admin-tracking-updated-at',
+    shipment.updated_at
+      ? formatAdminTrackingDate(shipment.updated_at)
+      : '—'
+  );
+
+  setText(
+    'admin-tracking-package-count',
+    shipment.package_count !== null &&
+    shipment.package_count !== undefined
+      ? String(shipment.package_count)
+      : '—'
+  );
+
+  setText(
+    'admin-tracking-weight',
+    shipment.weight !== null &&
+    shipment.weight !== undefined
+      ? String(shipment.weight)
+      : '—'
+  );
+
+  setText(
+    'admin-tracking-declared-value',
+    shipment.declared_value !== null &&
+    shipment.declared_value !== undefined
+      ? String(shipment.declared_value)
+      : '—'
+  );
+
+  setText(
+    'admin-tracking-currency',
+    shipment.currency
+  );
+
+  setText(
+    'admin-tracking-sender-name',
+    shipment.sender_name
+  );
+
+  setText(
+    'admin-tracking-sender-country',
+    shipment.sender_country
+  );
+
+  setText(
+    'admin-tracking-recipient-name',
+    shipment.recipient_name
+  );
+
+  setText(
+    'admin-tracking-recipient-country',
+    shipment.recipient_country
+  );
+
+  setText(
+    'admin-tracking-description',
+    shipment.description
+  );
 
   setText(
     'admin-tracking-number',
@@ -2063,10 +2198,33 @@ function renderAdminTrackingHistory(
                 'Location not recorded'
               )}
 
+            </div>
+
+            <div class="admin-tracking-history-gps">
+
+              <span>GPS</span>
+
               ${
                 hasGps
-                  ? ' · GPS verified'
-                  : ''
+                  ? `
+                    <code>
+                      ${escapeAdminHtml(
+                        Number(event.latitude).toFixed(6)
+                      )},
+                      ${escapeAdminHtml(
+                        Number(event.longitude).toFixed(6)
+                      )}
+                    </code>
+
+                    <span class="admin-tracking-gps-verified">
+                      Verified
+                    </span>
+                  `
+                  : `
+                    <span class="admin-tracking-gps-unavailable">
+                      Not recorded
+                    </span>
+                  `
               }
 
             </div>

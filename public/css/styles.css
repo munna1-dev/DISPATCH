@@ -3032,6 +3032,131 @@ body.admin-sidebar-collapsed .admin-sidebar-exit {
   white-space: nowrap;
 }
 
+
+.admin-tracking-details-card {
+  margin-top: 1rem;
+}
+
+.admin-tracking-details-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.admin-tracking-details-grid > div,
+.admin-tracking-party,
+.admin-tracking-description-block {
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+}
+
+.admin-tracking-details-grid > div > span:not(.admin-section-eyebrow),
+.admin-tracking-party > span:not(.admin-section-eyebrow) {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.admin-tracking-details-grid strong,
+.admin-tracking-party strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.admin-tracking-parties-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+}
+
+.admin-tracking-party > span:not(.admin-section-eyebrow) {
+  margin-top: 0.45rem;
+  margin-bottom: 0;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.admin-tracking-description-block {
+  margin-top: 0.85rem;
+}
+
+.admin-tracking-description-block p {
+  margin: 0.5rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.admin-tracking-history-gps {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.admin-tracking-history-gps > span:first-child {
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-tracking-history-gps code {
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  font-size: 0.72rem;
+  color: var(--text-main);
+  overflow-wrap: anywhere;
+}
+
+.admin-tracking-gps-verified {
+  color: var(--accent-gold);
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .admin-tracking-details-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-tracking-details-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-tracking-parties-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-tracking-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-tracking-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr);
