@@ -341,7 +341,8 @@ const ALLOWED_STATUSES = [
   "Delivered",
   "Customs Hold",
   "Delayed",
-  "CUSTOM"
+  "CUSTOM",
+  "Withheld for Correspondence Resolution and Procedure"
 ];
 
 function isValidStatus(status) {
