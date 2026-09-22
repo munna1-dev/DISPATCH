@@ -781,7 +781,9 @@ app.get(
           status,
           location,
           description,
-          event_time
+          event_time,
+          latitude,
+          longitude
         FROM shipment_events
         WHERE shipment_id = (
           SELECT id

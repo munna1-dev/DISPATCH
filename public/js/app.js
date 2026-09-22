@@ -530,7 +530,8 @@ function initMapCanvas(
   origin,
   current,
   destination,
-  status
+  status,
+  events = []
 ) {
   const canvas =
     document.getElementById("liveMapCanvas");
@@ -603,8 +604,33 @@ function initMapCanvas(
   const destinationGeo =
     resolveGeoLocation(destination);
 
+  const historyGeo = Array.isArray(events)
+    ? events
+        .map(event => {
+          if (
+            event &&
+            Number.isFinite(Number(event.latitude)) &&
+            Number.isFinite(Number(event.longitude))
+          ) {
+            return {
+              lat: Number(event.latitude),
+              lon: Number(event.longitude),
+              label: event.location || "Tracking Location",
+              event_time: event.event_time,
+              status: event.status
+            };
+          }
+
+          return resolveGeoLocation(
+            event && event.location
+          );
+        })
+        .filter(Boolean)
+    : [];
+
   const locations = [
     originGeo,
+    ...historyGeo,
     currentGeo,
     destinationGeo
   ].filter(Boolean);
@@ -694,11 +720,26 @@ function initMapCanvas(
         )
       : null;
 
-  const routePoints = [
-    originPoint,
-    currentPoint,
-    destinationPoint
-  ].filter(Boolean);
+  const historyPoints = historyGeo
+    .map(point =>
+      projectGeo(
+        point.lat,
+        point.lon,
+        bounds,
+        width,
+        height
+      )
+    )
+    .filter(Boolean);
+
+  const routePoints =
+    historyPoints.length >= 2
+      ? historyPoints
+      : [
+          originPoint,
+          currentPoint,
+          destinationPoint
+        ].filter(Boolean);
 
   let animation = 0;
 
@@ -770,6 +811,28 @@ function initMapCanvas(
       ctx,
       routePoints
     );
+
+    // Historical tracking nodes
+    if (historyPoints.length > 0) {
+      historyPoints.forEach((point, index) => {
+        const event = historyGeo[index];
+
+        const isLatest =
+          index === historyPoints.length - 1;
+
+        if (!isLatest) {
+          drawGeoNode(
+            ctx,
+            point,
+            "#e8a87c",
+            event && event.label
+              ? event.label
+              : "Tracking Location",
+            "normal"
+          );
+        }
+      });
+    }
 
     // Origin
     if (originPoint) {
@@ -1579,7 +1642,8 @@ async function handleTrackSubmit(
             shipment.origin,
             mapCurrent,
             shipment.destination,
-            shipment.status
+            shipment.status,
+            events
           );
         } catch (mapError) {
           console.warn(
@@ -1829,13 +1893,15 @@ function initMapCanvasWithGps(
   origin,
   current,
   destination,
-  status
+  status,
+  events = []
 ) {
   initMapCanvas(
     origin,
     current,
     destination,
-    status
+    status,
+    events
   );
 }
 
