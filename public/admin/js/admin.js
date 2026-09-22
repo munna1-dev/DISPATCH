@@ -1645,6 +1645,21 @@ async function loadAdminDashboard() {
 let adminTrackingEvents = [];
 let adminTrackingShipment = null;
 
+function activateAdminTrackingWorkspace() {
+  const workspace =
+    document.getElementById(
+      'admin-tracking-workspace'
+    );
+
+  if (!workspace) {
+    return;
+  }
+
+  workspace.style.display = 'block';
+
+  initAdminTrackingCenter();
+}
+
 function initAdminTrackingCenter() {
 
   resetAdminTrackingCenter();
