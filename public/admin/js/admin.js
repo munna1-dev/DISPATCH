@@ -11353,11 +11353,6 @@ window.initAdminStaffManagement = initAdminStaffManagement;
           label.textContent = 'Logging out…';
         }
 
-        if (typeof handleAdminLogout === 'function') {
-          await handleAdminLogout();
-          return;
-        }
-
         try {
           await fetch(
             '/api/auth/logout',
