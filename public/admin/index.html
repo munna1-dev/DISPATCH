@@ -629,6 +629,15 @@
     <div class="admin-staff-header-actions">
       <button
         type="button"
+        class="btn-gold"
+        id="admin-staff-create-user"
+      >
+        <span class="icon icon-user-plus"></span>
+        Create User
+      </button>
+
+      <button
+        type="button"
         class="btn-outline"
         id="admin-staff-dashboard"
       >
@@ -757,6 +766,132 @@
   </div>
 
 </section>
+
+<!-- =========================================================
+     STAFF CREATE USER MODAL
+========================================================= -->
+<div
+  id="admin-staff-create-user-modal"
+  class="admin-staff-modal"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="admin-staff-create-user-title"
+>
+  <div
+    class="admin-staff-modal-backdrop"
+    data-staff-create-close
+  ></div>
+
+  <div class="admin-staff-modal-card">
+
+    <div class="admin-staff-modal-header">
+      <div>
+        <span class="admin-section-eyebrow">ACCOUNT PROVISIONING</span>
+        <h3 id="admin-staff-create-user-title">Create User</h3>
+      </div>
+
+      <button
+        type="button"
+        class="admin-staff-modal-close"
+        data-staff-create-close
+        aria-label="Close create user dialog"
+      >
+        ×
+      </button>
+    </div>
+
+    <form id="admin-staff-create-user-form">
+
+      <div class="admin-staff-form-grid">
+
+        <div>
+          <label for="admin-staff-create-name">Full Name</label>
+          <input
+            type="text"
+            id="admin-staff-create-name"
+            class="form-control"
+            maxlength="120"
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="admin-staff-create-email">Email</label>
+          <input
+            type="email"
+            id="admin-staff-create-email"
+            class="form-control"
+            maxlength="254"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="admin-staff-create-role">Role</label>
+          <select
+            id="admin-staff-create-role"
+            class="form-control"
+            required
+          >
+            <option value="Admin">Admin</option>
+            <option value="Operations Manager">Operations Manager</option>
+            <option value="Dispatcher">Dispatcher</option>
+            <option value="Driver">Driver</option>
+            <option value="Trunk Driver">Trunk Driver</option>
+            <option value="Cargo Personnel">Cargo Personnel</option>
+            <option value="Warehouse Personnel">Warehouse Personnel</option>
+            <option value="Customer Service">Customer Service</option>
+            <option value="Customer" selected>Customer</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="admin-staff-create-password">Temporary Password</label>
+          <input
+            type="password"
+            id="admin-staff-create-password"
+            class="form-control"
+            minlength="8"
+            maxlength="200"
+            autocomplete="new-password"
+            required
+          />
+        </div>
+
+      </div>
+
+      <div class="admin-staff-security-note">
+        The password is sent only to the authenticated server endpoint and
+        is stored as a bcrypt hash. It is not displayed after account creation.
+      </div>
+
+      <div class="admin-staff-modal-actions">
+
+        <button
+          type="button"
+          class="btn-outline"
+          data-staff-create-close
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="btn-gold"
+          id="admin-staff-create-submit"
+        >
+          Create User
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+</div>
 
 <!-- =========================================================
      STAFF EDIT MODAL

@@ -9154,6 +9154,222 @@ async function loadAdminStaff() {
   }
 }
 
+
+function closeAdminStaffCreateUser() {
+  const modal =
+    document.getElementById('admin-staff-create-user-modal');
+
+  if (!modal) {
+    return;
+  }
+
+  modal.hidden = true;
+
+  const form =
+    document.getElementById('admin-staff-create-user-form');
+
+  if (form) {
+    form.reset();
+  }
+}
+
+function openAdminStaffCreateUser() {
+  if (
+    typeof adminActionAllowed === 'function' &&
+    !adminActionAllowed('staff.create')
+  ) {
+    showAdminStaffFeedback(
+      'You do not have permission to create users.',
+      'error'
+    );
+    return;
+  }
+
+  const modal =
+    document.getElementById('admin-staff-create-user-modal');
+
+  const form =
+    document.getElementById('admin-staff-create-user-form');
+
+  if (!modal || !form) {
+    return;
+  }
+
+  form.reset();
+
+  const role =
+    document.getElementById('admin-staff-create-role');
+
+  if (role) {
+    role.value = 'Customer';
+  }
+
+  modal.hidden = false;
+
+  window.setTimeout(() => {
+    document
+      .getElementById('admin-staff-create-name')
+      ?.focus();
+  }, 0);
+}
+
+async function submitAdminStaffCreateUser(event) {
+  event.preventDefault();
+
+  if (
+    typeof adminActionAllowed === 'function' &&
+    !adminActionAllowed('staff.create')
+  ) {
+    showAdminStaffFeedback(
+      'You do not have permission to create users.',
+      'error'
+    );
+    return;
+  }
+
+  const name =
+    document
+      .getElementById('admin-staff-create-name')
+      ?.value
+      .trim() || '';
+
+  const email =
+    document
+      .getElementById('admin-staff-create-email')
+      ?.value
+      .trim() || '';
+
+  const password =
+    document
+      .getElementById('admin-staff-create-password')
+      ?.value || '';
+
+  const role =
+    document
+      .getElementById('admin-staff-create-role')
+      ?.value || 'Customer';
+
+  const submitButton =
+    document.getElementById('admin-staff-create-submit');
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.setAttribute('aria-busy', 'true');
+  }
+
+  try {
+    const response = await fetch(
+      '/api/admin/users',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role
+        })
+      }
+    );
+
+    let payload = {};
+
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      if (typeof handleAdminSessionExpired === 'function') {
+        handleAdminSessionExpired();
+      }
+
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        payload.error ||
+        'Failed to create user.'
+      );
+    }
+
+    closeAdminStaffCreateUser();
+
+    showAdminStaffFeedback(
+      payload.message ||
+      'User created successfully.',
+      'success'
+    );
+
+    await loadAdminStaff();
+
+  } catch (error) {
+    console.error(
+      '[STAFF MANAGEMENT CREATE]',
+      error
+    );
+
+    showAdminStaffFeedback(
+      error.message ||
+      'Unable to create user.',
+      'error'
+    );
+
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.removeAttribute('aria-busy');
+    }
+  }
+}
+
+function initAdminStaffCreateUser() {
+  const button =
+    document.getElementById('admin-staff-create-user');
+
+  const form =
+    document.getElementById('admin-staff-create-user-form');
+
+  if (button) {
+    button.addEventListener(
+      'click',
+      openAdminStaffCreateUser
+    );
+
+    if (
+      typeof adminActionAllowed === 'function' &&
+      !adminActionAllowed('staff.create')
+    ) {
+      button.hidden = true;
+    }
+  }
+
+  if (form) {
+    form.addEventListener(
+      'submit',
+      submitAdminStaffCreateUser
+    );
+  }
+
+  document
+    .querySelectorAll('[data-staff-create-close]')
+    .forEach(element => {
+      element.addEventListener(
+        'click',
+        closeAdminStaffCreateUser
+      );
+    });
+}
+
 function openAdminStaffEdit(id) {
 
   if (
@@ -9645,6 +9861,8 @@ function initAdminStaffManagement() {
   }
 
   adminStaffInitialized = true;
+
+  initAdminStaffCreateUser();
 
   const search =
     document.getElementById('admin-staff-search');
