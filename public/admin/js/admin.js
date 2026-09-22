@@ -2253,7 +2253,6 @@ function drawAdminTrackingMap(
   shipment,
   events
 ) {
-
   const canvas =
     document.getElementById(
       'adminTrackingMapCanvas'
@@ -2280,51 +2279,40 @@ function drawAdminTrackingMap(
     return;
   }
 
-  const gpsEvents =
-    events.filter(event =>
-      event &&
-      Number.isFinite(
-        Number(event.latitude)
-      ) &&
-      Number.isFinite(
-        Number(event.longitude)
-      )
+  const ordered =
+    [...(Array.isArray(events) ? events : [])].sort(
+      (a, b) => {
+        const aTime =
+          new Date(
+            a?.event_time ||
+            a?.created_at ||
+            0
+          ).getTime();
+
+        const bTime =
+          new Date(
+            b?.event_time ||
+            b?.created_at ||
+            0
+          ).getTime();
+
+        if (aTime !== bTime) {
+          return aTime - bTime;
+        }
+
+        return Number(a?.id || 0) -
+          Number(b?.id || 0);
+      }
     );
 
-  if (!gpsEvents.length) {
+  const hasGps =
+    event =>
+      event &&
+      Number.isFinite(Number(event.latitude)) &&
+      Number.isFinite(Number(event.longitude));
 
-    if (empty) empty.hidden = false;
-
-    if (gpsState) {
-      gpsState.textContent =
-        'GPS unavailable';
-    }
-
-    const ctx =
-      canvas.getContext('2d');
-
-    if (ctx) {
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-    }
-
-    return;
-  }
-
-  if (empty) empty.hidden = true;
-
-  if (gpsState) {
-    gpsState.textContent =
-      `${gpsEvents.length} GPS point${
-        gpsEvents.length === 1
-          ? ''
-          : 's'
-      } · Verified`;
-  }
+  const gpsEvents =
+    ordered.filter(hasGps);
 
   const width =
     Math.max(
@@ -2369,83 +2357,6 @@ function drawAdminTrackingMap(
     0
   );
 
-  const points =
-    gpsEvents.map(event => ({
-      lat: Number(event.latitude),
-      lon: Number(event.longitude),
-      event
-    }));
-
-  const lats =
-    points.map(point => point.lat);
-
-  const lons =
-    points.map(point => point.lon);
-
-  const minLat =
-    Math.min(...lats);
-
-  const maxLat =
-    Math.max(...lats);
-
-  const minLon =
-    Math.min(...lons);
-
-  const maxLon =
-    Math.max(...lons);
-
-  const latRange =
-    Math.max(
-      0.01,
-      maxLat - minLat
-    );
-
-  const lonRange =
-    Math.max(
-      0.01,
-      maxLon - minLon
-    );
-
-  const latPad =
-    Math.max(
-      0.01,
-      latRange * 0.18
-    );
-
-  const lonPad =
-    Math.max(
-      0.01,
-      lonRange * 0.18
-    );
-
-  const bounds = {
-    minLat: minLat - latPad,
-    maxLat: maxLat + latPad,
-    minLon: minLon - lonPad,
-    maxLon: maxLon + lonPad
-  };
-
-  const project =
-    (lat, lon) => {
-
-      const x =
-        ((lon - bounds.minLon) /
-          (bounds.maxLon - bounds.minLon)) *
-        (width - 60) +
-        30;
-
-      const y =
-        ((bounds.maxLat - lat) /
-          (bounds.maxLat - bounds.minLat)) *
-        (height - 60) +
-        30;
-
-      return {
-        x,
-        y
-      };
-    };
-
   ctx.clearRect(
     0,
     0,
@@ -2481,86 +2392,385 @@ function drawAdminTrackingMap(
     height
   );
 
-  ctx.strokeStyle =
-    'rgba(255,255,255,0.055)';
+  /*
+   * =====================================================
+   * VERIFIED GPS GEOGRAPHIC AREA
+   * =====================================================
+   */
 
-  ctx.lineWidth = 1;
+  if (gpsEvents.length) {
+    if (empty) {
+      empty.hidden = true;
+    }
 
-  const gridStep = 45;
+    if (gpsState) {
+      gpsState.textContent =
+        `${gpsEvents.length} GPS point${
+          gpsEvents.length === 1 ? '' : 's'
+        } · Verified`;
+    }
 
-  for (
-    let x = 0;
-    x <= width;
-    x += gridStep
-  ) {
+    const points =
+      gpsEvents.map(event => ({
+        lat: Number(event.latitude),
+        lon: Number(event.longitude),
+        event
+      }));
 
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-  }
+    const lats =
+      points.map(point => point.lat);
 
-  for (
-    let y = 0;
-    y <= height;
-    y += gridStep
-  ) {
+    const lons =
+      points.map(point => point.lon);
 
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-  }
+    const minLat =
+      Math.min(...lats);
 
-  const projected =
-    points.map(point =>
-      project(
-        point.lat,
-        point.lon
-      )
-    );
+    const maxLat =
+      Math.max(...lats);
 
-  if (projected.length > 1) {
+    const minLon =
+      Math.min(...lons);
 
-    ctx.beginPath();
+    const maxLon =
+      Math.max(...lons);
+
+    const latRange =
+      Math.max(
+        0.01,
+        maxLat - minLat
+      );
+
+    const lonRange =
+      Math.max(
+        0.01,
+        maxLon - minLon
+      );
+
+    const latPad =
+      Math.max(
+        0.01,
+        latRange * 0.18
+      );
+
+    const lonPad =
+      Math.max(
+        0.01,
+        lonRange * 0.18
+      );
+
+    const bounds = {
+      minLat: minLat - latPad,
+      maxLat: maxLat + latPad,
+      minLon: minLon - lonPad,
+      maxLon: maxLon + lonPad
+    };
+
+    const project =
+      (lat, lon) => ({
+        x:
+          ((lon - bounds.minLon) /
+            (bounds.maxLon - bounds.minLon)) *
+          (width - 60) +
+          30,
+
+        y:
+          ((bounds.maxLat - lat) /
+            (bounds.maxLat - bounds.minLat)) *
+          (height - 60) +
+          30
+      });
+
+    ctx.strokeStyle =
+      'rgba(255,255,255,0.055)';
+
+    ctx.lineWidth = 1;
+
+    const gridStep = 45;
+
+    for (
+      let x = 0;
+      x <= width;
+      x += gridStep
+    ) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+
+    for (
+      let y = 0;
+      y <= height;
+      y += gridStep
+    ) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    const projected =
+      points.map(point =>
+        project(
+          point.lat,
+          point.lon
+        )
+      );
+
+    if (projected.length > 1) {
+      ctx.beginPath();
+
+      projected.forEach(
+        (point, index) => {
+          if (index === 0) {
+            ctx.moveTo(
+              point.x,
+              point.y
+            );
+          } else {
+            ctx.lineTo(
+              point.x,
+              point.y
+            );
+          }
+        }
+      );
+
+      ctx.strokeStyle =
+        '#d4af37';
+
+      ctx.lineWidth = 2.5;
+
+      ctx.stroke();
+    }
 
     projected.forEach(
       (point, index) => {
+        const current =
+          index === projected.length - 1;
 
-        if (index === 0) {
-          ctx.moveTo(
+        ctx.beginPath();
+
+        ctx.arc(
+          point.x,
+          point.y,
+          current ? 7 : 4,
+          0,
+          Math.PI * 2
+        );
+
+        ctx.fillStyle =
+          current
+            ? '#d4af37'
+            : '#a9b1bb';
+
+        ctx.fill();
+
+        if (current) {
+          ctx.beginPath();
+
+          ctx.arc(
             point.x,
-            point.y
+            point.y,
+            13,
+            0,
+            Math.PI * 2
           );
-        } else {
-          ctx.lineTo(
-            point.x,
-            point.y
-          );
+
+          ctx.strokeStyle =
+            'rgba(212,175,55,0.28)';
+
+          ctx.lineWidth = 2;
+
+          ctx.stroke();
         }
       }
     );
+  } else {
+    /*
+     * GPS is unavailable, but shipment events still exist.
+     * Keep the chronological route lane visible instead of
+     * covering it with the GPS empty-state overlay.
+     */
+    if (empty) {
+      empty.hidden = true;
+      empty.textContent =
+        'No verified GPS coordinates are available. Showing the complete chronological route below.';
+    }
+
+    if (gpsState) {
+      gpsState.textContent =
+        'GPS unavailable · Location history available';
+    }
+  }
+
+  /*
+   * =====================================================
+   * COMPLETE CHRONOLOGICAL ROUTE LANE
+   *
+   * Every shipment event is represented here.
+   * No coordinates are fabricated for events without GPS.
+   * =====================================================
+   */
+
+  if (!ordered.length) {
+    return;
+  }
+
+  const routeTop =
+    Math.max(
+      70,
+      Math.min(
+        height - 110,
+        Math.round(height * 0.68)
+      )
+    );
+
+  const routeLeft = 36;
+  const routeRight =
+    Math.max(
+      routeLeft + 80,
+      width - 36
+    );
+
+  const routeWidth =
+    routeRight - routeLeft;
+
+  const count =
+    ordered.length;
+
+  const spacing =
+    count === 1
+      ? 0
+      : routeWidth / (count - 1);
+
+  /*
+   * Background panel for the chronological route.
+   */
+  ctx.fillStyle =
+    'rgba(5,10,15,0.78)';
+
+  ctx.fillRect(
+    0,
+    routeTop - 55,
+    width,
+    height - routeTop + 55
+  );
+
+  /*
+   * Route heading.
+   */
+  ctx.fillStyle =
+    'rgba(255,255,255,0.72)';
+
+  ctx.font =
+    '600 11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+
+  ctx.fillText(
+    'COMPLETE ROUTE · CHRONOLOGICAL STOPS',
+    routeLeft,
+    routeTop - 31
+  );
+
+  /*
+   * Base route line.
+   */
+  const routeY =
+    routeTop + 14;
+
+  ctx.beginPath();
+  ctx.moveTo(
+    routeLeft,
+    routeY
+  );
+  ctx.lineTo(
+    routeRight,
+    routeY
+  );
+
+  ctx.strokeStyle =
+    'rgba(255,255,255,0.16)';
+
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  /*
+   * Highlight completed chronological segments.
+   */
+  if (count > 1) {
+    ctx.beginPath();
+
+    ctx.moveTo(
+      routeLeft,
+      routeY
+    );
+
+    for (
+      let index = 1;
+      index < count;
+      index += 1
+    ) {
+      ctx.lineTo(
+        routeLeft +
+          spacing * index,
+        routeY
+      );
+    }
 
     ctx.strokeStyle =
-      '#d4af37';
+      'rgba(212,175,55,0.82)';
 
-    ctx.lineWidth = 2.5;
-
+    ctx.lineWidth = 2;
     ctx.stroke();
   }
 
-  projected.forEach(
-    (point, index) => {
+  ordered.forEach(
+    (event, index) => {
+      const x =
+        count === 1
+          ? width / 2
+          : routeLeft +
+            spacing * index;
 
       const current =
-        index === projected.length - 1;
+        index === count - 1;
 
+      const gps =
+        hasGps(event);
+
+      /*
+       * Stop connector.
+       */
+      ctx.beginPath();
+
+      ctx.moveTo(
+        x,
+        routeY - 4
+      );
+
+      ctx.lineTo(
+        x,
+        routeY + 34
+      );
+
+      ctx.strokeStyle =
+        gps
+          ? 'rgba(212,175,55,0.7)'
+          : 'rgba(255,255,255,0.22)';
+
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      /*
+       * Stop node.
+       */
       ctx.beginPath();
 
       ctx.arc(
-        point.x,
-        point.y,
-        current ? 7 : 4,
+        x,
+        routeY,
+        current ? 9 : 7,
         0,
         Math.PI * 2
       );
@@ -2568,87 +2778,143 @@ function drawAdminTrackingMap(
       ctx.fillStyle =
         current
           ? '#d4af37'
-          : '#a9b1bb';
+          : gps
+            ? '#d4af37'
+            : '#a9b1bb';
 
       ctx.fill();
 
-      if (current) {
+      ctx.strokeStyle =
+        current
+          ? 'rgba(212,175,55,0.45)'
+          : 'rgba(255,255,255,0.2)';
 
-        ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-        ctx.arc(
-          point.x,
-          point.y,
-          13,
-          0,
-          Math.PI * 2
+      /*
+       * Stop number.
+       */
+      ctx.fillStyle =
+        '#080d13';
+
+      ctx.font =
+        '700 8px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      ctx.fillText(
+        String(index + 1),
+        x,
+        routeY
+      );
+
+      /*
+       * Status.
+       */
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+
+      ctx.fillStyle =
+        '#ffffff';
+
+      ctx.font =
+        '600 9px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+
+      const status =
+        String(
+          event?.status ||
+          'Tracking Event'
         );
 
-        ctx.strokeStyle =
-          'rgba(212,175,55,0.28)';
+      ctx.fillText(
+        status.length > 18
+          ? `${status.slice(0, 17)}…`
+          : status,
+        x,
+        routeY + 53
+      );
 
-        ctx.lineWidth = 2;
+      /*
+       * Location.
+       */
+      ctx.fillStyle =
+        'rgba(255,255,255,0.58)';
 
-        ctx.stroke();
-      }
+      ctx.font =
+        '500 8px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+
+      const location =
+        String(
+          event?.location ||
+          'Location unavailable'
+        );
+
+      ctx.fillText(
+        location.length > 22
+          ? `${location.slice(0, 21)}…`
+          : location,
+        x,
+        routeY + 66
+      );
+
+      /*
+       * GPS / location-only indicator.
+       */
+      ctx.fillStyle =
+        gps
+          ? '#d4af37'
+          : 'rgba(255,255,255,0.42)';
+
+      ctx.font =
+        '600 7px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+
+      ctx.fillText(
+        gps
+          ? 'GPS VERIFIED'
+          : 'LOCATION ONLY',
+        x,
+        routeY + 78
+      );
     }
   );
 
-  const first =
-    projected[0];
+  ctx.textAlign = 'start';
+  ctx.textBaseline = 'alphabetic';
 
-  const last =
-    projected[
-      projected.length - 1
-    ];
-
-  if (first) {
+  /*
+   * Route endpoint labels.
+   */
+  if (ordered.length > 1) {
+    ctx.fillStyle =
+      'rgba(255,255,255,0.42)';
 
     ctx.font =
-      '600 11px sans-serif';
-
-    ctx.fillStyle =
-      '#d8dde4';
+      '600 8px system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
 
     ctx.fillText(
       'START',
-      first.x + 10,
-      first.y - 10
+      routeLeft,
+      height - 14
     );
-  }
 
-  if (last) {
-
-    ctx.font =
-      '600 11px sans-serif';
-
-    ctx.fillStyle =
-      '#d4af37';
+    ctx.textAlign = 'right';
 
     ctx.fillText(
       'CURRENT',
-      last.x + 10,
-      last.y - 10
-    );
-  }
-}
-
-
-function activateAdminTrackingWorkspace() {
-
-  initAdminTrackingCenter();
-
-  const workspace =
-    document.getElementById(
-      'admin-tracking-workspace'
+      routeRight,
+      height - 14
     );
 
-  if (workspace) {
-    workspace.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
+    ctx.textAlign = 'start';
   }
+
+  /*
+   * Keep the shipment reference available for future map
+   * interaction without changing the rendered data.
+   */
+  void shipment;
 }
 
 
