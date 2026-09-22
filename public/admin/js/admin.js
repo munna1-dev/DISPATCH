@@ -131,9 +131,14 @@ async function handleAdminLogin(e) {
     /*
      * The backend sets the authentication cookie.
      * No token is stored in localStorage.
+     *
+     * The login page is separate from the admin dashboard,
+     * so navigate to the canonical admin dashboard after
+     * successful authentication.
      */
-
-    await loadAdminDashboard();
+    window.location.replace(
+      'https://account.uscourier.app/admin/index.html'
+    );
 
   } catch (err) {
     console.error(
