@@ -450,12 +450,36 @@ async function validateStaffSession(decoded) {
       AND s.id = $2::uuid
       AND u.status = 'Active'
       AND s.status = 'Active'
+      AND s.last_activity_at >= NOW() - INTERVAL '10 minutes'
     LIMIT 1
     `,
     [decoded.id, decoded.sid]
   );
 
   if (result.rows.length === 0) {
+
+    /*
+     * The session is no longer valid if it has been
+     * inactive for 10 minutes or more.
+     *
+     * Mark the PostgreSQL session as logged out so
+     * subsequent requests cannot reuse it.
+     */
+    await queryWithRetry(
+      `
+      UPDATE staff_sessions
+      SET
+        status = 'Logged Out',
+        logout_at = NOW(),
+        last_activity_at = NOW()
+      WHERE id = $1::uuid
+        AND user_id = $2
+        AND status = 'Active'
+        AND last_activity_at < NOW() - INTERVAL '10 minutes'
+      `,
+      [decoded.sid, decoded.id]
+    );
+
     return null;
   }
 

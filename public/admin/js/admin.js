@@ -7515,6 +7515,139 @@ async function saveAdminSettings() {
 
 
 /* =========================================================
+   ADMIN INACTIVITY TIMEOUT
+========================================================= */
+
+(function setupAdminInactivityTimeout() {
+
+  const INACTIVITY_LIMIT =
+    10 * 60 * 1000;
+
+  const ACTIVITY_THROTTLE =
+    1000;
+
+  let inactivityTimer = null;
+  let lastActivitySignal = 0;
+  let logoutInProgress = false;
+
+  function resetInactivityTimer() {
+
+    if (logoutInProgress) {
+      return;
+    }
+
+    if (inactivityTimer) {
+      window.clearTimeout(
+        inactivityTimer
+      );
+    }
+
+    inactivityTimer =
+      window.setTimeout(
+        function() {
+
+          if (logoutInProgress) {
+            return;
+          }
+
+          logoutInProgress = true;
+
+          try {
+            sessionStorage.removeItem(
+              'dispatch_admin_refresh_state'
+            );
+          } catch (error) {
+            console.warn(
+              '[ADMIN INACTIVITY STATE CLEAR]',
+              error
+            );
+          }
+
+          fetch(
+            '/api/auth/logout',
+            {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                Accept:
+                  'application/json'
+              },
+              cache: 'no-store'
+            }
+          )
+          .catch(function(error) {
+            console.error(
+              '[ADMIN INACTIVITY LOGOUT]',
+              error
+            );
+          })
+          .finally(function() {
+            window.location.replace(
+              '/admin/login.html'
+            );
+          });
+
+        },
+        INACTIVITY_LIMIT
+      );
+  }
+
+  function registerActivity() {
+
+    const now =
+      Date.now();
+
+    if (
+      now - lastActivitySignal <
+      ACTIVITY_THROTTLE
+    ) {
+      return;
+    }
+
+    lastActivitySignal =
+      now;
+
+    resetInactivityTimer();
+  }
+
+  [
+    'mousedown',
+    'mousemove',
+    'keydown',
+    'touchstart',
+    'touchmove',
+    'scroll',
+    'pointerdown',
+    'pointermove'
+  ].forEach(function(eventName) {
+
+    document.addEventListener(
+      eventName,
+      registerActivity,
+      {
+        passive: true
+      }
+    );
+
+  });
+
+  document.addEventListener(
+    'visibilitychange',
+    function() {
+
+      if (!document.hidden) {
+        registerActivity();
+      }
+
+    }
+  );
+
+  resetInactivityTimer();
+
+})();
+
+
+/* =========================================================
    SESSION EXPIRATION
 ========================================================= */
 
@@ -9714,7 +9847,141 @@ window.initAdminStaffManagement = initAdminStaffManagement;
     return workspace;
   }
 
-  function handleNav(name) {
+  const ADMIN_REFRESH_STATE_KEY =
+    'dispatch_admin_refresh_state';
+
+  function getCurrentAdminWorkspace() {
+
+    const active =
+      document.querySelector(
+        '[data-admin-nav].active'
+      );
+
+    return active
+      ? active.dataset.adminNav
+      : 'dashboard';
+  }
+
+  function saveAdminRefreshState() {
+
+    const state = {
+      workspace:
+        getCurrentAdminWorkspace(),
+
+      shipmentSearch:
+        document.getElementById(
+          'admin-shipment-search'
+        )?.value || '',
+
+      shipmentStatus:
+        document.getElementById(
+          'admin-shipment-status-filter'
+        )?.value || '',
+
+      shipmentService:
+        document.getElementById(
+          'admin-shipment-service-filter'
+        )?.value || '',
+
+      trackingShipment:
+        document.getElementById(
+          'admin-tracking-shipment-select'
+        )?.value || ''
+    };
+
+    try {
+      sessionStorage.setItem(
+        ADMIN_REFRESH_STATE_KEY,
+        JSON.stringify(state)
+      );
+    } catch (error) {
+      console.warn(
+        '[ADMIN REFRESH STATE SAVE]',
+        error
+      );
+    }
+  }
+
+  function readAdminRefreshState() {
+
+    try {
+      const raw =
+        sessionStorage.getItem(
+          ADMIN_REFRESH_STATE_KEY
+        );
+
+      if (!raw) {
+        return null;
+      }
+
+      const state =
+        JSON.parse(raw);
+
+      if (
+        !state ||
+        typeof state !== 'object'
+      ) {
+        return null;
+      }
+
+      return state;
+
+    } catch (error) {
+      console.warn(
+        '[ADMIN REFRESH STATE READ]',
+        error
+      );
+
+      return null;
+    }
+  }
+
+  function clearAdminRefreshState() {
+
+    try {
+      sessionStorage.removeItem(
+        ADMIN_REFRESH_STATE_KEY
+      );
+    } catch (error) {
+      console.warn(
+        '[ADMIN REFRESH STATE CLEAR]',
+        error
+      );
+    }
+  }
+
+  function restoreAdminRefreshState() {
+
+    const state =
+      readAdminRefreshState();
+
+    if (
+      !state ||
+      !state.workspace
+    ) {
+      return;
+    }
+
+    /*
+     * Consume the state immediately so a failed
+     * restoration cannot repeatedly replay on
+     * subsequent navigation.
+     */
+    clearAdminRefreshState();
+
+    if (
+      typeof handleNav !== 'function'
+    ) {
+      return;
+    }
+
+    handleNav(
+      state.workspace,
+      state
+    );
+  }
+
+  function handleNav(name, refreshState) {
 
     setActiveNav(name);
 
@@ -9767,6 +10034,40 @@ window.initAdminStaffManagement = initAdminStaffManagement;
       loadAdminShipments()
         .then(function() {
 
+          if (refreshState) {
+
+            const search =
+              document.getElementById(
+                'admin-shipment-search'
+              );
+
+            const status =
+              document.getElementById(
+                'admin-shipment-status-filter'
+              );
+
+            const service =
+              document.getElementById(
+                'admin-shipment-service-filter'
+              );
+
+            if (search) {
+              search.value =
+                refreshState.shipmentSearch || '';
+            }
+
+            if (status) {
+              status.value =
+                refreshState.shipmentStatus || '';
+            }
+
+            if (service) {
+              service.value =
+                refreshState.shipmentService || '';
+            }
+
+          }
+
           if (
             typeof renderAdminShipmentWorkspace ===
             'function'
@@ -9815,6 +10116,39 @@ window.initAdminStaffManagement = initAdminStaffManagement;
         .then(function() {
 
           activateAdminTrackingWorkspace();
+
+          if (
+            refreshState &&
+            refreshState.trackingShipment
+          ) {
+
+            const select =
+              document.getElementById(
+                'admin-tracking-shipment-select'
+              );
+
+            if (select) {
+
+              const shipmentId =
+                String(
+                  refreshState.trackingShipment
+                );
+
+              select.value =
+                shipmentId;
+
+              select.dispatchEvent(
+                new Event(
+                  'change',
+                  {
+                    bubbles: true
+                  }
+                )
+              );
+
+            }
+
+          }
 
         })
         .catch(function(error) {
@@ -10002,6 +10336,8 @@ window.initAdminStaffManagement = initAdminStaffManagement;
       'click',
       function() {
 
+        clearAdminRefreshState();
+
         /*
          * Reuse existing application navigation
          * rather than forcing a reload.
@@ -10055,7 +10391,24 @@ window.initAdminStaffManagement = initAdminStaffManagement;
    * loads the authenticated profile and applies the
    * role-aware visibility layer.
    */
-  scheduleAdminRBACBootstrap();
+  scheduleAdminRBACBootstrap()
+    .then(function() {
+
+      window.setTimeout(
+        function() {
+          restoreAdminRefreshState();
+        },
+        50
+      );
+
+    });
+
+  window.addEventListener(
+    'pagehide',
+    function() {
+      saveAdminRefreshState();
+    }
+  );
 
 })();
 
