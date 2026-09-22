@@ -412,6 +412,68 @@ function adminSubdomainOnly(req, res, next) {
   next();
 }
 
+
+/*
+ * ============================================================
+ * STAFF SESSION VALIDATION
+ * ============================================================
+ *
+ * JWT authenticity is necessary but not sufficient.
+ * Every authenticated request also verifies:
+ *   - the PostgreSQL user still exists
+ *   - the account is Active
+ *   - the JWT contains a valid staff session UUID
+ *   - the staff session is still Active
+ *
+ * The session ID is stored only inside the signed JWT and is
+ * never exposed to browser JavaScript.
+ */
+async function validateStaffSession(decoded) {
+  if (!decoded || !decoded.id || !decoded.sid) {
+    return null;
+  }
+
+  const result = await queryWithRetry(
+    `
+    SELECT
+      u.id,
+      u.email,
+      u.role,
+      u.name,
+      u.status AS user_status,
+      s.id AS session_id,
+      s.status AS session_status
+    FROM users u
+    INNER JOIN staff_sessions s
+      ON s.user_id = u.id
+    WHERE u.id = $1
+      AND s.id = $2::uuid
+      AND u.status = 'Active'
+      AND s.status = 'Active'
+    LIMIT 1
+    `,
+    [decoded.id, decoded.sid]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const row = result.rows[0];
+
+  await queryWithRetry(
+    `
+    UPDATE staff_sessions
+    SET last_activity_at = NOW()
+    WHERE id = $1::uuid
+      AND status = 'Active'
+    `,
+    [decoded.sid]
+  );
+
+  return row;
+}
+
 async function adminPageMiddleware(req, res, next) {
   let token = req.cookies.us_courier_token;
 
@@ -433,36 +495,43 @@ async function adminPageMiddleware(req, res, next) {
       JWT_SECRET
     );
 
-    if (!decoded || !decoded.id) {
+    if (!decoded || !decoded.id || !decoded.sid) {
+      return res.redirect("/admin/login.html");
+    }
+
+    /*
+     * JWT verification proves the token is authentic.
+     * PostgreSQL session validation additionally confirms:
+     * - the staff session still exists
+     * - the session is still Active
+     * - the user still exists
+     * - the user account is still Active
+     */
+    const session = await validateStaffSession(decoded);
+
+    if (!session) {
       return res.redirect("/admin/login.html");
     }
 
     /*
      * Never trust the role stored in the JWT alone.
-     * Re-check the current account in PostgreSQL.
+     * validateStaffSession() returns the current role
+     * directly from PostgreSQL.
      */
-    const result = await queryWithRetry(
-      `
-      SELECT id, email, role
-      FROM users
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [decoded.id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.redirect("/admin/login.html");
-    }
-
-    const user = result.rows[0];
-
-    if (!ADMIN_ALLOWED_ROLES.has(user.role)) {
+    if (!ADMIN_ALLOWED_ROLES.has(session.role)) {
       return res.redirect("/admin/login.html");
     }
 
     req.user = decoded;
-    req.admin = user;
+
+    req.admin = {
+      id: session.id,
+      email: session.email,
+      role: session.role,
+      name: session.name
+    };
+
+    req.staffSession = session;
 
     next();
   } catch (error) {
@@ -682,7 +751,7 @@ app.get(
 // AUTH MIDDLEWARE
 // ============================================================
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   let token = req.cookies.us_courier_token;
 
   if (!token) {
@@ -700,14 +769,45 @@ function authMiddleware(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      JWT_SECRET
+    );
+
+    if (!decoded || !decoded.id || !decoded.sid) {
+      return res.status(401).json({
+        error: "Invalid or expired session"
+      });
+    }
+
+    /*
+     * JWT verification proves the token was signed by this server.
+     * PostgreSQL session validation additionally proves that:
+     * - this staff session still exists
+     * - the session is still Active
+     * - the user account still exists
+     * - the user account is still Active
+     */
+    const session = await validateStaffSession(decoded);
+
+    if (!session) {
+      return res.status(401).json({
+        error: "Invalid or expired session"
+      });
+    }
 
     req.user = decoded;
+    req.staffSession = session;
 
     next();
-  } catch {
+  } catch (error) {
+    console.warn(
+      "[AUTH SESSION]",
+      error.message
+    );
+
     return res.status(401).json({
-      error: "Invalid or expired token"
+      error: "Invalid or expired session"
     });
   }
 }
@@ -831,6 +931,8 @@ app.post(
     LOGIN_MAX_ATTEMPTS
   ),
   async (req, res) => {
+    let createdSessionId = null;
+
     try {
       const email = cleanString(req.body?.email, 254)
         .toLowerCase();
@@ -857,7 +959,8 @@ app.post(
           id,
           email,
           role,
-          password_hash
+          password_hash,
+          status
         FROM users
         WHERE email = $1
         LIMIT 1
@@ -873,6 +976,16 @@ app.post(
 
       const user = result.rows[0];
 
+      /*
+       * Disabled staff accounts must never receive a
+       * new authenticated session.
+       */
+      if (user.status !== "Active") {
+        return res.status(403).json({
+          error: "Portal access denied"
+        });
+      }
+
       if (!user.password_hash) {
         return res.status(401).json({
           error: "Invalid Operator Credentials"
@@ -880,8 +993,8 @@ app.post(
       }
 
       /*
-       * Prevent a missing database role from automatically
-       * becoming Administrator.
+       * Prevent a missing or unexpected database role from
+       * automatically becoming Administrator.
        */
       if (!ADMIN_ALLOWED_ROLES.has(user.role)) {
         return res.status(403).json({
@@ -900,11 +1013,78 @@ app.post(
         });
       }
 
+      /*
+       * Capture the connection information for the staff
+       * session. x-forwarded-for may contain a comma-separated
+       * proxy chain, so retain only the first address.
+       */
+      const forwardedFor = String(
+        req.headers["x-forwarded-for"] || ""
+      );
+
+      const ipAddress = (
+        forwardedFor.split(",")[0].trim() ||
+        String(req.socket?.remoteAddress || "").trim()
+      ).slice(0, 200) || null;
+
+      const userAgent = cleanString(
+        req.headers["user-agent"],
+        1000
+      ) || null;
+
+      /*
+       * Create the PostgreSQL-backed staff session BEFORE
+       * issuing the JWT. The JWT references this session by UUID.
+       */
+      const sessionResult = await queryWithRetry(
+        `
+        INSERT INTO staff_sessions (
+          user_id,
+          ip_address,
+          user_agent,
+          status
+        )
+        VALUES ($1, $2, $3, 'Active')
+        RETURNING id
+        `,
+        [
+          user.id,
+          ipAddress,
+          userAgent
+        ]
+      );
+
+      if (sessionResult.rows.length === 0) {
+        throw new Error("Unable to create staff session");
+      }
+
+      const sessionId = sessionResult.rows[0].id;
+      createdSessionId = sessionId;
+
+      /*
+       * Record the successful login against the staff account.
+       */
+      await queryWithRetry(
+        `
+        UPDATE users
+        SET
+          last_login_at = NOW(),
+          updated_at = NOW()
+        WHERE id = $1
+        `,
+        [user.id]
+      );
+
+      /*
+       * The JWT is still only an authentication reference.
+       * Its sid must correspond to an Active PostgreSQL session.
+       */
       const token = jwt.sign(
         {
           id: user.id,
           email: user.email,
-          role: user.role
+          role: user.role,
+          sid: sessionId
         },
         JWT_SECRET,
         {
@@ -921,9 +1101,29 @@ app.post(
       });
 
       /*
-       * Token is intentionally NOT returned to JavaScript.
-       * Authentication is handled by the HttpOnly cookie.
+       * Authentication remains cookie-based. The JWT itself
+       * is never returned to browser JavaScript.
        */
+      try {
+        if (typeof writeAdminAuditLog === "function") {
+          await writeAdminAuditLog({
+            adminId: user.id,
+            adminEmail: user.email,
+            action: "auth.login",
+            targetType: "staff_session",
+            targetId: String(sessionId),
+            details: JSON.stringify({
+              method: "password"
+            }),
+            ipAddress
+          });
+        }
+      } catch (auditError) {
+        console.error(
+          "[AUTH LOGIN AUDIT]",
+          auditError.message
+        );
+      }
 
       return res.json({
         success: true,
@@ -934,6 +1134,33 @@ app.post(
         }
       });
     } catch (err) {
+      /*
+       * If PostgreSQL created the staff session but a later
+       * login step failed, immediately invalidate that session.
+       * This prevents orphaned Active sessions.
+       */
+      if (createdSessionId) {
+        try {
+          await queryWithRetry(
+            `
+            UPDATE staff_sessions
+            SET
+              status = 'Terminated',
+              terminated_at = NOW(),
+              last_activity_at = NOW()
+            WHERE id = $1::uuid
+              AND status = 'Active'
+            `,
+            [createdSessionId]
+          );
+        } catch (cleanupError) {
+          console.error(
+            "[AUTH LOGIN SESSION CLEANUP]",
+            cleanupError.message
+          );
+        }
+      }
+
       console.error("[AUTH LOGIN]", err.message);
 
       return res.status(500).json({
@@ -950,7 +1177,96 @@ app.post(
 app.post(
   "/api/auth/logout",
   requireSameOrigin,
-  (req, res) => {
+  async (req, res) => {
+    let token = req.cookies.us_courier_token;
+
+    if (!token) {
+      const header = req.headers.authorization || "";
+
+      if (header.startsWith("Bearer ")) {
+        token = header.slice(7);
+      }
+    }
+
+    try {
+      if (token) {
+        try {
+          const decoded = jwt.verify(
+            token,
+            JWT_SECRET
+          );
+
+          if (decoded && decoded.id && decoded.sid) {
+            const sessionResult = await queryWithRetry(
+              `
+              UPDATE staff_sessions
+              SET
+                status = 'Logged Out',
+                logout_at = NOW(),
+                last_activity_at = NOW()
+              WHERE id = $1::uuid
+                AND user_id = $2
+                AND status = 'Active'
+              RETURNING id
+              `,
+              [
+                decoded.sid,
+                decoded.id
+              ]
+            );
+
+            if (sessionResult.rows.length > 0) {
+              try {
+                if (typeof writeAdminAuditLog === "function") {
+                  await writeAdminAuditLog({
+                    adminId: decoded.id,
+                    adminEmail: decoded.email || null,
+                    action: "auth.logout",
+                    targetType: "staff_session",
+                    targetId: String(decoded.sid),
+                    details: JSON.stringify({
+                      method: "password"
+                    }),
+                    ipAddress: (
+                      String(
+                        req.headers["x-forwarded-for"] || ""
+                      ).split(",")[0].trim() ||
+                      String(
+                        req.socket?.remoteAddress || ""
+                      ).trim()
+                    ).slice(0, 200) || null
+                  });
+                }
+              } catch (auditError) {
+                console.error(
+                  "[AUTH LOGOUT AUDIT]",
+                  auditError.message
+                );
+              }
+            }
+          }
+        } catch (sessionError) {
+          /*
+           * Logout must still clear the browser cookie if the
+           * JWT is expired, malformed, or the database session
+           * can no longer be updated.
+           */
+          console.warn(
+            "[AUTH LOGOUT SESSION]",
+            sessionError.message
+          );
+        }
+      }
+    } catch (error) {
+      console.error(
+        "[AUTH LOGOUT]",
+        error.message
+      );
+    }
+
+    /*
+     * Always clear the authentication cookie.
+     */
     res.clearCookie("us_courier_token", {
       httpOnly: true,
       secure: true,
@@ -2995,6 +3311,48 @@ app.put(
       }
     }
 
+    const latitude =
+      b.latitude === undefined ||
+      b.latitude === null ||
+      b.latitude === ""
+        ? null
+        : Number(b.latitude);
+
+    const longitude =
+      b.longitude === undefined ||
+      b.longitude === null ||
+      b.longitude === ""
+        ? null
+        : Number(b.longitude);
+
+    if (
+      latitude !== null &&
+      (
+        !Number.isFinite(latitude) ||
+        latitude < -90 ||
+        latitude > 90
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Latitude must be between -90 and 90."
+      });
+    }
+
+    if (
+      longitude !== null &&
+      (
+        !Number.isFinite(longitude) ||
+        longitude < -180 ||
+        longitude > 180
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "Longitude must be between -180 and 180."
+      });
+    }
+
     const c = await pool.connect();
 
     try {
@@ -3031,8 +3389,10 @@ app.put(
           status = $1,
           location = $2,
           description = $3,
-          event_time = COALESCE($4::timestamptz, event_time)
-        WHERE id = $5
+          event_time = COALESCE($4::timestamptz, event_time),
+          latitude = $5,
+          longitude = $6
+        WHERE id = $7
         RETURNING
           id,
           shipment_id,
@@ -3051,6 +3411,8 @@ app.put(
           eventTime
             ? eventTime.toISOString()
             : null,
+          latitude,
+          longitude,
           eventId
         ]
       );
@@ -3091,6 +3453,29 @@ app.put(
       }
 
       await c.query("COMMIT");
+
+      await writeAdminAuditLog({
+        adminId: req.admin?.id || req.user?.id || null,
+        adminEmail: req.admin?.email || null,
+        action: "tracking_event.update",
+        targetType: "shipment_event",
+        targetId: String(eventId),
+        details: JSON.stringify({
+          shipment_id: shipmentId,
+          status,
+          location: location || null,
+          description,
+          event_time: eventTime
+            ? eventTime.toISOString()
+            : null,
+          latitude,
+          longitude
+        }),
+        ipAddress:
+          req.headers["x-forwarded-for"] ||
+          req.socket?.remoteAddress ||
+          null
+      });
 
       return res.json({
         success: true,
@@ -3856,6 +4241,7 @@ async function startServer() {
     console.log(`Environment: ${NODE_ENV}`);
     console.log("Database: Supabase PostgreSQL");
     console.log("Live URL: https://uscourier.app");
+console.log("Admin Portal: https://account.uscourier.app");
   });
 
   const shutdown = async (signal) => {
