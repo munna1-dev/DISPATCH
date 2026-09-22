@@ -612,14 +612,16 @@ app.get("/admin/", adminSubdomainOnly, (req, res) => {
 app.use("/admin", adminSubdomainOnly);
 
 // The admin subdomain root must never be handled by public/index.html.
-app.get("/", adminPageMiddleware, (req, res) => {
+app.get("/", (req, res, next) => {
   if (getRequestHostname(req) !== "account.uscourier.app") {
-    return res.status(404).send("Not Found");
+    return next();
   }
 
-  return res.sendFile(
-    path.join(__dirname, "public", "admin", "index.html")
-  );
+  return adminPageMiddleware(req, res, () => {
+    return res.sendFile(
+      path.join(__dirname, "public", "admin", "index.html")
+    );
+  });
 });
 
 app.get("/login.html", (req, res) => {
