@@ -2232,6 +2232,26 @@ document.addEventListener(
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Always start the public portal on a clean Home view.
+  // Tracking is opened only after an intentional user lookup.
+  if (!window.location.pathname.startsWith("/admin")) {
+    const homeTrackingInput =
+      document.getElementById("home-tracking-input");
+
+    const pageTrackingInput =
+      document.getElementById("page-tracking-input");
+
+    if (homeTrackingInput) {
+      homeTrackingInput.value = "";
+    }
+
+    if (pageTrackingInput) {
+      pageTrackingInput.value = "";
+    }
+
+    showSection("home");
+  }
+
   const adminParams = new URLSearchParams(window.location.search);
 
   if (adminParams.get("admin") === "1") {
@@ -2270,6 +2290,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     const trackingNumber = (params.get("trk") || "").trim();
 
     if (!trackingNumber) {
+      const homeInput =
+        document.getElementById("home-tracking-input");
+
+      const pageInput =
+        document.getElementById("page-tracking-input");
+
+      if (homeInput) {
+        homeInput.value = "";
+      }
+
+      if (pageInput) {
+        pageInput.value = "";
+      }
+
+      showSection("home");
       return;
     }
 
