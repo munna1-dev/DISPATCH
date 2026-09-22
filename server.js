@@ -2268,8 +2268,7 @@ const ADMIN_ALLOWED_ROLES = new Set([
   "Trunk Driver",
   "Cargo Personnel",
   "Warehouse Personnel",
-  "Customer Service",
-  "Customer"
+  "Customer Service"
 ]);
 
 function normalizeAdminRole(value) {
