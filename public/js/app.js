@@ -2234,7 +2234,10 @@ document.addEventListener(
 document.addEventListener("DOMContentLoaded", async () => {
   // Always start the public portal on a clean Home view.
   // Tracking is opened only after an intentional user lookup.
-  if (!window.location.pathname.startsWith("/admin")) {
+  if (
+    !document.body.classList.contains("admin-standalone-page") &&
+    !window.location.pathname.startsWith("/admin")
+  ) {
     const homeTrackingInput =
       document.getElementById("home-tracking-input");
 
