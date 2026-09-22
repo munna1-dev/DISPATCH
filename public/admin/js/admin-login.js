@@ -221,7 +221,7 @@
           "success"
         );
 
-        window.location.replace("https://account.uscourier.app/");
+        window.location.replace("/dashboard");
 
       } catch (error) {
         console.error(

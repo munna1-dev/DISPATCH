@@ -530,7 +530,7 @@ async function adminPageMiddleware(req, res, next) {
   }
 
   if (!token) {
-    return res.redirect("https://account.uscourier.app/login.html");
+    return res.redirect("https://account.uscourier.app/");
   }
 
   try {
@@ -540,7 +540,7 @@ async function adminPageMiddleware(req, res, next) {
     );
 
     if (!decoded || !decoded.id || !decoded.sid) {
-      return res.redirect("https://account.uscourier.app/login.html");
+      return res.redirect("https://account.uscourier.app/");
     }
 
     /*
@@ -554,7 +554,7 @@ async function adminPageMiddleware(req, res, next) {
     const session = await validateStaffSession(decoded);
 
     if (!session) {
-      return res.redirect("https://account.uscourier.app/login.html");
+      return res.redirect("https://account.uscourier.app/");
     }
 
     /*
@@ -563,7 +563,7 @@ async function adminPageMiddleware(req, res, next) {
      * directly from PostgreSQL.
      */
     if (!ADMIN_ALLOWED_ROLES.has(session.role)) {
-      return res.redirect("https://account.uscourier.app/login.html");
+      return res.redirect("https://account.uscourier.app/");
     }
 
     req.user = decoded;
@@ -584,7 +584,7 @@ async function adminPageMiddleware(req, res, next) {
       error.message
     );
 
-    return res.redirect("https://account.uscourier.app/login.html");
+    return res.redirect("https://account.uscourier.app/");
   }
 }
 
@@ -612,9 +612,33 @@ app.get("/admin/", adminSubdomainOnly, (req, res) => {
 app.use("/admin", adminSubdomainOnly);
 
 // The admin subdomain root must never be handled by public/index.html.
+// ============================================================
+// ADMIN PORTAL ROUTING
+// account.uscourier.app/          -> login
+// account.uscourier.app/dashboard -> protected dashboard
+// ============================================================
+
 app.get("/", (req, res, next) => {
-  if (getRequestHostname(req) !== "account.uscourier.app") {
+  const hostname = getRequestHostname(req);
+
+  // Public website
+  if (hostname === "uscourier.app") {
     return next();
+  }
+
+  // Admin hostname root = login page
+  if (hostname === "account.uscourier.app") {
+    return res.sendFile(
+      path.join(__dirname, "public", "admin", "login.html")
+    );
+  }
+
+  return next();
+});
+
+app.get("/dashboard", (req, res, next) => {
+  if (getRequestHostname(req) !== "account.uscourier.app") {
+    return res.status(404).send("Not Found");
   }
 
   return adminPageMiddleware(req, res, () => {
@@ -625,13 +649,7 @@ app.get("/", (req, res, next) => {
 });
 
 app.get("/login.html", (req, res) => {
-  if (getRequestHostname(req) !== "account.uscourier.app") {
-    return res.status(404).send("Not Found");
-  }
-
-  return res.sendFile(
-    path.join(__dirname, "public", "admin", "login.html")
-  );
+  return res.status(404).send("Not Found");
 });
 
 app.get("/index.html", (req, res, next) => {
@@ -1323,29 +1341,6 @@ app.post(
     });
   }
 );
-
-// ============================================================
-// ADMIN SUBDOMAIN ROOT
-// ============================================================
-
-// account.uscourier.app is dedicated to the Admin Portal.
-// Never serve the public index.html from this hostname.
-app.get("/", (req, res, next) => {
-  const hostname = getRequestHostname(req);
-
-  if (hostname === "account.uscourier.app") {
-    return res.sendFile(
-      path.join(
-        __dirname,
-        "public",
-        "admin",
-        "login.html"
-      )
-    );
-  }
-
-  next();
-});
 
 // Explicitly prevent the public homepage from being opened
 // through account.uscourier.app/index.html.
