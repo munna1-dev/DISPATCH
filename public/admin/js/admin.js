@@ -1340,11 +1340,25 @@ async function loadAdminSettingsWorkspace() {
                 : ''
             );
 
+          const currentStatus =
+            normalizeShipmentValue(
+              statusFilter
+                ? statusFilter.value
+                : ''
+            );
+
+          const currentService =
+            normalizeShipmentValue(
+              serviceFilter
+                ? serviceFilter.value
+                : ''
+            );
+
           const hasFilters =
             Boolean(
               currentSearchTerm ||
-              selectedStatus ||
-              selectedService
+              currentStatus ||
+              currentService
             );
 
           if (hasFilters) {
