@@ -156,12 +156,26 @@ async function handleAdminLogout() {
 
   try {
 
+    try {
+      sessionStorage.removeItem(
+        'dispatch_admin_refresh_state'
+      );
+    } catch (storageError) {
+      console.warn(
+        '[ADMIN LOGOUT STATE CLEAR]',
+        storageError
+      );
+    }
+
     await fetch(
       '/api/auth/logout',
       {
         method: 'POST',
-
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json'
+        },
+        cache: 'no-store'
       }
     );
 
@@ -10334,41 +10348,54 @@ window.initAdminStaffManagement = initAdminStaffManagement;
 
     exitButton.addEventListener(
       'click',
-      function() {
+      async function() {
+
+        if (exitButton.dataset.logoutInProgress === 'true') {
+          return;
+        }
+
+        exitButton.dataset.logoutInProgress = 'true';
+        exitButton.disabled = true;
+        exitButton.setAttribute('aria-busy', 'true');
 
         clearAdminRefreshState();
+        closeMobileSidebar();
 
-        /*
-         * Reuse existing application navigation
-         * rather than forcing a reload.
-         */
+        const label =
+          exitButton.querySelector('.admin-nav-label');
 
-        if (
-          typeof loadPublicHome ===
-          'function'
-        ) {
-          loadPublicHome();
+        if (label) {
+          label.textContent = 'Logging out…';
+        }
+
+        if (typeof handleAdminLogout === 'function') {
+          await handleAdminLogout();
           return;
         }
 
-        const home =
-          document.querySelector(
-            '[data-view="home"]'
+        try {
+          await fetch(
+            '/api/auth/logout',
+            {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                Accept: 'application/json'
+              },
+              cache: 'no-store'
+            }
           );
-
-        if (home) {
-          home.click();
-          return;
+        } catch (error) {
+          console.error(
+            '[ADMIN SIDEBAR LOGOUT]',
+            error
+          );
+        } finally {
+          window.location.replace('/admin/login.html');
         }
-
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
 
       }
     );
-
   }
 
   window.addEventListener(

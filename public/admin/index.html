@@ -149,7 +149,7 @@
               id="admin-sidebar-exit"
             >
               <span>↪</span>
-              <span class="admin-nav-label">Exit Portal</span>
+              <span class="admin-nav-label">Logout</span>
             </button>
 
           </div>
@@ -1224,6 +1224,296 @@
       </div>
     </section>
 
+
+
+<!-- =========================================================
+     ADMIN OPERATIONS TRACKING CENTER
+========================================================= -->
+<div
+  id="admin-tracking-workspace"
+  class="admin-tracking-workspace"
+  aria-label="Operations Tracking Center"
+>
+
+  <div class="admin-tracking-header">
+
+    <div>
+      <div class="admin-section-eyebrow">
+        OPERATIONS CONTROL
+      </div>
+
+      <h2 class="admin-tracking-title">
+        <span class="icon icon-map"></span>
+        Live Tracking
+      </h2>
+
+      <p class="admin-tracking-description">
+        Monitor shipment movement, tracking history and verified
+        location events from the operational database.
+      </p>
+    </div>
+
+    <div class="admin-tracking-header-actions">
+
+      <button
+        type="button"
+        class="btn-outline"
+        id="admin-tracking-refresh"
+      >
+        <span class="icon icon-refresh"></span>
+        Refresh
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="admin-tracking-selector card">
+
+    <div class="admin-tracking-selector-copy">
+
+      <span class="admin-filter-label">
+        Shipment
+      </span>
+
+      <strong>
+        Select a shipment to inspect its route
+      </strong>
+
+    </div>
+
+    <div class="admin-tracking-selector-control">
+
+      <select
+        id="admin-tracking-shipment-select"
+        class="form-control"
+        aria-label="Select shipment for tracking"
+      >
+        <option value="">
+          Select shipment...
+        </option>
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="admin-tracking-empty"
+    class="card admin-tracking-state"
+  >
+    <span class="icon icon-map"></span>
+
+    <strong>
+      No shipment selected
+    </strong>
+
+    <span>
+      Select a shipment above to view its operational route
+      and tracking history.
+    </span>
+  </div>
+
+
+  <div
+    id="admin-tracking-loading"
+    class="card admin-tracking-state"
+    hidden
+  >
+    <span class="admin-tracking-spinner"></span>
+
+    <strong>
+      Loading tracking data...
+    </strong>
+
+    <span>
+      Retrieving the latest tracking events.
+    </span>
+  </div>
+
+
+  <div
+    id="admin-tracking-error"
+    class="card admin-tracking-state admin-tracking-error"
+    hidden
+  >
+    <strong>
+      Unable to load tracking data.
+    </strong>
+
+    <span id="admin-tracking-error-text">
+      Please try again.
+    </span>
+  </div>
+
+
+  <div
+    id="admin-tracking-content"
+    hidden
+  >
+
+    <div class="admin-tracking-overview-grid">
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Tracking Number</span>
+
+        <strong id="admin-tracking-number">
+          —
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Status</span>
+
+        <strong id="admin-tracking-status">
+          —
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Current Location</span>
+
+        <strong id="admin-tracking-current">
+          —
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Tracking Events</span>
+
+        <strong id="admin-tracking-event-count">
+          0
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>GPS Points</span>
+
+        <strong id="admin-tracking-gps-count">
+          0
+        </strong>
+
+      </div>
+
+      <div class="card admin-tracking-overview-card">
+
+        <span>Last Update</span>
+
+        <strong id="admin-tracking-last-update">
+          —
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <div class="admin-tracking-main-grid">
+
+      <section class="card admin-tracking-map-card">
+
+        <div class="admin-tracking-card-header">
+
+          <div>
+
+            <span class="admin-section-eyebrow">
+              ROUTE VISUALIZATION
+            </span>
+
+            <h3>
+              Shipment Route
+            </h3>
+
+          </div>
+
+          <span
+            id="admin-tracking-gps-state"
+            class="admin-tracking-gps-badge"
+          >
+            GPS unavailable
+          </span>
+
+        </div>
+
+
+        <div class="admin-tracking-map">
+
+          <canvas
+            id="adminTrackingMapCanvas"
+            aria-label="Shipment route map"
+          ></canvas>
+
+          <div
+            id="admin-tracking-map-empty"
+            class="admin-tracking-map-empty"
+            hidden
+          >
+            No GPS coordinates are available for this shipment.
+          </div>
+
+        </div>
+
+
+        <div class="admin-tracking-route-summary">
+
+          <div>
+            <span>Origin</span>
+            <strong id="admin-tracking-origin">—</strong>
+          </div>
+
+          <div>
+            <span>Destination</span>
+            <strong id="admin-tracking-destination">—</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section class="card admin-tracking-history-card">
+
+        <div class="admin-tracking-card-header">
+
+          <div>
+
+            <span class="admin-section-eyebrow">
+              CHRONOLOGY
+            </span>
+
+            <h3>
+              Tracking History
+            </h3>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="admin-tracking-history"
+          class="admin-tracking-history-list"
+        ></div>
+
+      </section>
+
+    </div>
+
+  </div>
+
+</div>
+
           </main>
         </div>
 
@@ -1944,294 +2234,6 @@
 
 
 
-<!-- =========================================================
-     ADMIN OPERATIONS TRACKING CENTER
-========================================================= -->
-<div
-  id="admin-tracking-workspace"
-  class="admin-tracking-workspace"
-  aria-label="Operations Tracking Center"
->
-
-  <div class="admin-tracking-header">
-
-    <div>
-      <div class="admin-section-eyebrow">
-        OPERATIONS CONTROL
-      </div>
-
-      <h2 class="admin-tracking-title">
-        <span class="icon icon-map"></span>
-        Live Tracking
-      </h2>
-
-      <p class="admin-tracking-description">
-        Monitor shipment movement, tracking history and verified
-        location events from the operational database.
-      </p>
-    </div>
-
-    <div class="admin-tracking-header-actions">
-
-      <button
-        type="button"
-        class="btn-outline"
-        id="admin-tracking-refresh"
-      >
-        <span class="icon icon-refresh"></span>
-        Refresh
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <div class="admin-tracking-selector card">
-
-    <div class="admin-tracking-selector-copy">
-
-      <span class="admin-filter-label">
-        Shipment
-      </span>
-
-      <strong>
-        Select a shipment to inspect its route
-      </strong>
-
-    </div>
-
-    <div class="admin-tracking-selector-control">
-
-      <select
-        id="admin-tracking-shipment-select"
-        class="form-control"
-        aria-label="Select shipment for tracking"
-      >
-        <option value="">
-          Select shipment...
-        </option>
-      </select>
-
-    </div>
-
-  </div>
-
-
-  <div
-    id="admin-tracking-empty"
-    class="card admin-tracking-state"
-  >
-    <span class="icon icon-map"></span>
-
-    <strong>
-      No shipment selected
-    </strong>
-
-    <span>
-      Select a shipment above to view its operational route
-      and tracking history.
-    </span>
-  </div>
-
-
-  <div
-    id="admin-tracking-loading"
-    class="card admin-tracking-state"
-    hidden
-  >
-    <span class="admin-tracking-spinner"></span>
-
-    <strong>
-      Loading tracking data...
-    </strong>
-
-    <span>
-      Retrieving the latest tracking events.
-    </span>
-  </div>
-
-
-  <div
-    id="admin-tracking-error"
-    class="card admin-tracking-state admin-tracking-error"
-    hidden
-  >
-    <strong>
-      Unable to load tracking data.
-    </strong>
-
-    <span id="admin-tracking-error-text">
-      Please try again.
-    </span>
-  </div>
-
-
-  <div
-    id="admin-tracking-content"
-    hidden
-  >
-
-    <div class="admin-tracking-overview-grid">
-
-      <div class="card admin-tracking-overview-card">
-
-        <span>Tracking Number</span>
-
-        <strong id="admin-tracking-number">
-          —
-        </strong>
-
-      </div>
-
-      <div class="card admin-tracking-overview-card">
-
-        <span>Status</span>
-
-        <strong id="admin-tracking-status">
-          —
-        </strong>
-
-      </div>
-
-      <div class="card admin-tracking-overview-card">
-
-        <span>Current Location</span>
-
-        <strong id="admin-tracking-current">
-          —
-        </strong>
-
-      </div>
-
-      <div class="card admin-tracking-overview-card">
-
-        <span>Tracking Events</span>
-
-        <strong id="admin-tracking-event-count">
-          0
-        </strong>
-
-      </div>
-
-      <div class="card admin-tracking-overview-card">
-
-        <span>GPS Points</span>
-
-        <strong id="admin-tracking-gps-count">
-          0
-        </strong>
-
-      </div>
-
-      <div class="card admin-tracking-overview-card">
-
-        <span>Last Update</span>
-
-        <strong id="admin-tracking-last-update">
-          —
-        </strong>
-
-      </div>
-
-    </div>
-
-
-    <div class="admin-tracking-main-grid">
-
-      <section class="card admin-tracking-map-card">
-
-        <div class="admin-tracking-card-header">
-
-          <div>
-
-            <span class="admin-section-eyebrow">
-              ROUTE VISUALIZATION
-            </span>
-
-            <h3>
-              Shipment Route
-            </h3>
-
-          </div>
-
-          <span
-            id="admin-tracking-gps-state"
-            class="admin-tracking-gps-badge"
-          >
-            GPS unavailable
-          </span>
-
-        </div>
-
-
-        <div class="admin-tracking-map">
-
-          <canvas
-            id="adminTrackingMapCanvas"
-            aria-label="Shipment route map"
-          ></canvas>
-
-          <div
-            id="admin-tracking-map-empty"
-            class="admin-tracking-map-empty"
-            hidden
-          >
-            No GPS coordinates are available for this shipment.
-          </div>
-
-        </div>
-
-
-        <div class="admin-tracking-route-summary">
-
-          <div>
-            <span>Origin</span>
-            <strong id="admin-tracking-origin">—</strong>
-          </div>
-
-          <div>
-            <span>Destination</span>
-            <strong id="admin-tracking-destination">—</strong>
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <section class="card admin-tracking-history-card">
-
-        <div class="admin-tracking-card-header">
-
-          <div>
-
-            <span class="admin-section-eyebrow">
-              CHRONOLOGY
-            </span>
-
-            <h3>
-              Tracking History
-            </h3>
-
-          </div>
-
-        </div>
-
-
-        <div
-          id="admin-tracking-history"
-          class="admin-tracking-history-list"
-        ></div>
-
-      </section>
-
-    </div>
-
-  </div>
-
-</div>
-
 <!-- Modal: Admin Tracking Details / Route History -->
   <div id="modal-tracking-events" class="modal-overlay">
     <div class="card" style="max-width: 1100px; width: 94%; max-height: 90vh; overflow-y: auto;">
@@ -2430,7 +2432,7 @@
   </div>
 
 
-    
+
 
 
     <script src="/js/app.js"></script>
