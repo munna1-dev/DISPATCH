@@ -166,6 +166,8 @@ const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
 
 const CONTACT_WINDOW_MS = 15 * 60 * 1000;
+const MAIL_SEND_WINDOW_MS = 15 * 60 * 1000;
+const MAIL_SEND_MAX_ATTEMPTS = 20;
 const CONTACT_MAX_ATTEMPTS = 5;
 
 const TRACKING_WINDOW_MS = 60 * 1000;
@@ -244,6 +246,7 @@ function requireSameOrigin(req, res, next) {
   const allowedOrigins = new Set([
     "https://uscourier.app",
     "https://account.uscourier.app",
+    "https://mail.uscourier.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
   ]);
@@ -618,9 +621,20 @@ app.use("/admin", adminSubdomainOnly);
 // account.uscourier.app/          -> login
 // account.uscourier.app/dashboard -> protected dashboard
 // ============================================================
+app.get("/mail", (req, res) => {
+  if (getRequestHostname(req) !== "mail.uscourier.app") {
+    return res.status(404).send("Not Found");
+  }
+  return res.sendFile(path.join(__dirname, "public", "mail", "index.html"));
+});
+
 
 app.get("/", (req, res, next) => {
   const hostname = getRequestHostname(req);
+
+  if (hostname === "mail.uscourier.app") {
+    return res.sendFile(path.join(__dirname, "public", "mail", "index.html"));
+  }
 
   // Public website
   if (hostname === "uscourier.app") {
@@ -878,6 +892,360 @@ async function authMiddleware(req, res, next) {
 }
 
 // ============================================================
+// MAILBOX API
+// ============================================================
+app.get("/api/mailbox", authMiddleware, async (req, res) => {
+  try {
+    const result = await queryWithRetry(
+      `SELECT id, email, display_name, status, created_at, updated_at
+       FROM mailboxes
+       WHERE user_id = $1
+       LIMIT 1`,
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Mailbox not provisioned",
+        mailbox: null
+      });
+    }
+
+    return res.json({
+      success: true,
+      mailbox: result.rows[0]
+    });
+  } catch (error) {
+    console.error("[MAILBOX]", error.message);
+    return res.status(500).json({
+      error: "Unable to retrieve mailbox"
+    });
+  }
+});
+
+app.get("/api/mailbox/messages", authMiddleware, async (req, res) => {
+  try {
+    const folder = String(req.query.folder || "inbox").toLowerCase();
+    const allowedFolders = ["inbox", "sent", "drafts", "trash", "archive"];
+
+    if (!allowedFolders.includes(folder)) {
+      return res.status(400).json({
+        error: "Invalid mailbox folder"
+      });
+    }
+
+    const result = await queryWithRetry(
+      `SELECT
+         m.id,
+         m.sender_name,
+         m.sender_email,
+         m.subject,
+         m.text_body,
+         m.html_body,
+         m.folder,
+         m.is_read,
+         m.is_starred,
+         m.thread_id,
+         m.received_at,
+         m.sent_at,
+         m.created_at,
+         COALESCE(
+           json_agg(
+             json_build_object(
+               'type', r.recipient_type,
+               'email', r.email,
+               'name', r.display_name
+             ) ORDER BY r.created_at
+           ) FILTER (WHERE r.id IS NOT NULL),
+           '[]'::json
+         ) AS recipients
+       FROM mail_messages m
+       JOIN mailboxes b ON b.id = m.mailbox_id
+       LEFT JOIN mail_recipients r ON r.message_id = m.id
+       WHERE b.user_id = $1
+         AND b.status = 'active'
+         AND m.folder = $2
+       GROUP BY m.id
+       ORDER BY COALESCE(m.received_at, m.sent_at, m.created_at) DESC
+       LIMIT 100`,
+      [req.user.id, folder]
+    );
+
+    return res.json({
+      success: true,
+      folder,
+      count: result.rows.length,
+      messages: result.rows
+    });
+  } catch (error) {
+    console.error("[MAILBOX MESSAGES]", error.message);
+    return res.status(500).json({
+      error: "Unable to retrieve mailbox messages"
+    });
+  }
+});
+
+app.post(
+  "/api/mailbox/drafts",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const to = cleanString(req.body?.to, 2000)
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const cc = cleanString(req.body?.cc, 2000)
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const bcc = cleanString(req.body?.bcc, 2000)
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const subject = cleanString(req.body?.subject, 200);
+      const textBody = cleanString(req.body?.body, 10000);
+
+      if (to.some((email) => !isValidEmail(email)) ||
+          cc.some((email) => !isValidEmail(email)) ||
+          bcc.some((email) => !isValidEmail(email))) {
+        return res.status(400).json({
+          success: false,
+          error: "One or more recipients are invalid."
+        });
+      }
+
+      const mailboxResult = await queryWithRetry(
+        `SELECT id, email, display_name
+         FROM mailboxes
+         WHERE user_id = $1
+           AND status = 'active'
+         LIMIT 1`,
+        [req.user.id]
+      );
+
+      if (!mailboxResult.rows.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Mailbox not provisioned."
+        });
+      }
+
+      const mailbox = mailboxResult.rows[0];
+
+      const messageResult = await queryWithRetry(
+        `INSERT INTO mail_messages (
+           mailbox_id,
+           sender_name,
+           sender_email,
+           subject,
+           text_body,
+           folder,
+           is_read
+         ) VALUES ($1, $2, $3, $4, $5, 'drafts', true)
+         RETURNING id, folder, subject, created_at, updated_at`,
+        [
+          mailbox.id,
+          mailbox.display_name,
+          mailbox.email,
+          subject,
+          textBody
+        ]
+      );
+
+      const message = messageResult.rows[0];
+
+      const recipients = [
+        ...to.map((email) => ({ type: "to", email })),
+        ...cc.map((email) => ({ type: "cc", email })),
+        ...bcc.map((email) => ({ type: "bcc", email }))
+      ];
+
+      for (const recipient of recipients) {
+        await queryWithRetry(
+          `INSERT INTO mail_recipients (
+             message_id,
+             recipient_type,
+             email
+           ) VALUES ($1, $2, $3)`,
+          [message.id, recipient.type, recipient.email]
+        );
+      }
+
+      return res.status(201).json({
+        success: true,
+        message
+      });
+    } catch (error) {
+      console.error("[MAILBOX DRAFT]", error.message);
+      return res.status(500).json({
+        success: false,
+        error: "Unable to save draft."
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/mailbox/send",
+  rateLimit("mail-send", MAIL_SEND_WINDOW_MS, MAIL_SEND_MAX_ATTEMPTS),
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      if (!resend) {
+        return res.status(503).json({
+          success: false,
+          error: "Email service is not configured."
+        });
+      }
+
+      const to = cleanString(req.body?.to, 2000)
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const cc = cleanString(req.body?.cc, 2000)
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const bcc = cleanString(req.body?.bcc, 2000)
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const subject = cleanString(req.body?.subject, 200);
+      const textBody = cleanString(req.body?.body, 10000);
+
+      if (!to.length || to.some((email) => !isValidEmail(email))) {
+        return res.status(400).json({
+          success: false,
+          error: "Please provide at least one valid recipient."
+        });
+      }
+
+      if (cc.some((email) => !isValidEmail(email)) || bcc.some((email) => !isValidEmail(email))) {
+        return res.status(400).json({
+          success: false,
+          error: "One or more recipients are invalid."
+        });
+      }
+
+      if (!textBody) {
+        return res.status(400).json({
+          success: false,
+          error: "Message body is required."
+        });
+      }
+
+      const mailboxResult = await queryWithRetry(
+        `SELECT id, email, display_name
+         FROM mailboxes
+         WHERE user_id = $1
+           AND status = 'active'
+         LIMIT 1`,
+        [req.user.id]
+      );
+
+      if (!mailboxResult.rows.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Mailbox not provisioned."
+        });
+      }
+
+      const mailbox = mailboxResult.rows[0];
+      const htmlBody = textBody
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/\n/g, "<br>");
+
+      const result = await resend.emails.send({
+        from: `${mailbox.display_name} <${mailbox.email}>`,
+        to,
+        cc: cc.length ? cc : undefined,
+        bcc: bcc.length ? bcc : undefined,
+        subject,
+        text: textBody,
+        html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`
+      });
+
+      if (result?.error) {
+        console.error("[MAILBOX SEND]", result.error.message);
+        return res.status(502).json({
+          success: false,
+          error: "Unable to send email."
+        });
+      }
+
+      const messageResult = await queryWithRetry(
+        `INSERT INTO mail_messages (
+           mailbox_id,
+           resend_email_id,
+           sender_name,
+           sender_email,
+           subject,
+           text_body,
+           html_body,
+           folder,
+           is_read,
+           sent_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'sent', true, now())
+         RETURNING id, resend_email_id, created_at, sent_at`,
+        [
+          mailbox.id,
+          result?.data?.id || null,
+          mailbox.display_name,
+          mailbox.email,
+          subject,
+          textBody,
+          `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`
+        ]
+      );
+
+      const messageId = messageResult.rows[0].id;
+
+      const recipients = [
+        ...to.map((email) => ({ type: "to", email })),
+        ...cc.map((email) => ({ type: "cc", email })),
+        ...bcc.map((email) => ({ type: "bcc", email }))
+      ];
+
+      for (const recipient of recipients) {
+        await queryWithRetry(
+          `INSERT INTO mail_recipients (
+             message_id,
+             recipient_type,
+             email
+           ) VALUES ($1, $2, $3)`,
+          [messageId, recipient.type, recipient.email]
+        );
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: {
+          id: messageId,
+          resend_email_id: result?.data?.id || null
+        }
+      });
+    } catch (error) {
+      console.error("[MAILBOX SEND]", error.message);
+      return res.status(500).json({
+        success: false,
+        error: "Unable to send email right now."
+      });
+    }
+  }
+);
+
+
 // ADMIN AUTHORIZATION
 // ============================================================
 
