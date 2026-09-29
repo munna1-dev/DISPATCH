@@ -2970,6 +2970,214 @@ app.post(
         .replace(/"/g, "&quot;")
         .replace(/\n/g, "<br>");
 
+      const safeSubject = String(subject || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+      const brandedHtmlBody = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>${safeSubject} | US COURIER</title>
+</head>
+
+<body style="
+  margin:0;
+  padding:0;
+  width:100%;
+  background:#f3f6fa;
+  color:#172033;
+  font-family:Arial,Helvetica,sans-serif;
+">
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+    style="width:100%;margin:0;padding:28px 12px;background:#f3f6fa;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" width="680" cellspacing="0" cellpadding="0" border="0"
+          style="
+            width:100%;
+            max-width:680px;
+            background:#ffffff;
+            border:1px solid #dfe5ee;
+            border-radius:14px;
+            overflow:hidden;
+          ">
+
+          <tr>
+            <td style="
+              padding:22px 28px;
+              background:#111827;
+              border-bottom:4px solid #c9a227;
+            ">
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td width="52" valign="middle">
+                    <div style="
+                      width:42px;
+                      height:42px;
+                      line-height:42px;
+                      text-align:center;
+                      background:#111827;
+                      border:2px solid #c9a227;
+                      border-radius:9px;
+                      color:#ffffff;
+                      font-size:21px;
+                      font-weight:900;
+                    ">UC</div>
+                  </td>
+
+                  <td valign="middle" style="padding-left:12px;">
+                    <div style="
+                      color:#ffffff;
+                      font-size:18px;
+                      line-height:22px;
+                      font-weight:900;
+                      letter-spacing:2px;
+                    ">US COURIER</div>
+
+                    <div style="
+                      color:#c9a227;
+                      font-size:9px;
+                      line-height:14px;
+                      font-weight:800;
+                      letter-spacing:2px;
+                    ">LOGISTICS &amp; DELIVERY</div>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:30px 30px 8px 30px;">
+
+              <div style="
+                color:#173b76;
+                font-size:25px;
+                line-height:34px;
+                font-weight:800;
+              ">${safeSubject}</div>
+
+              <div style="
+                width:48px;
+                height:3px;
+                margin-top:12px;
+                background:#c9a227;
+              "></div>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="
+              padding:12px 30px 30px 30px;
+              color:#34445d;
+              font-size:15px;
+              line-height:1.7;
+            ">
+
+              <div style="
+                background:#f7f9fc;
+                border:1px solid #e2e7ef;
+                border-left:4px solid #c9a227;
+                border-radius:8px;
+                padding:20px;
+                white-space:normal;
+                word-break:break-word;
+              ">
+                ${htmlBody}
+              </div>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="
+              padding:22px 30px;
+              background:#f7f9fc;
+              border-top:1px solid #e3e8ef;
+            ">
+
+              <div style="
+                color:#173b76;
+                font-size:14px;
+                line-height:20px;
+                font-weight:800;
+              ">US COURIER</div>
+
+              <div style="
+                margin-top:4px;
+                color:#68778c;
+                font-size:12px;
+                line-height:18px;
+              ">
+                Reliable logistics. Professional delivery.
+              </div>
+
+              <div style="
+                margin-top:12px;
+                font-size:12px;
+                line-height:18px;
+              ">
+                <a
+                  href="https://uscourier.app"
+                  style="
+                    color:#173b76;
+                    font-weight:700;
+                    text-decoration:none;
+                  "
+                >uscourier.app</a>
+              </div>
+
+              <div style="
+                margin-top:14px;
+                padding-top:14px;
+                border-top:1px solid #dfe5ee;
+                color:#8793a4;
+                font-size:11px;
+                line-height:17px;
+              ">
+                This email was sent from the US COURIER mail service.
+                Please treat any confidential shipment or account
+                information with care.
+              </div>
+
+            </td>
+          </tr>
+
+        </table>
+
+        <div style="
+          max-width:680px;
+          padding:14px 12px 0;
+          color:#8a96a7;
+          font-size:10px;
+          line-height:16px;
+          text-align:center;
+        ">
+          &copy; ${new Date().getFullYear()} US COURIER. All rights reserved.
+        </div>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+`;
+
+
       /*
        * Store outgoing attachments in private Vercel Blob before
        * sending the email.
@@ -3026,7 +3234,7 @@ app.post(
           bcc: bcc.length ? bcc : undefined,
           subject,
           text: textBody,
-          html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`,
+          html: brandedHtmlBody,
           attachments: uploadedFiles.length
             ? uploadedFiles.map((file) => ({
                 content: file.buffer,
@@ -3092,7 +3300,7 @@ app.post(
           mailbox.email,
           subject,
           textBody,
-          `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`
+          brandedHtmlBody
         ]
       );
 

@@ -589,3 +589,304 @@
     font-size: 13px;
   }
 }
+
+
+/* ============================================================
+   USCOURIER MAIL UI UPGRADE
+   Fixed sidebar / independent mail scrolling
+   ============================================================ */
+
+.mail-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  height: calc(100% - 72px);
+  min-height: 0;
+}
+
+.sidebar {
+  position: relative;
+  z-index: 20;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid #e7ebf1;
+  background: #fbfcfe;
+  padding: 22px 14px;
+}
+
+.main {
+  min-width: 0;
+  min-height: 0;
+  padding: 24px 28px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mail-toolbar {
+  flex: 0 0 auto;
+}
+
+.mail-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 0;
+}
+
+.message-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.reader {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reader-thread {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   CC / BCC
+   ============================================================ */
+
+.compose-to-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #e8edf3;
+}
+
+.compose-to-row > input {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0 !important;
+}
+
+.recipient-options {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding-right: 10px;
+}
+
+.recipient-toggle {
+  border: 0;
+  background: transparent;
+  color: #617087;
+  padding: 5px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recipient-toggle:hover,
+.recipient-toggle[aria-expanded="true"] {
+  background: #eef3f9;
+  color: #173b76;
+}
+
+.recipient-extra {
+  border-bottom: 1px solid #e8edf3;
+}
+
+.recipient-extra input {
+  border-bottom: 0 !important;
+}
+
+/* ============================================================
+   Reader
+   ============================================================ */
+
+.reader-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255,255,255,.97);
+  backdrop-filter: blur(8px);
+}
+
+.reader-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.reader-back:hover {
+  text-decoration: underline;
+}
+
+.reader-heading h3 {
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+/* ============================================================
+   Mobile sidebar drawer
+   ============================================================ */
+
+.sidebar-toggle {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.sidebar-mobile-head {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 760px) {
+
+  .mail-header {
+    height: 64px;
+  }
+
+  .sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .layout {
+    height: calc(100% - 64px);
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(285px, 86vw);
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-105%);
+    transition: transform .22s ease;
+    box-shadow: 12px 0 35px rgba(15,27,45,.18);
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-mobile-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 42px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+
+  .sidebar-mobile-head strong {
+    color: var(--text);
+    font-size: 16px;
+  }
+
+  .sidebar-mobile-head button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: block;
+    background: rgba(10,18,32,.45);
+    backdrop-filter: blur(2px);
+  }
+
+  .main {
+    height: 100%;
+    padding: 18px 12px;
+  }
+
+  .mail-content {
+    min-height: 0;
+  }
+}
+
+/* ============================================================
+   Better message-reader state
+   ============================================================ */
+
+.mail-content.reader-open {
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 1.25fr);
+}
+
+.mail-content.reader-open .reader {
+  box-shadow: inset 1px 0 0 #edf0f4;
+}
+
+@media (max-width: 900px) {
+  .mail-content.reader-open {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .mail-content.reader-open {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mail-content.reader-open .message-list {
+    display: none;
+  }
+
+  .mail-content.reader-open .reader {
+    display: block;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .compose-to-row {
+    gap: 2px;
+  }
+
+  .recipient-options {
+    padding-right: 6px;
+  }
+
+  .recipient-toggle {
+    padding: 5px;
+  }
+}

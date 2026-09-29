@@ -87,6 +87,15 @@
 
     <header class="mail-header">
 
+      <button
+        type="button"
+        class="sidebar-toggle"
+        id="sidebarToggle"
+        aria-label="Open mailbox navigation"
+        aria-controls="mailSidebar"
+        aria-expanded="false"
+      >☰</button>
+
       <div class="brand uc-mail-brand">
         <span class="uc-mail-brand-mark">
           <svg viewBox="0 0 48 48" aria-hidden="true">
@@ -117,7 +126,19 @@
 
     <div class="layout">
 
-      <aside class="sidebar">
+      <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+      <aside class="sidebar" id="mailSidebar">
+
+        <div class="sidebar-mobile-head">
+          <strong>Mail</strong>
+          <button
+            type="button"
+            id="closeSidebar"
+            aria-label="Close mailbox navigation"
+          >×</button>
+        </div>
+
         <button class="compose" type="button">＋ Compose</button>
 
         <nav aria-label="Mailbox folders">
@@ -191,11 +212,53 @@
         <button type="button" id="closeCompose">×</button>
       </div>
 
-      <input id="composeTo" type="email" placeholder="To">
+      <div class="compose-to-row">
 
-      <div class="compose-recipient-row">
-        <input id="composeCc" type="text" placeholder="Cc">
-        <input id="composeBcc" type="text" placeholder="Bcc">
+        <input
+          id="composeTo"
+          type="email"
+          placeholder="To"
+          autocomplete="email"
+        >
+
+        <div class="recipient-options" aria-label="Additional recipients">
+
+          <button
+            type="button"
+            class="recipient-toggle"
+            id="toggleCc"
+            aria-controls="composeCcWrap"
+            aria-expanded="false"
+          >CC</button>
+
+          <button
+            type="button"
+            class="recipient-toggle"
+            id="toggleBcc"
+            aria-controls="composeBccWrap"
+            aria-expanded="false"
+          >BCC</button>
+
+        </div>
+
+      </div>
+
+      <div class="recipient-extra" id="composeCcWrap" hidden>
+        <input
+          id="composeCc"
+          type="text"
+          placeholder="Cc"
+          autocomplete="off"
+        >
+      </div>
+
+      <div class="recipient-extra" id="composeBccWrap" hidden>
+        <input
+          id="composeBcc"
+          type="text"
+          placeholder="Bcc"
+          autocomplete="off"
+        >
       </div>
 
       <input id="composeSubject" type="text" placeholder="Subject">

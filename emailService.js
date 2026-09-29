@@ -35,71 +35,215 @@ function escapeHtml(value) {
 }
 
 function emailLayout(title, content) {
+  const safeTitle = escapeHtml(title);
+
   return `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${escapeHtml(title)}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>${safeTitle} | US COURIER</title>
 </head>
 
 <body style="
   margin:0;
   padding:0;
-  background:#160e0a;
-  color:#f8f4f0;
+  width:100%;
+  background:#f3f6fa;
+  color:#172033;
   font-family:Arial,Helvetica,sans-serif;
 ">
 
-  <div style="
-    max-width:680px;
-    margin:40px auto;
-    padding:24px;
-  ">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+    style="width:100%;margin:0;padding:28px 12px;background:#f3f6fa;">
+    <tr>
+      <td align="center">
 
-    <div style="
-      background:#24130e;
-      border:1px solid #3a241a;
-      border-radius:16px;
-      padding:30px;
-    ">
+        <table role="presentation" width="680" cellspacing="0" cellpadding="0" border="0"
+          style="
+            width:100%;
+            max-width:680px;
+            background:#ffffff;
+            border:1px solid #dfe5ee;
+            border-radius:14px;
+            overflow:hidden;
+          ">
 
-      <div style="
-        font-size:24px;
-        font-weight:700;
-        color:#e8a87c;
-        margin-bottom:24px;
-      ">
-        US COURIER
-      </div>
+          <!-- HEADER -->
+          <tr>
+            <td style="
+              padding:22px 28px;
+              background:#111827;
+              border-bottom:4px solid #c9a227;
+            ">
 
-      ${content}
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td width="52" valign="middle">
 
-      <div style="
-        margin-top:32px;
-        padding-top:20px;
-        border-top:1px solid #3a241a;
-        color:#b8aaa2;
-        font-size:13px;
-      ">
-        US COURIER<br>
-        <a
-          href="${escapeHtml(PUBLIC_APP_URL)}"
-          style="color:#e8a87c;"
-        >
-          ${escapeHtml(PUBLIC_APP_URL)}
-        </a>
-      </div>
+                    <!-- Inline USCourier brand mark -->
+                    <div style="
+                      width:42px;
+                      height:42px;
+                      line-height:42px;
+                      text-align:center;
+                      background:#111827;
+                      border:2px solid #c9a227;
+                      border-radius:9px;
+                      color:#ffffff;
+                      font-size:21px;
+                      font-weight:900;
+                    ">
+                      UC
+                    </div>
 
-    </div>
+                  </td>
 
-  </div>
+                  <td valign="middle" style="padding-left:12px;">
+                    <div style="
+                      color:#ffffff;
+                      font-size:18px;
+                      line-height:22px;
+                      font-weight:900;
+                      letter-spacing:2px;
+                    ">
+                      US COURIER
+                    </div>
+
+                    <div style="
+                      color:#c9a227;
+                      font-size:9px;
+                      line-height:14px;
+                      font-weight:800;
+                      letter-spacing:2px;
+                    ">
+                      LOGISTICS &amp; DELIVERY
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- TITLE -->
+          <tr>
+            <td style="padding:30px 30px 8px 30px;">
+
+              <div style="
+                color:#173b76;
+                font-size:26px;
+                line-height:34px;
+                font-weight:800;
+              ">
+                ${safeTitle}
+              </div>
+
+              <div style="
+                width:48px;
+                height:3px;
+                margin-top:12px;
+                background:#c9a227;
+              "></div>
+
+            </td>
+          </tr>
+
+          <!-- CONTENT -->
+          <tr>
+            <td style="
+              padding:12px 30px 30px 30px;
+              color:#34445d;
+              font-size:15px;
+              line-height:1.7;
+            ">
+              ${content}
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="
+              padding:22px 30px;
+              background:#f7f9fc;
+              border-top:1px solid #e3e8ef;
+            ">
+
+              <div style="
+                color:#173b76;
+                font-size:14px;
+                line-height:20px;
+                font-weight:800;
+              ">
+                US COURIER
+              </div>
+
+              <div style="
+                margin-top:4px;
+                color:#68778c;
+                font-size:12px;
+                line-height:18px;
+              ">
+                Reliable logistics. Professional delivery.
+              </div>
+
+              <div style="
+                margin-top:12px;
+                font-size:12px;
+                line-height:18px;
+              ">
+                <a
+                  href="${escapeHtml(PUBLIC_APP_URL)}"
+                  style="
+                    color:#173b76;
+                    font-weight:700;
+                    text-decoration:none;
+                  "
+                >
+                  ${escapeHtml(PUBLIC_APP_URL)}
+                </a>
+              </div>
+
+              <div style="
+                margin-top:14px;
+                padding-top:14px;
+                border-top:1px solid #dfe5ee;
+                color:#8793a4;
+                font-size:11px;
+                line-height:17px;
+              ">
+                This is an official communication from US COURIER.
+                Please do not share confidential account or shipment
+                information with unauthorized persons.
+              </div>
+
+            </td>
+          </tr>
+
+        </table>
+
+        <div style="
+          max-width:680px;
+          padding:14px 12px 0;
+          color:#8a96a7;
+          font-size:10px;
+          line-height:16px;
+          text-align:center;
+        ">
+          &copy; ${new Date().getFullYear()} US COURIER. All rights reserved.
+        </div>
+
+      </td>
+    </tr>
+  </table>
 
 </body>
 </html>
 `;
 }
-
 /* =========================================================
    RESEND HTTPS TRANSPORT
 ========================================================= */
@@ -274,14 +418,14 @@ async function sendShipmentCreated({
       </p>
 
       <div style="
-        background:#160e0a;
+        background:#eef3f8;
         padding:18px;
         border-radius:12px;
         margin:20px 0;
       ">
         <strong>Tracking Number</strong><br>
         <span style="
-          color:#e8a87c;
+          color:#c9a227;
           font-size:20px;
         ">
           ${escapeHtml(
@@ -331,7 +475,7 @@ async function sendShipmentStatusUpdated({
       </p>
 
       <div style="
-        background:#160e0a;
+        background:#eef3f8;
         padding:18px;
         border-radius:12px;
       ">
@@ -415,7 +559,7 @@ async function sendContactNotification({
       </p>
 
       <div style="
-        background:#160e0a;
+        background:#eef3f8;
         padding:18px;
         border-radius:12px;
         margin:20px 0;
@@ -435,7 +579,7 @@ async function sendContactNotification({
       </div>
 
       <div style="
-        background:#160e0a;
+        background:#eef3f8;
         padding:18px;
         border-radius:12px;
         white-space:pre-wrap;
@@ -478,7 +622,7 @@ async function sendContactReply({
       </p>
 
       <div style="
-        background:#160e0a;
+        background:#eef3f8;
         border-radius:12px;
         padding:18px;
         margin:20px 0;
@@ -541,8 +685,8 @@ async function sendPasswordReset({
           style="
             display:inline-block;
             padding:12px 20px;
-            background:#e8a87c;
-            color:#24130e;
+            background:#c9a227;
+            color:#111827;
             text-decoration:none;
             border-radius:8px;
             font-weight:700;
@@ -583,7 +727,7 @@ async function sendAdminLoginAlert({
       </p>
 
       <div style="
-        background:#160e0a;
+        background:#eef3f8;
         padding:18px;
         border-radius:12px;
       ">

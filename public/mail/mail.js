@@ -681,6 +681,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function startReply(message) {
     editingDraftId = null;
 
+    window.usCourierResetRecipientVisibility?.();
+
     const sender = message.sender_email || "";
     const subject = message.subject || "";
 
@@ -713,6 +715,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const heading = document.createElement("div");
     heading.className = "reader-heading";
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "reader-back";
+    back.textContent = "← Back to messages";
+    back.addEventListener("click", () => {
+      if (mailContent) {
+        mailContent.classList.remove("reader-open");
+      }
+
+      reader.innerHTML = "";
+      title.textContent = labels[folder] || "Inbox";
+      subtitle.textContent = "Select a message to read";
+      renderMessages();
+    });
+
+    heading.appendChild(back);
 
     const subject = document.createElement("h3");
     subject.textContent = threadMessages[0]?.subject || "(No subject)";
@@ -1174,3 +1193,219 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })();
 });
+
+
+/* ============================================================
+   USCOURIER MAIL UI UPGRADE
+   CC/BCC controls + mobile sidebar
+   ============================================================ */
+
+(function () {
+  "use strict";
+
+  function initMailUiUpgrade() {
+
+    const toggleCc = document.getElementById("toggleCc");
+    const toggleBcc = document.getElementById("toggleBcc");
+
+    const composeCcWrap =
+      document.getElementById("composeCcWrap");
+
+    const composeBccWrap =
+      document.getElementById("composeBccWrap");
+
+    const composeCc =
+      document.getElementById("composeCc");
+
+    const composeBcc =
+      document.getElementById("composeBcc");
+
+    function setRecipientVisibility(type, visible) {
+
+      const isCc = type === "cc";
+
+      const button =
+        isCc ? toggleCc : toggleBcc;
+
+      const wrapper =
+        isCc ? composeCcWrap : composeBccWrap;
+
+      if (!button || !wrapper) return;
+
+      wrapper.hidden = !visible;
+
+      button.setAttribute(
+        "aria-expanded",
+        String(visible)
+      );
+    }
+
+    window.usCourierSetRecipientVisibility =
+      setRecipientVisibility;
+
+    function resetRecipientVisibility() {
+      setRecipientVisibility("cc", false);
+      setRecipientVisibility("bcc", false);
+    }
+
+    window.usCourierResetRecipientVisibility =
+      resetRecipientVisibility;
+
+    toggleCc?.addEventListener("click", function () {
+
+      setRecipientVisibility(
+        "cc",
+        composeCcWrap.hidden
+      );
+
+      if (!composeCcWrap.hidden) {
+        requestAnimationFrame(function () {
+          composeCc?.focus();
+        });
+      }
+    });
+
+    toggleBcc?.addEventListener("click", function () {
+
+      setRecipientVisibility(
+        "bcc",
+        composeBccWrap.hidden
+      );
+
+      if (!composeBccWrap.hidden) {
+        requestAnimationFrame(function () {
+          composeBcc?.focus();
+        });
+      }
+    });
+
+    /* --------------------------------------------------------
+       Mobile sidebar
+       -------------------------------------------------------- */
+
+    const sidebar =
+      document.getElementById("mailSidebar");
+
+    const sidebarToggle =
+      document.getElementById("sidebarToggle");
+
+    const closeSidebar =
+      document.getElementById("closeSidebar");
+
+    const sidebarBackdrop =
+      document.getElementById("sidebarBackdrop");
+
+    function setSidebarOpen(open) {
+
+      if (!sidebar) return;
+
+      sidebar.classList.toggle(
+        "is-open",
+        open
+      );
+
+      sidebarToggle?.setAttribute(
+        "aria-expanded",
+        String(open)
+      );
+
+      if (sidebarBackdrop) {
+        sidebarBackdrop.hidden = !open;
+      }
+    }
+
+    window.usCourierSetSidebarOpen =
+      setSidebarOpen;
+
+    sidebarToggle?.addEventListener(
+      "click",
+      function () {
+        setSidebarOpen(true);
+      }
+    );
+
+    closeSidebar?.addEventListener(
+      "click",
+      function () {
+        setSidebarOpen(false);
+      }
+    );
+
+    sidebarBackdrop?.addEventListener(
+      "click",
+      function () {
+        setSidebarOpen(false);
+      }
+    );
+
+    document.addEventListener(
+      "keydown",
+      function (event) {
+
+        if (event.key === "Escape") {
+          setSidebarOpen(false);
+        }
+
+      }
+    );
+
+    document
+      .querySelectorAll(".nav-item")
+      .forEach(function (item) {
+
+        item.addEventListener(
+          "click",
+          function () {
+            setSidebarOpen(false);
+          }
+        );
+
+      });
+
+    /* --------------------------------------------------------
+       Reset hidden CC/BCC when compose is opened fresh.
+       This does NOT interfere with the existing mail send
+       logic.
+       -------------------------------------------------------- */
+
+    const composeButton =
+      document.querySelector(".compose");
+
+    composeButton?.addEventListener(
+      "click",
+      function () {
+
+        /*
+         * Existing mail.js compose handler should still
+         * perform the actual opening/reset logic.
+         *
+         * We only reset the optional recipient UI.
+         */
+
+        if (window.usCourierSetRecipientVisibility) {
+          window.usCourierSetRecipientVisibility(
+            "cc",
+            Boolean(composeCc?.value?.trim())
+          );
+
+          window.usCourierSetRecipientVisibility(
+            "bcc",
+            Boolean(composeBcc?.value?.trim())
+          );
+        }
+
+      }
+    );
+
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initMailUiUpgrade
+    );
+  } else {
+    initMailUiUpgrade();
+  }
+
+})();
