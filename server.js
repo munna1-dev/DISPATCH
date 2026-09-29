@@ -3,6 +3,7 @@
 require("dotenv").config();
 
 const dns = require("dns");
+const crypto = require("crypto");
 dns.setDefaultResultOrder("ipv4first");
 
 const express = require("express");
@@ -367,13 +368,335 @@ app.use(
   cors({
     origin: [
       "https://uscourier.app",
-      "https://account.uscourier.app"
+      "https://account.uscourier.app",
+      "https://mail.uscourier.app"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
+
+function parseMailAddress(value) {
+  const raw = cleanString(value, 320);
+  const match = raw.match(/^\s*(.*?)\s*<([^<>\s]+@[^<>\s]+)>\s*$/);
+  if (match) {
+    return { name: cleanString(match[1].replace(/^"|"$/g, ""), 160), email: match[2].trim().toLowerCase() };
+  }
+  const emailMatch = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  if (!emailMatch) return null;
+  return { name: "", email: emailMatch[0].toLowerCase() };
+}
+
+function normalizeMailAddresses(values = []) {
+  return values.flatMap((value) => {
+    const address = parseMailAddress(value);
+    return address ? [address] : [];
+  });
+}
+
+function getMailHeader(headers, name) {
+  if (!headers || typeof headers !== "object") return "";
+  const wanted = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (String(key).toLowerCase() === wanted) return cleanString(value, 1000);
+  }
+  return "";
+}
+
+function normalizeMailSubject(subject) {
+  return cleanString(subject, 300).replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, "").trim().toLowerCase();
+}
+
+app.post(
+  "/api/webhooks/resend",
+  express.raw({
+    type: "application/json",
+    limit: "2mb"
+  }),
+  async (req, res) => {
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    const webhookId = req.get("webhook-id");
+    const webhookTimestamp = req.get("webhook-timestamp");
+    const webhookSignature = req.get("webhook-signature");
+
+    if (!webhookSecret) {
+      console.error("[RESEND WEBHOOK] Secret is not configured.");
+      return res.status(503).json({
+        success: false,
+        error: "Webhook is not configured."
+      });
+    }
+
+    if (!webhookId || !webhookTimestamp || !webhookSignature) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid webhook request."
+      });
+    }
+    try {
+      const payload = Buffer.isBuffer(req.body)
+        ? req.body.toString("utf8")
+        : String(req.body || "");
+
+      const event = resend.webhooks.verify({
+        webhookSecret,
+        payload,
+        headers: {
+          id: webhookId,
+          timestamp: webhookTimestamp,
+          signature: webhookSignature
+        }
+      });
+
+      if (!event || event.type !== "email.received" || !event.data?.email_id) {
+        return res.status(200).json({
+          success: true,
+          received: true
+        });
+      }
+
+      const eventResult = await pool.query(
+        `INSERT INTO mail_webhook_events (
+           event_id,
+           event_type,
+           resend_email_id,
+           payload
+         )
+         VALUES ($1, $2, $3, $4::jsonb)
+         ON CONFLICT (event_id) DO NOTHING
+         RETURNING id, processed`,
+        [
+          webhookId,
+          event.type,
+          event.data.email_id,
+          payload
+        ]
+      );
+
+      if (eventResult.rowCount === 0) {
+        const existingEvent = await pool.query(
+          `SELECT processed
+           FROM mail_webhook_events
+           WHERE event_id = $1
+           LIMIT 1`,
+          [webhookId]
+        );
+
+        if (existingEvent.rows[0]?.processed) {
+          return res.status(200).json({
+            success: true,
+            received: true,
+            duplicate: true
+          });
+        }
+      }
+      const receivedResult = await resend.receiving.get(event.data.email_id);
+
+      if (receivedResult.error || !receivedResult.data) {
+        throw new Error("Unable to retrieve received email.");
+      }
+
+      const received = receivedResult.data;
+      const sender = parseMailAddress(received.from);
+
+      if (!sender) {
+        throw new Error("Received email has no valid sender address.");
+      }
+
+      const receivedFor = normalizeMailAddresses(received.received_for || []);
+      const recipientsTo = normalizeMailAddresses(received.to || []);
+      const recipientsCc = normalizeMailAddresses(received.cc || []);
+      const recipientsBcc = normalizeMailAddresses(received.bcc || []);
+
+      const mailboxCandidates = [
+        ...receivedFor.map((item) => item.email),
+        ...recipientsTo.map((item) => item.email)
+      ].filter(Boolean);
+
+      const mailboxResult = await pool.query(
+        `SELECT id, email, display_name
+         FROM mailboxes
+         WHERE status = 'active'
+           AND LOWER(email) = ANY($1::text[])
+         LIMIT 1`,
+        [mailboxCandidates.map((email) => email.toLowerCase())]
+      );
+
+      if (!mailboxResult.rows[0]) {
+        console.warn("[RESEND WEBHOOK] No active mailbox matched received email.");
+
+        await pool.query(
+          `UPDATE mail_webhook_events
+           SET processed = true,
+               processed_at = now()
+           WHERE event_id = $1`,
+          [webhookId]
+        );
+
+        return res.status(200).json({
+          success: true,
+          received: true,
+          ignored: true
+        });
+      }
+
+      const mailbox = mailboxResult.rows[0];
+      const headers = received.headers || {};
+      const inReplyTo = getMailHeader(headers, "in-reply-to");
+      const references = getMailHeader(headers, "references");
+      const normalizedSubject = normalizeMailSubject(received.subject);
+
+      let threadId = received.message_id || event.data.email_id;
+
+      if (inReplyTo || references) {
+        const referenceIds = [
+          inReplyTo,
+          ...references.split(/\s+/)
+        ].filter(Boolean);
+
+        const parentResult = await pool.query(
+          `SELECT thread_id, message_id
+           FROM mail_messages
+           WHERE mailbox_id = $1
+             AND message_id = ANY($2::text[])
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [mailbox.id, referenceIds]
+        );
+
+        if (parentResult.rows[0]) {
+          threadId = parentResult.rows[0].thread_id || parentResult.rows[0].message_id || threadId;
+        }
+      }
+
+      if (threadId === received.message_id && normalizedSubject) {
+        const subjectResult = await pool.query(
+          `SELECT thread_id
+           FROM mail_messages
+           WHERE mailbox_id = $1
+             AND LOWER(TRIM(REGEXP_REPLACE(subject, '^(re|fw|fwd):[[:space:]]*', '', 'i'))) = $2
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [mailbox.id, normalizedSubject]
+        );
+
+        if (subjectResult.rows[0]?.thread_id) {
+          threadId = subjectResult.rows[0].thread_id;
+        }
+      }
+      const messageResult = await pool.query(
+        `INSERT INTO mail_messages (
+           mailbox_id,
+           resend_email_id,
+           message_id,
+           in_reply_to,
+           thread_id,
+           sender_name,
+           sender_email,
+           subject,
+           text_body,
+           html_body,
+           folder,
+           is_read,
+           is_starred,
+           received_at
+         )
+         VALUES (
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+           'inbox', false, false, $11
+         )
+         ON CONFLICT (mailbox_id, resend_email_id) DO NOTHING
+         RETURNING id`,
+        [
+          mailbox.id,
+          received.id,
+          cleanString(received.message_id, 1000) || null,
+          inReplyTo || null,
+          threadId,
+          sender.name || null,
+          sender.email,
+          cleanString(received.subject, 300),
+          received.text || null,
+          received.html || null,
+          received.created_at || new Date().toISOString()
+        ]
+      );
+
+      if (messageResult.rowCount > 0) {
+        const messageId = messageResult.rows[0].id;
+        const recipients = [
+          ...recipientsTo.map((item) => ({ ...item, type: "to" })),
+          ...recipientsCc.map((item) => ({ ...item, type: "cc" })),
+          ...recipientsBcc.map((item) => ({ ...item, type: "bcc" }))
+        ];
+
+        for (const recipient of recipients) {
+          await pool.query(
+            `INSERT INTO mail_recipients (
+               message_id,
+               recipient_type,
+               email,
+               display_name
+             )
+             VALUES ($1, $2, $3, $4)`,
+            [
+              messageId,
+              recipient.type,
+              recipient.email,
+              recipient.name || null
+            ]
+          );
+        }
+        for (const attachment of received.attachments || []) {
+          await pool.query(
+            `INSERT INTO mail_attachments (
+               message_id,
+               resend_attachment_id,
+               filename,
+               content_type,
+               content_disposition,
+               content_id,
+               size_bytes
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT DO NOTHING`,
+            [
+              messageId,
+              attachment.id,
+              attachment.filename || "attachment",
+              attachment.content_type || "application/octet-stream",
+              attachment.content_disposition || null,
+              attachment.content_id || null,
+              Number.isFinite(Number(attachment.size)) ? Number(attachment.size) : null
+            ]
+          );
+        }
+      }
+
+      await pool.query(
+        `UPDATE mail_webhook_events
+         SET processed = true,
+             processed_at = now()
+         WHERE event_id = $1`,
+        [webhookId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        received: true
+      });
+    } catch (error) {
+      console.error("[RESEND WEBHOOK] Processing failed:", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Webhook processing failed."
+      });
+    }
+  }
+);
+
 
 app.use(
   express.json({
@@ -985,6 +1308,95 @@ app.get("/api/mailbox/messages", authMiddleware, async (req, res) => {
   }
 });
 
+app.get("/api/mailbox/messages/:id/thread", authMiddleware, async (req, res) => {
+  try {
+    const messageId = cleanString(req.params.id, 100);
+
+    if (!messageId) {
+      return res.status(400).json({ success: false, error: "Message ID is required." });
+    }
+
+    const result = await queryWithRetry(
+      `SELECT
+         m.id,
+         m.resend_email_id,
+         m.message_id,
+         m.in_reply_to,
+         m.thread_id,
+         m.sender_name,
+         m.sender_email,
+         m.subject,
+         m.text_body,
+         m.html_body,
+         m.folder,
+         m.is_read,
+         m.is_starred,
+         m.received_at,
+         m.sent_at,
+         m.created_at,
+         m.updated_at,
+         COALESCE((
+           SELECT json_agg(
+             json_build_object(
+               'type', r.recipient_type,
+               'email', r.email,
+               'name', r.display_name
+             ) ORDER BY r.created_at
+           )
+           FROM mail_recipients r
+           WHERE r.message_id = m.id
+         ), '[]'::json) AS recipients,
+         COALESCE((
+           SELECT json_agg(
+             json_build_object(
+               'id', a.id,
+               'filename', a.filename,
+               'content_type', a.content_type,
+               'content_disposition', a.content_disposition,
+               'content_id', a.content_id,
+               'size_bytes', a.size_bytes
+             ) ORDER BY a.created_at
+           )
+           FROM mail_attachments a
+           WHERE a.message_id = m.id
+         ), '[]'::json) AS attachments
+       FROM mail_messages m
+       JOIN mailboxes b ON b.id = m.mailbox_id
+       WHERE b.user_id = $1
+         AND b.status = 'active'
+         AND m.thread_id = (
+           SELECT source.thread_id
+           FROM mail_messages source
+           WHERE source.id = $2
+             AND source.mailbox_id = b.id
+           LIMIT 1
+         )
+       ORDER BY COALESCE(m.received_at, m.sent_at, m.created_at) ASC`,
+      [req.user.id, messageId]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        error: "Message not found."
+      });
+    }
+
+    return res.json({
+      success: true,
+      thread_id: result.rows[0].thread_id,
+      count: result.rows.length,
+      messages: result.rows
+    });
+  } catch (error) {
+    console.error("[MAILBOX THREAD]", error.message);
+    return res.status(500).json({
+      success: false,
+      error: "Unable to retrieve message thread."
+    });
+  }
+});
+
+
 app.post(
   "/api/mailbox/drafts",
   requireSameOrigin,
@@ -1008,6 +1420,7 @@ app.post(
 
       const subject = cleanString(req.body?.subject, 200);
       const textBody = cleanString(req.body?.body, 10000);
+      const replyToMessageId = cleanString(req.body?.replyToMessageId, 100);
 
       if (to.some((email) => !isValidEmail(email)) ||
           cc.some((email) => !isValidEmail(email)) ||
@@ -1159,6 +1572,32 @@ app.post(
       }
 
       const mailbox = mailboxResult.rows[0];
+      const generatedMessageId = `<${crypto.randomUUID()}@uscourier.app>`;
+
+      let parentMessage = null;
+      if (replyToMessageId) {
+        const parentResult = await queryWithRetry(
+          `SELECT id, message_id, in_reply_to, thread_id, subject
+           FROM mail_messages
+           WHERE id = $1
+             AND mailbox_id = $2
+           LIMIT 1`,
+          [replyToMessageId, mailbox.id]
+        );
+        parentMessage = parentResult.rows[0] || null;
+
+        if (!parentMessage) {
+          return res.status(404).json({
+            success: false,
+            error: "The message you are replying to could not be found."
+          });
+        }
+      }
+
+      const inReplyTo = parentMessage?.message_id || null;
+      const threadId = parentMessage?.thread_id || parentMessage?.message_id || generatedMessageId;
+      const references = parentMessage?.message_id || null;
+
       const htmlBody = textBody
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -1173,7 +1612,12 @@ app.post(
         bcc: bcc.length ? bcc : undefined,
         subject,
         text: textBody,
-        html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`
+        html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`,
+        headers: {
+          "Message-ID": generatedMessageId,
+          ...(inReplyTo ? { "In-Reply-To": inReplyTo } : {}),
+          ...(references ? { "References": references } : {})
+        }
       });
 
       if (result?.error) {
@@ -1188,6 +1632,9 @@ app.post(
         `INSERT INTO mail_messages (
            mailbox_id,
            resend_email_id,
+           message_id,
+           in_reply_to,
+           thread_id,
            sender_name,
            sender_email,
            subject,
@@ -1196,11 +1643,14 @@ app.post(
            folder,
            is_read,
            sent_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'sent', true, now())
-         RETURNING id, resend_email_id, created_at, sent_at`,
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'sent', true, now())
+         RETURNING id, resend_email_id, message_id, thread_id, created_at, sent_at`,
         [
           mailbox.id,
           result?.data?.id || null,
+          generatedMessageId,
+          inReplyTo,
+          threadId,
           mailbox.display_name,
           mailbox.email,
           subject,
@@ -1232,7 +1682,9 @@ app.post(
         success: true,
         message: {
           id: messageId,
-          resend_email_id: result?.data?.id || null
+          resend_email_id: result?.data?.id || null,
+          message_id: generatedMessageId,
+          thread_id: threadId
         }
       });
     } catch (error) {

@@ -14,6 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const send = document.getElementById("sendMail");
   const attachment = document.getElementById("composeAttachment");
   const attachmentStatus = document.getElementById("attachmentStatus");
+  const reader = document.querySelector(".reader");
+  const mailContent = document.querySelector(".mail-content");
+  const refreshMail = document.getElementById("refreshMail");
+
+  let replyToMessageId = null;
 
   const mailLogin = document.getElementById("mailLogin");
   const mailShell = document.getElementById("mailShell");
@@ -190,6 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     list.innerHTML = "";
     empty.hidden = true;
     listCount.textContent = "Loading…";
+    if (mailContent) mailContent.classList.remove("reader-open");
 
     try {
       const response = await fetch("/api/mailbox/messages?folder=" + encodeURIComponent(folder), {
@@ -247,12 +253,193 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function openMessage(message) {
+  function formatMessageDate(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }).format(date);
+  }
+
+  function renderSafeBody(message) {
+    const body = document.createElement("div");
+    body.className = "reader-body";
+
+    if (message.text_body) {
+      body.textContent = message.text_body;
+    } else {
+      const note = document.createElement("p");
+      note.textContent = "This message contains no plain-text body.";
+      body.appendChild(note);
+    }
+
+    return body;
+  }
+
+  function startReply(message) {
+    const sender = message.sender_email || "";
+    const subject = message.subject || "";
+
+    document.getElementById("composeTo").value = sender;
+    document.getElementById("composeCc").value = "";
+    document.getElementById("composeBcc").value = "";
+    document.getElementById("composeSubject").value =
+      /^\s*re\s*:/i.test(subject)
+        ? subject
+        : `Re: ${subject || "(No subject)"}`;
+    document.getElementById("composeBody").value = "";
+
+    replyToMessageId = message.id;
+    modal.hidden = false;
+
+    const composeTitle = document.querySelector(".compose-head strong");
+    if (composeTitle) composeTitle.textContent = "Reply";
+
+    document.getElementById("composeBody").focus();
+  }
+
+  function renderReader(threadMessages, selectedId) {
+    reader.innerHTML = "";
+
+    const thread = document.createElement("div");
+    thread.className = "reader-thread";
+
+    const header = document.createElement("div");
+    header.className = "reader-head";
+
+    const heading = document.createElement("div");
+    heading.className = "reader-heading";
+
+    const subject = document.createElement("h3");
+    subject.textContent = threadMessages[0]?.subject || "(No subject)";
+
+    const count = document.createElement("span");
+    count.textContent =
+      threadMessages.length > 1
+        ? `${threadMessages.length} messages in thread`
+        : "Message";
+
+    heading.append(subject, count);
+
+    const actions = document.createElement("div");
+    actions.className = "reader-actions";
+
+    const selected =
+      threadMessages.find((item) => item.id === selectedId) ||
+      threadMessages[threadMessages.length - 1];
+
+    const reply = document.createElement("button");
+    reply.type = "button";
+    reply.className = "reader-action";
+    reply.textContent = "Reply";
+    reply.addEventListener("click", () => startReply(selected));
+
+    actions.appendChild(reply);
+    header.append(heading, actions);
+    thread.appendChild(header);
+
+    threadMessages.forEach((item) => {
+      const card = document.createElement("article");
+      card.className =
+        "thread-message" + (item.id === selectedId ? " selected" : "");
+
+      const meta = document.createElement("div");
+      meta.className = "thread-meta";
+
+      const sender = document.createElement("div");
+      sender.className = "thread-sender";
+      sender.textContent = item.sender_name
+        ? `${item.sender_name} <${item.sender_email}>`
+        : item.sender_email || "Unknown sender";
+
+      const date = document.createElement("time");
+      date.textContent = formatMessageDate(
+        item.received_at || item.sent_at || item.created_at
+      );
+
+      meta.append(sender, date);
+      card.appendChild(meta);
+
+      const recipients = (item.recipients || [])
+        .filter((recipient) => recipient.type !== "bcc")
+        .map((recipient) => recipient.email)
+        .join(", ");
+
+      if (recipients) {
+        const recipientLine = document.createElement("div");
+        recipientLine.className = "thread-recipients";
+        recipientLine.textContent = `To: ${recipients}`;
+        card.appendChild(recipientLine);
+      }
+
+      card.appendChild(renderSafeBody(item));
+
+      const attachments = Array.isArray(item.attachments)
+        ? item.attachments
+        : [];
+
+      if (attachments.length) {
+        const attachmentList = document.createElement("div");
+        attachmentList.className = "reader-attachments";
+
+        attachments.forEach((file) => {
+          const attachmentItem = document.createElement("span");
+          attachmentItem.className = "reader-attachment";
+          attachmentItem.textContent = file.filename || "Attachment";
+          attachmentList.appendChild(attachmentItem);
+        });
+
+        card.appendChild(attachmentList);
+      }
+
+      thread.appendChild(card);
+    });
+
+    reader.appendChild(thread);
+  }
+
+  async function openMessage(message) {
     title.textContent = message.subject || "(No subject)";
-    subtitle.textContent = message.sender_email || "Message";
-    list.innerHTML = "";
-    empty.hidden = false;
-    empty.textContent = message.text_body || "This message contains no plain-text body."; 
+    subtitle.textContent = "Loading conversation…";
+
+    try {
+      const response = await fetch(
+        "/api/mailbox/messages/" +
+          encodeURIComponent(message.id) +
+          "/thread",
+        { credentials: "include" }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Unable to load conversation.");
+      }
+
+      const threadMessages = Array.isArray(data.messages)
+        ? data.messages
+        : [message];
+
+      renderReader(threadMessages, message.id);
+
+      if (mailContent) {
+        mailContent.classList.add("reader-open");
+      }
+
+      subtitle.textContent = message.sender_email || "Conversation";
+    } catch (error) {
+      reader.innerHTML = "";
+
+      const state = document.createElement("div");
+      state.className = "reader-empty";
+      state.textContent =
+        error.message || "Unable to load conversation.";
+
+      reader.appendChild(state);
+      subtitle.textContent = "Unable to load conversation";
+    }
   }
 
   function showFolder(nextFolder) {
@@ -296,7 +483,14 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ to, cc, bcc, subject, body })
+        body: JSON.stringify({
+          to,
+          cc,
+          bcc,
+          subject,
+          body,
+          replyToMessageId
+        })
       });
 
       const data = await response.json().catch(() => ({}));
@@ -355,6 +549,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("composeBody").value = "";
       attachment.value = "";
       attachmentStatus.textContent = "No file attached";
+      replyToMessageId = null;
+      const composeTitle = document.querySelector(".compose-head strong");
+      if (composeTitle) composeTitle.textContent = "New message";
       subtitle.textContent = "Message sent successfully.";
       showFolder("sent");
     } catch (error) {
@@ -364,6 +561,17 @@ document.addEventListener("DOMContentLoaded", () => {
       send.textContent = "Send";
     }
   });
+
+  if (refreshMail) {
+    refreshMail.addEventListener("click", async () => {
+      refreshMail.disabled = true;
+      try {
+        await loadMessages();
+      } finally {
+        refreshMail.disabled = false;
+      }
+    });
+  }
 
   search.addEventListener("input", () => {
     const value = search.value.trim().toLowerCase();
