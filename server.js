@@ -12,6 +12,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const multer = require("multer");
+const { put, get, del } = require("@vercel/blob");
+const { Readable } = require("stream");
 
 const MAIL_ATTACHMENT_MAX_FILES = 5;
 const MAIL_ATTACHMENT_MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
@@ -81,6 +83,145 @@ const mailAttachmentUpload = multer({
     callback(null, true);
   }
 });
+
+
+function sanitizeMailAttachmentFilename(filename) {
+  return String(filename || "attachment")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/[\\/]/g, "_")
+    .replace(/"/g, "'")
+    .trim()
+    .slice(0, 180) || "attachment";
+}
+
+function isBlobStorageConfigured() {
+  return Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN &&
+    String(process.env.BLOB_READ_WRITE_TOKEN).trim()
+  );
+}
+
+function buildMailAttachmentBlobPath(mailboxId, batchId, filename) {
+  const safeMailboxId = String(mailboxId || "unknown")
+    .replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  const safeBatchId = String(batchId || crypto.randomUUID())
+    .replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  const safeFilename = sanitizeMailAttachmentFilename(filename)
+    .replace(/[^a-zA-Z0-9._()' -]/g, "_");
+
+  return `mail-attachments/${safeMailboxId}/${safeBatchId}/${crypto.randomUUID()}-${safeFilename}`;
+}
+
+async function uploadMailAttachmentBlob(mailboxId, batchId, file) {
+  if (!isBlobStorageConfigured()) {
+    throw new Error("BLOB_READ_WRITE_TOKEN is not configured.");
+  }
+
+  const pathname = buildMailAttachmentBlobPath(
+    mailboxId,
+    batchId,
+    file.originalname
+  );
+
+  const blob = await put(pathname, file.buffer, {
+    access: "private",
+    addRandomSuffix: false,
+    contentType: file.mimetype || "application/octet-stream"
+  });
+
+  return {
+    pathname,
+    url: blob.url,
+    sizeBytes: file.size
+  };
+}
+
+async function deleteMailAttachmentBlobs(uploadedBlobs) {
+  if (!Array.isArray(uploadedBlobs) || !uploadedBlobs.length) {
+    return;
+  }
+
+  for (const item of uploadedBlobs) {
+    if (!item?.pathname) {
+      continue;
+    }
+
+    try {
+      await del(item.pathname);
+    } catch (error) {
+      console.error(
+        "[MAILBOX BLOB] Cleanup failed:",
+        item.pathname,
+        error.message
+      );
+    }
+  }
+}
+
+async function streamPrivateMailAttachment(res, blob) {
+  if (!blob || blob.statusCode !== 200 || !blob.stream) {
+    throw new Error("Private attachment was not found in Blob storage.");
+  }
+
+  const stream =
+    typeof blob.stream.pipe === "function"
+      ? blob.stream
+      : Readable.fromWeb(blob.stream);
+
+  stream.on("error", (error) => {
+    console.error("[MAILBOX BLOB] Download stream failed:", error.message);
+
+    if (!res.headersSent) {
+      res.status(500).end();
+    } else {
+      res.destroy(error);
+    }
+  });
+
+  stream.pipe(res);
+}
+
+async function downloadMailAttachmentWithLimit(response, maxBytes) {
+  if (!response || !response.body) {
+    throw new Error("Attachment download response has no readable body.");
+  }
+
+  const contentLength = Number(
+    response.headers.get("content-length")
+  );
+
+  if (
+    Number.isFinite(contentLength) &&
+    contentLength > maxBytes
+  ) {
+    throw new Error(
+      `Attachment exceeds the ${Math.floor(maxBytes / (1024 * 1024))} MB size limit.`
+    );
+  }
+
+  const chunks = [];
+  let totalBytes = 0;
+
+  for await (const chunk of response.body) {
+    const buffer = Buffer.isBuffer(chunk)
+      ? chunk
+      : Buffer.from(chunk);
+
+    totalBytes += buffer.length;
+
+    if (totalBytes > maxBytes) {
+      throw new Error(
+        `Attachment exceeds the ${Math.floor(maxBytes / (1024 * 1024))} MB size limit.`
+      );
+    }
+
+    chunks.push(buffer);
+  }
+
+  return Buffer.concat(chunks, totalBytes);
+}
 
 function validateMailAttachments(files) {
   const attachments = Array.isArray(files) ? files : [];
@@ -790,29 +931,307 @@ app.post(
             ]
           );
         }
-        for (const attachment of received.attachments || []) {
-          await pool.query(
-            `INSERT INTO mail_attachments (
-               message_id,
-               resend_attachment_id,
-               filename,
-               content_type,
-               content_disposition,
-               content_id,
-               size_bytes
-             )
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT DO NOTHING`,
-            [
-              messageId,
-              attachment.id,
-              attachment.filename || "attachment",
-              attachment.content_type || "application/octet-stream",
-              attachment.content_disposition || null,
-              attachment.content_id || null,
-              Number.isFinite(Number(attachment.size)) ? Number(attachment.size) : null
-            ]
+        const incomingAttachmentBatchId = crypto.randomUUID();
+        const incomingAttachments =
+          Array.isArray(received.attachments)
+            ? received.attachments.slice(0, MAIL_ATTACHMENT_MAX_FILES)
+            : [];
+
+        let incomingAttachmentTotalBytes = 0;
+
+        if (
+          Array.isArray(received.attachments) &&
+          received.attachments.length > MAIL_ATTACHMENT_MAX_FILES
+        ) {
+          console.warn(
+            "[RESEND WEBHOOK] Incoming attachment count exceeded the maximum; " +
+            `only the first ${MAIL_ATTACHMENT_MAX_FILES} attachments will be processed.`
           );
+        }
+
+        for (const attachment of incomingAttachments) {
+          const filename =
+            sanitizeMailAttachmentFilename(
+              attachment?.filename || "attachment"
+            );
+
+          const lowerFilename =
+            filename.toLowerCase();
+
+          const extension =
+            lowerFilename.includes(".")
+              ? lowerFilename.slice(
+                  lowerFilename.lastIndexOf(".")
+                )
+              : "";
+
+          const contentType =
+            String(
+              attachment?.content_type ||
+              "application/octet-stream"
+            )
+              .trim()
+              .toLowerCase();
+
+          const declaredSize =
+            Number(attachment?.size);
+
+          const safeDeclaredSize =
+            Number.isFinite(declaredSize) &&
+            declaredSize >= 0
+              ? declaredSize
+              : null;
+
+          const attachmentId =
+            String(attachment?.id || "").trim();
+
+          let storageProvider = null;
+          let storagePath = null;
+          let storageSizeBytes = safeDeclaredSize;
+          let uploadedBlob = null;
+
+          const validationError =
+            !filename
+              ? "Attachment filename is required."
+              : MAIL_ATTACHMENT_BLOCKED_EXTENSIONS.has(
+                  extension
+                )
+                ? "This attachment file type is not allowed."
+                : !MAIL_ATTACHMENT_ALLOWED_TYPES.has(
+                    contentType
+                  )
+                  ? "This attachment file type is not allowed."
+                  : safeDeclaredSize !== null &&
+                    safeDeclaredSize >
+                      MAIL_ATTACHMENT_MAX_FILE_SIZE
+                    ? "Attachment exceeds the 2 MB size limit."
+                    : !attachmentId
+                      ? "Resend attachment ID is missing."
+                      : null;
+
+          if (validationError) {
+            console.warn(
+              "[RESEND WEBHOOK] Incoming attachment rejected:",
+              filename,
+              validationError
+            );
+
+            await pool.query(
+              `INSERT INTO mail_attachments (
+                 message_id,
+                 resend_attachment_id,
+                 filename,
+                 content_type,
+                 content_disposition,
+                 content_id,
+                 size_bytes,
+                 storage_provider,
+                 storage_path,
+                 storage_size_bytes,
+                 storage_uploaded_at
+               )
+               VALUES (
+                 $1, $2, $3, $4, $5, $6, $7,
+                 NULL, NULL, $7, NULL
+               )
+               ON CONFLICT DO NOTHING`,
+              [
+                messageId,
+                attachmentId || null,
+                filename,
+                contentType,
+                attachment?.content_disposition || null,
+                attachment?.content_id || null,
+                safeDeclaredSize
+              ]
+            );
+
+            continue;
+          }
+
+          /*
+           * Do not add safeDeclaredSize to the aggregate here.
+           *
+           * Resend's declared size is useful for rejecting an individual
+           * attachment before downloading, but the combined-size limit must
+           * be calculated from the actual downloaded byte count. Otherwise
+           * the attachment can be counted once by declared size and again
+           * by buffer.length below.
+           */
+
+          if (isBlobStorageConfigured()) {
+            try {
+              const attachmentResult =
+                await resend.emails.receiving.attachments.get({
+                  emailId: received.id,
+                  id: attachmentId
+                });
+
+              if (
+                attachmentResult?.error ||
+                !attachmentResult?.data?.download_url
+              ) {
+                throw new Error(
+                  "Resend did not return an attachment download URL."
+                );
+              }
+
+              const downloadUrl =
+                String(
+                  attachmentResult.data.download_url
+                ).trim();
+
+              let parsedDownloadUrl;
+
+              try {
+                parsedDownloadUrl =
+                  new URL(downloadUrl);
+              } catch {
+                throw new Error(
+                  "Resend returned an invalid attachment download URL."
+                );
+              }
+
+              if (
+                parsedDownloadUrl.protocol !== "https:"
+              ) {
+                throw new Error(
+                  "Attachment download URL must use HTTPS."
+                );
+              }
+
+              const downloadResponse =
+                await fetch(
+                  parsedDownloadUrl,
+                  {
+                    method: "GET",
+                    signal:
+                      AbortSignal.timeout(15000)
+                  }
+                );
+
+              if (!downloadResponse.ok) {
+                throw new Error(
+                  `Attachment download returned HTTP ${downloadResponse.status}.`
+                );
+              }
+
+              const buffer =
+                await downloadMailAttachmentWithLimit(
+                  downloadResponse,
+                  MAIL_ATTACHMENT_MAX_FILE_SIZE
+                );
+
+              if (
+                incomingAttachmentTotalBytes +
+                  buffer.length >
+                MAIL_ATTACHMENT_MAX_TOTAL_SIZE
+              ) {
+                throw new Error(
+                  "Incoming attachment batch exceeds the 3 MB combined size limit."
+                );
+              }
+
+              storageSizeBytes = buffer.length;
+
+              uploadedBlob =
+                await uploadMailAttachmentBlob(
+                  mailbox.id,
+                  incomingAttachmentBatchId,
+                  {
+                    originalname: filename,
+                    mimetype: contentType,
+                    buffer,
+                    size: buffer.length
+                  }
+                );
+
+              storageProvider =
+                "vercel_blob";
+
+              storagePath =
+                uploadedBlob.pathname;
+
+              incomingAttachmentTotalBytes +=
+                buffer.length;
+
+            } catch (attachmentStorageError) {
+              console.error(
+                "[RESEND WEBHOOK] Incoming attachment storage failed:",
+                filename,
+                attachmentStorageError.message
+              );
+
+              if (uploadedBlob?.pathname) {
+                await deleteMailAttachmentBlobs([
+                  uploadedBlob
+                ]);
+              }
+
+              storageProvider = null;
+              storagePath = null;
+              storageSizeBytes =
+                safeDeclaredSize;
+            }
+          } else {
+            console.warn(
+              "[RESEND WEBHOOK] BLOB_READ_WRITE_TOKEN is not configured; " +
+              `incoming attachment "${filename}" was recorded without binary storage.`
+            );
+          }
+
+          try {
+            await pool.query(
+              `INSERT INTO mail_attachments (
+                 message_id,
+                 resend_attachment_id,
+                 filename,
+                 content_type,
+                 content_disposition,
+                 content_id,
+                 size_bytes,
+                 storage_provider,
+                 storage_path,
+                 storage_size_bytes,
+                 storage_uploaded_at
+               )
+               VALUES (
+                 $1, $2, $3, $4, $5, $6, $7,
+                 $8, $9, $10,
+                 CASE
+                   WHEN $8 = 'vercel_blob'
+                    AND $9 IS NOT NULL
+                   THEN now()
+                   ELSE NULL
+                 END
+               )
+               ON CONFLICT DO NOTHING`,
+              [
+                messageId,
+                attachmentId,
+                filename,
+                contentType,
+                attachment?.content_disposition || null,
+                attachment?.content_id || null,
+                safeDeclaredSize,
+                storageProvider,
+                storagePath,
+                storageSizeBytes
+              ]
+            );
+          } catch (metadataError) {
+            console.error(
+              "[RESEND WEBHOOK] Attachment metadata insert failed:",
+              filename,
+              metadataError.message
+            );
+
+            if (uploadedBlob?.pathname) {
+              await deleteMailAttachmentBlobs([
+                uploadedBlob
+              ]);
+            }
+          }
         }
       }
 
@@ -1450,6 +1869,126 @@ app.get("/api/mailbox/messages", authMiddleware, async (req, res) => {
   }
 });
 
+app.get(
+  "/api/mailbox/attachments/:id",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const attachmentId = String(req.params.id || "").trim();
+
+      if (!attachmentId) {
+        return res.status(400).json({
+          success: false,
+          error: "Attachment ID is required."
+        });
+      }
+
+      const result = await queryWithRetry(
+        `SELECT
+           a.id,
+           a.filename,
+           a.content_type,
+           a.content_disposition,
+           a.size_bytes,
+           a.storage_provider,
+           a.storage_path
+         FROM mail_attachments a
+         JOIN mail_messages m
+           ON m.id = a.message_id
+         JOIN mailboxes b
+           ON b.id = m.mailbox_id
+         WHERE a.id = $1
+           AND b.user_id = $2
+           AND b.status = 'active'
+         LIMIT 1`,
+        [attachmentId, req.user.id]
+      );
+
+      const attachment = result.rows[0];
+
+      if (!attachment) {
+        return res.status(404).json({
+          success: false,
+          error: "Attachment not found."
+        });
+      }
+
+      if (
+        attachment.storage_provider !== "vercel_blob" ||
+        !attachment.storage_path
+      ) {
+        return res.status(410).json({
+          success: false,
+          error: "This attachment is no longer available for download."
+        });
+      }
+
+      if (!isBlobStorageConfigured()) {
+        console.error(
+          "[MAILBOX BLOB] Download attempted without Blob configuration."
+        );
+
+        return res.status(503).json({
+          success: false,
+          error: "Attachment storage is not configured."
+        });
+      }
+
+      const blob = await get(attachment.storage_path, {
+        access: "private"
+      });
+
+      if (!blob || blob.statusCode !== 200 || !blob.stream) {
+        return res.status(404).json({
+          success: false,
+          error: "Attachment file was not found in storage."
+        });
+      }
+
+      const filename = sanitizeMailAttachmentFilename(
+        attachment.filename || "attachment"
+      );
+
+      const contentType =
+        attachment.content_type || "application/octet-stream";
+
+      res.setHeader("Content-Type", contentType);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Cache-Control", "private, no-store");
+
+      if (
+        Number.isFinite(Number(attachment.size_bytes)) &&
+        Number(attachment.size_bytes) >= 0
+      ) {
+        res.setHeader(
+          "Content-Length",
+          String(attachment.size_bytes)
+        );
+      }
+
+      await streamPrivateMailAttachment(res, blob);
+    } catch (error) {
+      console.error(
+        "[MAILBOX ATTACHMENT DOWNLOAD]",
+        error.message
+      );
+
+      if (!res.headersSent) {
+        return res.status(500).json({
+          success: false,
+          error: "Unable to download attachment."
+        });
+      }
+
+      res.destroy(error);
+    }
+  }
+);
+
 app.get("/api/mailbox/messages/:id/thread", authMiddleware, async (req, res) => {
   try {
     const messageId = cleanString(req.params.id, 100);
@@ -1496,7 +2035,14 @@ app.get("/api/mailbox/messages/:id/thread", authMiddleware, async (req, res) => 
                'content_type', a.content_type,
                'content_disposition', a.content_disposition,
                'content_id', a.content_id,
-               'size_bytes', a.size_bytes
+               'size_bytes', a.size_bytes,
+               'download_url',
+                 CASE
+                   WHEN a.storage_provider = 'vercel_blob'
+                    AND a.storage_path IS NOT NULL
+                   THEN '/api/mailbox/attachments/' || a.id::text
+                   ELSE NULL
+                 END
              ) ORDER BY a.created_at
            )
            FROM mail_attachments a
@@ -2424,30 +2970,95 @@ app.post(
         .replace(/"/g, "&quot;")
         .replace(/\n/g, "<br>");
 
-      const result = await resend.emails.send({
-        from: `${mailbox.display_name} <${mailbox.email}>`,
-        to,
-        cc: cc.length ? cc : undefined,
-        bcc: bcc.length ? bcc : undefined,
-        subject,
-        text: textBody,
-        html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`,
-        attachments: uploadedFiles.length
-          ? uploadedFiles.map((file) => ({
-              content: file.buffer,
-              filename: file.originalname,
-              contentType: file.mimetype
-            }))
-          : undefined,
-        headers: {
-          "Message-ID": generatedMessageId,
-          ...(inReplyTo ? { "In-Reply-To": inReplyTo } : {}),
-          ...(references ? { "References": references } : {})
+      /*
+       * Store outgoing attachments in private Vercel Blob before
+       * sending the email.
+       *
+       * The browser never receives the Blob token and the private
+       * Blob URL is never exposed directly to the client.
+       */
+      const attachmentBatchId = crypto.randomUUID();
+      const storedAttachments = [];
+
+      if (uploadedFiles.length) {
+        if (!isBlobStorageConfigured()) {
+          return res.status(503).json({
+            success: false,
+            error: "Attachment storage is not configured."
+          });
         }
-      });
+
+        try {
+          for (const file of uploadedFiles) {
+            const stored = await uploadMailAttachmentBlob(
+              mailbox.id,
+              attachmentBatchId,
+              file
+            );
+
+            storedAttachments.push({
+              file,
+              ...stored
+            });
+          }
+        } catch (storageError) {
+          console.error(
+            "[MAILBOX BLOB] Outgoing upload failed:",
+            storageError.message
+          );
+
+          await deleteMailAttachmentBlobs(storedAttachments);
+
+          return res.status(502).json({
+            success: false,
+            error: "Unable to store one or more attachments."
+          });
+        }
+      }
+
+      let result;
+
+      try {
+        result = await resend.emails.send({
+          from: `${mailbox.display_name} <${mailbox.email}>`,
+          to,
+          cc: cc.length ? cc : undefined,
+          bcc: bcc.length ? bcc : undefined,
+          subject,
+          text: textBody,
+          html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`,
+          attachments: uploadedFiles.length
+            ? uploadedFiles.map((file) => ({
+                content: file.buffer,
+                filename: file.originalname,
+                contentType: file.mimetype
+              }))
+            : undefined,
+          headers: {
+            "Message-ID": generatedMessageId,
+            ...(inReplyTo ? { "In-Reply-To": inReplyTo } : {}),
+            ...(references ? { "References": references } : {})
+          }
+        });
+      } catch (sendError) {
+        console.error(
+          "[MAILBOX SEND]",
+          sendError.message
+        );
+
+        await deleteMailAttachmentBlobs(storedAttachments);
+
+        return res.status(502).json({
+          success: false,
+          error: "Unable to send email."
+        });
+      }
 
       if (result?.error) {
         console.error("[MAILBOX SEND]", result.error.message);
+
+        await deleteMailAttachmentBlobs(storedAttachments);
+
         return res.status(502).json({
           success: false,
           error: "Unable to send email."
@@ -2505,21 +3116,28 @@ app.post(
           );
         }
 
-        for (const file of uploadedFiles) {
+        for (const stored of storedAttachments) {
           await queryWithRetry(
             `INSERT INTO mail_attachments (
                message_id,
                filename,
                content_type,
                content_disposition,
-               size_bytes
-             ) VALUES ($1, $2, $3, $4, $5)`,
+               size_bytes,
+               storage_provider,
+               storage_path,
+               storage_size_bytes,
+               storage_uploaded_at
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())`,
             [
               messageId,
-              file.originalname,
-              file.mimetype,
+              stored.file.originalname,
+              stored.file.mimetype,
               "attachment",
-              file.size
+              stored.file.size,
+              "vercel_blob",
+              stored.pathname,
+              stored.sizeBytes
             ]
           );
         }

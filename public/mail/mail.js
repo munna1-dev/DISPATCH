@@ -291,8 +291,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderMessages() {
     list.innerHTML = "";
+
     title.textContent = labels[folder];
     listHead.textContent = labels[folder];
+
     listCount.textContent =
       messages.length +
       (messages.length === 1 ? " message" : " messages");
@@ -304,6 +306,12 @@ document.addEventListener("DOMContentLoaded", () => {
         empty.textContent = "Trash is empty";
       } else if (folder === "starred") {
         empty.textContent = "No starred messages";
+      } else if (folder === "drafts") {
+        empty.textContent = "No saved drafts";
+      } else if (folder === "sent") {
+        empty.textContent = "No sent messages";
+      } else if (folder === "archive") {
+        empty.textContent = "Archive is empty";
       } else {
         empty.textContent = "No messages yet";
       }
@@ -313,33 +321,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
     empty.hidden = true;
 
-    messages.forEach((message) => {
+    messages.forEach((message, index) => {
       const row = document.createElement("div");
+
       row.className =
         "message-row-wrap" +
         (message.is_read ? "" : " unread");
 
       const openButton = document.createElement("button");
+
       openButton.type = "button";
       openButton.className =
         "message-row" +
         (message.is_read ? "" : " unread");
 
+      openButton.setAttribute(
+        "aria-label",
+        `Open message ${index + 1}: ${
+          message.subject || "No subject"
+        }`
+      );
+
+      const number = document.createElement("span");
+      number.className = "message-number";
+      number.textContent = String(index + 1);
+
       const sender = document.createElement("strong");
+      sender.className = "message-sender";
       sender.textContent =
         message.sender_name ||
         message.sender_email ||
         "Unknown sender";
 
       const subject = document.createElement("span");
+      subject.className = "message-subject";
       subject.textContent =
         message.subject || "(No subject)";
 
-      const preview = document.createElement("small");
-      preview.textContent =
-        message.text_body || "";
+      const date = document.createElement("time");
+      date.className = "message-date";
+      date.dateTime =
+        message.received_at ||
+        message.sent_at ||
+        message.created_at ||
+        "";
 
-      openButton.append(sender, subject, preview);
+      date.textContent = formatMessageDate(
+        message.received_at ||
+        message.sent_at ||
+        message.created_at
+      );
+
+      openButton.append(
+        number,
+        sender,
+        subject,
+        date
+      );
 
       openButton.addEventListener("click", () => {
         if (folder === "drafts") {
@@ -353,17 +391,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const actions = document.createElement("div");
       actions.className = "message-row-actions";
 
-      const starButton = document.createElement("button");
-      starButton.type = "button";
-      starButton.className = "message-action star-action";
-      starButton.title =
+      const star = document.createElement("button");
+      star.type = "button";
+      star.className = "message-action";
+      star.setAttribute(
+        "aria-label",
         message.is_starred
           ? "Remove star"
-          : "Star message";
-      starButton.textContent =
+          : "Star message"
+      );
+      star.setAttribute(
+        "aria-pressed",
+        message.is_starred ? "true" : "false"
+      );
+      star.textContent =
         message.is_starred ? "★" : "☆";
 
-      starButton.addEventListener("click", async (event) => {
+      star.addEventListener("click", async (event) => {
         event.stopPropagation();
 
         try {
@@ -372,111 +416,157 @@ document.addEventListener("DOMContentLoaded", () => {
             !message.is_starred
           );
 
-          message.is_starred = !message.is_starred;
+          message.is_starred =
+            !message.is_starred;
 
-          if (folder === "starred" && !message.is_starred) {
+          star.setAttribute(
+            "aria-pressed",
+            message.is_starred ? "true" : "false"
+          );
+
+          if (
+            folder === "starred" &&
+            !message.is_starred
+          ) {
             await loadMessages();
           } else {
             renderMessages();
           }
         } catch (error) {
-          subtitle.textContent = error.message;
+          subtitle.textContent =
+            error.message ||
+            "Unable to update star.";
         }
       });
 
-      actions.appendChild(starButton);
-
-      if (folder !== "trash" && folder !== "archive") {
-        const archiveButton = document.createElement("button");
-        archiveButton.type = "button";
-        archiveButton.className = "message-action";
-        archiveButton.title = "Archive";
-        archiveButton.textContent = "Archive";
-
-        archiveButton.addEventListener("click", async (event) => {
-          event.stopPropagation();
-
-          try {
-            await archiveMessage(message.id);
-            subtitle.textContent = "Message archived.";
-            await loadMessages();
-          } catch (error) {
-            subtitle.textContent = error.message;
-          }
-        });
-
-        actions.appendChild(archiveButton);
-      }
+      actions.appendChild(star);
 
       if (folder === "trash") {
-        const restoreButton = document.createElement("button");
-        restoreButton.type = "button";
-        restoreButton.className = "message-action";
-        restoreButton.title = "Restore";
-        restoreButton.textContent = "Restore";
+        const restore = document.createElement("button");
 
-        restoreButton.addEventListener("click", async (event) => {
-          event.stopPropagation();
+        restore.type = "button";
+        restore.className = "message-action";
+        restore.textContent = "↩";
+        restore.setAttribute(
+          "aria-label",
+          "Restore message"
+        );
 
-          try {
-            await restoreMessage(message.id);
-            subtitle.textContent = "Message restored.";
-            await loadMessages();
-          } catch (error) {
-            subtitle.textContent = error.message;
+        restore.addEventListener(
+          "click",
+          async (event) => {
+            event.stopPropagation();
+
+            try {
+              await restoreMessage(message.id);
+              await loadMessages();
+            } catch (error) {
+              subtitle.textContent =
+                error.message ||
+                "Unable to restore message.";
+            }
           }
-        });
+        );
 
-        const deleteButton = document.createElement("button");
-        deleteButton.type = "button";
-        deleteButton.className =
+        const remove = document.createElement("button");
+
+        remove.type = "button";
+        remove.className =
           "message-action message-action-danger";
-        deleteButton.title = "Delete permanently";
-        deleteButton.textContent = "Delete";
+        remove.textContent = "×";
+        remove.setAttribute(
+          "aria-label",
+          "Permanently delete message"
+        );
 
-        deleteButton.addEventListener("click", async (event) => {
-          event.stopPropagation();
+        remove.addEventListener(
+          "click",
+          async (event) => {
+            event.stopPropagation();
 
-          const confirmed = window.confirm(
-            "Permanently delete this message? This cannot be undone."
-          );
+            try {
+              await permanentlyDeleteMessage(
+                message.id
+              );
 
-          if (!confirmed) return;
-
-          try {
-            await permanentlyDeleteMessage(message.id);
-            subtitle.textContent = "Message permanently deleted.";
-            await loadMessages();
-          } catch (error) {
-            subtitle.textContent = error.message;
+              await loadMessages();
+            } catch (error) {
+              subtitle.textContent =
+                error.message ||
+                "Unable to permanently delete message.";
+            }
           }
-        });
+        );
 
-        actions.append(restoreButton, deleteButton);
+        actions.append(
+          restore,
+          remove
+        );
       } else {
-        const trashButton = document.createElement("button");
-        trashButton.type = "button";
-        trashButton.className =
-          "message-action message-action-danger";
-        trashButton.title = "Move to trash";
-        trashButton.textContent = "Trash";
+        const archive = document.createElement("button");
 
-        trashButton.addEventListener("click", async (event) => {
-          event.stopPropagation();
+        archive.type = "button";
+        archive.className = "message-action";
+        archive.textContent = "⌁";
+        archive.setAttribute(
+          "aria-label",
+          "Archive message"
+        );
 
-          try {
-            await trashMessage(message.id);
-            subtitle.textContent = "Message moved to trash.";
-            await loadMessages();
-          } catch (error) {
-            subtitle.textContent = error.message;
+        archive.addEventListener(
+          "click",
+          async (event) => {
+            event.stopPropagation();
+
+            try {
+              await archiveMessage(message.id);
+              await loadMessages();
+            } catch (error) {
+              subtitle.textContent =
+                error.message ||
+                "Unable to archive message.";
+            }
           }
-        });
+        );
 
-        actions.appendChild(trashButton);
+        const trash = document.createElement("button");
+
+        trash.type = "button";
+        trash.className =
+          "message-action message-action-danger";
+        trash.textContent = "⌫";
+        trash.setAttribute(
+          "aria-label",
+          "Move message to trash"
+        );
+
+        trash.addEventListener(
+          "click",
+          async (event) => {
+            event.stopPropagation();
+
+            try {
+              await trashMessage(message.id);
+              await loadMessages();
+            } catch (error) {
+              subtitle.textContent =
+                error.message ||
+                "Unable to move message to trash.";
+            }
+          }
+        );
+
+        actions.append(
+          archive,
+          trash
+        );
       }
 
-      row.append(openButton, actions);
+      row.append(
+        openButton,
+        actions
+      );
+
       list.appendChild(row);
     });
   }
