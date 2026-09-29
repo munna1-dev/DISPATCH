@@ -554,9 +554,9 @@ app.post(
   }),
   async (req, res) => {
     const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
-    const webhookId = req.get("webhook-id");
-    const webhookTimestamp = req.get("webhook-timestamp");
-    const webhookSignature = req.get("webhook-signature");
+    const webhookId = req.get("svix-id");
+    const webhookTimestamp = req.get("svix-timestamp");
+    const webhookSignature = req.get("svix-signature");
 
     if (!webhookSecret) {
       console.error("[RESEND WEBHOOK] Secret is not configured.");
