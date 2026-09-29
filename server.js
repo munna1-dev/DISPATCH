@@ -1249,7 +1249,14 @@ app.get("/api/mailbox", authMiddleware, async (req, res) => {
 app.get("/api/mailbox/messages", authMiddleware, async (req, res) => {
   try {
     const folder = String(req.query.folder || "inbox").toLowerCase();
-    const allowedFolders = ["inbox", "sent", "drafts", "trash", "archive"];
+    const allowedFolders = [
+      "inbox",
+      "starred",
+      "sent",
+      "drafts",
+      "trash",
+      "archive"
+    ];
 
     if (!allowedFolders.includes(folder)) {
       return res.status(400).json({
@@ -1287,7 +1294,11 @@ app.get("/api/mailbox/messages", authMiddleware, async (req, res) => {
        LEFT JOIN mail_recipients r ON r.message_id = m.id
        WHERE b.user_id = $1
          AND b.status = 'active'
-         AND m.folder = $2
+         AND (
+           ($2 = 'starred' AND m.is_starred = true AND m.folder <> 'trash')
+           OR
+           ($2 <> 'starred' AND m.folder = $2)
+         )
        GROUP BY m.id
        ORDER BY COALESCE(m.received_at, m.sent_at, m.created_at) DESC
        LIMIT 100`,
@@ -1397,12 +1408,369 @@ app.get("/api/mailbox/messages/:id/thread", authMiddleware, async (req, res) => 
 });
 
 
+
+// ============================================================
+// MAILBOX MESSAGE ACTIONS
+// ============================================================
+
+async function getOwnedMailboxMessage(userId, messageId) {
+  const result = await queryWithRetry(
+    `SELECT
+       m.id,
+       m.mailbox_id,
+       m.folder,
+       m.is_read,
+       m.is_starred,
+       m.thread_id,
+       m.subject,
+       m.sender_email
+     FROM mail_messages m
+     JOIN mailboxes b ON b.id = m.mailbox_id
+     WHERE m.id = $1
+       AND b.user_id = $2
+       AND b.status = 'active'
+     LIMIT 1`,
+    [messageId, userId]
+  );
+
+  return result.rows[0] || null;
+}
+
+app.patch(
+  "/api/mailbox/messages/:id/read",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const messageId = cleanString(req.params.id, 100);
+
+      if (!messageId) {
+        return res.status(400).json({
+          success: false,
+          error: "Message ID is required."
+        });
+      }
+
+      const message = await getOwnedMailboxMessage(req.user.id, messageId);
+
+      if (!message) {
+        return res.status(404).json({
+          success: false,
+          error: "Message not found."
+        });
+      }
+
+      const isRead =
+        typeof req.body?.isRead === "boolean"
+          ? req.body.isRead
+          : true;
+
+      const result = await queryWithRetry(
+        `UPDATE mail_messages
+         SET is_read = $1
+         WHERE id = $2
+           AND mailbox_id = $3
+         RETURNING id, is_read, is_starred, folder, updated_at`,
+        [isRead, message.id, message.mailbox_id]
+      );
+
+      return res.json({
+        success: true,
+        message: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[MAILBOX READ]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to update message read status."
+      });
+    }
+  }
+);
+
+app.patch(
+  "/api/mailbox/messages/:id/star",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const messageId = cleanString(req.params.id, 100);
+
+      if (!messageId) {
+        return res.status(400).json({
+          success: false,
+          error: "Message ID is required."
+        });
+      }
+
+      const message = await getOwnedMailboxMessage(req.user.id, messageId);
+
+      if (!message) {
+        return res.status(404).json({
+          success: false,
+          error: "Message not found."
+        });
+      }
+
+      const isStarred =
+        typeof req.body?.isStarred === "boolean"
+          ? req.body.isStarred
+          : !message.is_starred;
+
+      const result = await queryWithRetry(
+        `UPDATE mail_messages
+         SET is_starred = $1
+         WHERE id = $2
+           AND mailbox_id = $3
+         RETURNING id, is_read, is_starred, folder, updated_at`,
+        [isStarred, message.id, message.mailbox_id]
+      );
+
+      return res.json({
+        success: true,
+        message: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[MAILBOX STAR]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to update message star."
+      });
+    }
+  }
+);
+
+app.patch(
+  "/api/mailbox/messages/:id/archive",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const messageId = cleanString(req.params.id, 100);
+
+      if (!messageId) {
+        return res.status(400).json({
+          success: false,
+          error: "Message ID is required."
+        });
+      }
+
+      const message = await getOwnedMailboxMessage(req.user.id, messageId);
+
+      if (!message) {
+        return res.status(404).json({
+          success: false,
+          error: "Message not found."
+        });
+      }
+
+      if (message.folder === "trash") {
+        return res.status(400).json({
+          success: false,
+          error: "Trash messages must be restored before archiving."
+        });
+      }
+
+      const result = await queryWithRetry(
+        `UPDATE mail_messages
+         SET folder = 'archive'
+         WHERE id = $1
+           AND mailbox_id = $2
+         RETURNING id, folder, is_read, is_starred, updated_at`,
+        [message.id, message.mailbox_id]
+      );
+
+      return res.json({
+        success: true,
+        message: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[MAILBOX ARCHIVE]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to archive message."
+      });
+    }
+  }
+);
+
+app.patch(
+  "/api/mailbox/messages/:id/trash",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const messageId = cleanString(req.params.id, 100);
+
+      if (!messageId) {
+        return res.status(400).json({
+          success: false,
+          error: "Message ID is required."
+        });
+      }
+
+      const message = await getOwnedMailboxMessage(req.user.id, messageId);
+
+      if (!message) {
+        return res.status(404).json({
+          success: false,
+          error: "Message not found."
+        });
+      }
+
+      if (message.folder === "trash") {
+        return res.json({
+          success: true,
+          message: {
+            id: message.id,
+            folder: "trash"
+          }
+        });
+      }
+
+      const result = await queryWithRetry(
+        `UPDATE mail_messages
+         SET folder = 'trash'
+         WHERE id = $1
+           AND mailbox_id = $2
+         RETURNING id, folder, is_read, is_starred, updated_at`,
+        [message.id, message.mailbox_id]
+      );
+
+      return res.json({
+        success: true,
+        message: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[MAILBOX TRASH]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to move message to trash."
+      });
+    }
+  }
+);
+
+app.patch(
+  "/api/mailbox/messages/:id/restore",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const messageId = cleanString(req.params.id, 100);
+
+      if (!messageId) {
+        return res.status(400).json({
+          success: false,
+          error: "Message ID is required."
+        });
+      }
+
+      const message = await getOwnedMailboxMessage(req.user.id, messageId);
+
+      if (!message) {
+        return res.status(404).json({
+          success: false,
+          error: "Message not found."
+        });
+      }
+
+      if (message.folder !== "trash") {
+        return res.status(400).json({
+          success: false,
+          error: "Only messages in trash can be restored."
+        });
+      }
+
+      const result = await queryWithRetry(
+        `UPDATE mail_messages
+         SET folder = 'inbox'
+         WHERE id = $1
+           AND mailbox_id = $2
+         RETURNING id, folder, is_read, is_starred, updated_at`,
+        [message.id, message.mailbox_id]
+      );
+
+      return res.json({
+        success: true,
+        message: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[MAILBOX RESTORE]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to restore message."
+      });
+    }
+  }
+);
+
+app.delete(
+  "/api/mailbox/messages/:id",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const messageId = cleanString(req.params.id, 100);
+
+      if (!messageId) {
+        return res.status(400).json({
+          success: false,
+          error: "Message ID is required."
+        });
+      }
+
+      const message = await getOwnedMailboxMessage(req.user.id, messageId);
+
+      if (!message) {
+        return res.status(404).json({
+          success: false,
+          error: "Message not found."
+        });
+      }
+
+      if (message.folder !== "trash") {
+        return res.status(400).json({
+          success: false,
+          error: "Move the message to trash before permanently deleting it."
+        });
+      }
+
+      await queryWithRetry(
+        `DELETE FROM mail_messages
+         WHERE id = $1
+           AND mailbox_id = $2`,
+        [message.id, message.mailbox_id]
+      );
+
+      return res.json({
+        success: true,
+        deleted: true,
+        message_id: message.id
+      });
+    } catch (error) {
+      console.error("[MAILBOX DELETE]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to permanently delete message."
+      });
+    }
+  }
+);
+
 app.post(
   "/api/mailbox/drafts",
   requireSameOrigin,
   authMiddleware,
   async (req, res) => {
     try {
+      const draftId = cleanString(req.body?.draftId, 100);
       const to = cleanString(req.body?.to, 2000)
         .split(",")
         .map((email) => email.trim().toLowerCase())
@@ -1422,9 +1790,11 @@ app.post(
       const textBody = cleanString(req.body?.body, 10000);
       const replyToMessageId = cleanString(req.body?.replyToMessageId, 100);
 
-      if (to.some((email) => !isValidEmail(email)) ||
-          cc.some((email) => !isValidEmail(email)) ||
-          bcc.some((email) => !isValidEmail(email))) {
+      if (
+        to.some((email) => !isValidEmail(email)) ||
+        cc.some((email) => !isValidEmail(email)) ||
+        bcc.some((email) => !isValidEmail(email))
+      ) {
         return res.status(400).json({
           success: false,
           error: "One or more recipients are invalid."
@@ -1449,33 +1819,149 @@ app.post(
 
       const mailbox = mailboxResult.rows[0];
 
-      const messageResult = await queryWithRetry(
-        `INSERT INTO mail_messages (
-           mailbox_id,
-           sender_name,
-           sender_email,
-           subject,
-           text_body,
-           folder,
-           is_read
-         ) VALUES ($1, $2, $3, $4, $5, 'drafts', true)
-         RETURNING id, folder, subject, created_at, updated_at`,
-        [
-          mailbox.id,
-          mailbox.display_name,
-          mailbox.email,
-          subject,
-          textBody
-        ]
-      );
+      let parentMessage = null;
 
-      const message = messageResult.rows[0];
+      if (replyToMessageId) {
+        const parentResult = await queryWithRetry(
+          `SELECT id, message_id, thread_id, subject
+           FROM mail_messages
+           WHERE id = $1
+             AND mailbox_id = $2
+           LIMIT 1`,
+          [replyToMessageId, mailbox.id]
+        );
+
+        parentMessage = parentResult.rows[0] || null;
+
+        if (!parentMessage) {
+          return res.status(404).json({
+            success: false,
+            error: "The message you are replying to could not be found."
+          });
+        }
+      }
 
       const recipients = [
         ...to.map((email) => ({ type: "to", email })),
         ...cc.map((email) => ({ type: "cc", email })),
         ...bcc.map((email) => ({ type: "bcc", email }))
       ];
+
+      let message;
+
+      if (draftId) {
+        const existingResult = await queryWithRetry(
+          `SELECT
+             id,
+             mailbox_id,
+             folder,
+             thread_id,
+             in_reply_to
+           FROM mail_messages
+           WHERE id = $1
+             AND mailbox_id = $2
+           LIMIT 1`,
+          [draftId, mailbox.id]
+        );
+
+        if (!existingResult.rows.length) {
+          return res.status(404).json({
+            success: false,
+            error: "Draft not found."
+          });
+        }
+
+        if (existingResult.rows[0].folder !== "drafts") {
+          return res.status(409).json({
+            success: false,
+            error: "Only draft messages can be edited."
+          });
+        }
+
+        // When editing an existing draft without a new
+        // replyToMessageId, preserve its existing thread
+        // relationship. If a new parent message is supplied,
+        // explicitly rebuild the reply relationship.
+        const threadId =
+          parentMessage?.thread_id ||
+          parentMessage?.message_id ||
+          existingResult.rows[0].thread_id ||
+          null;
+
+        const inReplyTo =
+          parentMessage?.message_id ||
+          existingResult.rows[0].in_reply_to ||
+          null;
+
+        const updateResult = await queryWithRetry(
+          `UPDATE mail_messages
+           SET subject = $1,
+               text_body = $2,
+               thread_id = $3,
+               in_reply_to = $4,
+               updated_at = now()
+           WHERE id = $5
+             AND mailbox_id = $6
+             AND folder = 'drafts'
+           RETURNING id, folder, subject, created_at, updated_at`,
+          [
+            subject,
+            textBody,
+            threadId,
+            inReplyTo,
+            draftId,
+            mailbox.id
+          ]
+        );
+
+        message = updateResult.rows[0];
+
+        await queryWithRetry(
+          `DELETE FROM mail_recipients
+           WHERE message_id = $1`,
+          [message.id]
+        );
+      } else {
+        const generatedMessageId =
+          `<${crypto.randomUUID()}@uscourier.app>`;
+
+        const threadId =
+          parentMessage?.thread_id ||
+          parentMessage?.message_id ||
+          generatedMessageId;
+
+        const inReplyTo =
+          parentMessage?.message_id ||
+          null;
+
+        const messageResult = await queryWithRetry(
+          `INSERT INTO mail_messages (
+             mailbox_id,
+             message_id,
+             in_reply_to,
+             thread_id,
+             sender_name,
+             sender_email,
+             subject,
+             text_body,
+             folder,
+             is_read
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'drafts', true)
+           RETURNING id, folder, subject, created_at, updated_at`,
+          [
+            mailbox.id,
+            generatedMessageId,
+            inReplyTo,
+            threadId,
+            mailbox.display_name,
+            mailbox.email,
+            subject,
+            textBody
+          ]
+        );
+
+        message = messageResult.rows[0];
+      }
 
       for (const recipient of recipients) {
         await queryWithRetry(
@@ -1484,16 +1970,25 @@ app.post(
              recipient_type,
              email
            ) VALUES ($1, $2, $3)`,
-          [message.id, recipient.type, recipient.email]
+          [
+            message.id,
+            recipient.type,
+            recipient.email
+          ]
         );
       }
 
-      return res.status(201).json({
+      return res.status(draftId ? 200 : 201).json({
         success: true,
-        message
+        draft_id: message.id,
+        message: {
+          ...message,
+          draft_id: message.id
+        }
       });
     } catch (error) {
       console.error("[MAILBOX DRAFT]", error.message);
+
       return res.status(500).json({
         success: false,
         error: "Unable to save draft."
@@ -1501,6 +1996,149 @@ app.post(
     }
   }
 );
+
+app.get(
+  "/api/mailbox/drafts/:id",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const mailboxResult = await queryWithRetry(
+        `SELECT id
+         FROM mailboxes
+         WHERE user_id = $1
+           AND status = 'active'
+         LIMIT 1`,
+        [req.user.id]
+      );
+
+      if (!mailboxResult.rows.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Mailbox not provisioned."
+        });
+      }
+
+      const result = await queryWithRetry(
+        `SELECT
+           m.id,
+           m.subject,
+           m.text_body,
+           m.thread_id,
+           m.in_reply_to,
+           m.created_at,
+           m.updated_at,
+           COALESCE(
+             json_agg(
+               json_build_object(
+                 'type', r.recipient_type,
+                 'email', r.email,
+                 'display_name', r.display_name
+               )
+               ORDER BY r.recipient_type, r.email
+             ) FILTER (WHERE r.id IS NOT NULL),
+             '[]'::json
+           ) AS recipients
+         FROM mail_messages m
+         LEFT JOIN mail_recipients r
+           ON r.message_id = m.id
+         WHERE m.id = $1
+           AND m.mailbox_id = $2
+           AND m.folder = 'drafts'
+         GROUP BY
+           m.id,
+           m.subject,
+           m.text_body,
+           m.thread_id,
+           m.in_reply_to,
+           m.created_at,
+           m.updated_at
+         LIMIT 1`,
+        [
+          req.params.id,
+          mailboxResult.rows[0].id
+        ]
+      );
+
+      if (!result.rows.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Draft not found."
+        });
+      }
+
+      return res.json({
+        success: true,
+        draft: result.rows[0]
+      });
+    } catch (error) {
+      console.error("[MAILBOX DRAFT GET]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to load draft."
+      });
+    }
+  }
+);
+
+app.delete(
+  "/api/mailbox/drafts/:id",
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const mailboxResult = await queryWithRetry(
+        `SELECT id
+         FROM mailboxes
+         WHERE user_id = $1
+           AND status = 'active'
+         LIMIT 1`,
+        [req.user.id]
+      );
+
+      if (!mailboxResult.rows.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Mailbox not provisioned."
+        });
+      }
+
+      const result = await queryWithRetry(
+        `DELETE FROM mail_messages
+         WHERE id = $1
+           AND mailbox_id = $2
+           AND folder = 'drafts'
+         RETURNING id`,
+        [
+          req.params.id,
+          mailboxResult.rows[0].id
+        ]
+      );
+
+      if (!result.rows.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Draft not found."
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: {
+          id: result.rows[0].id
+        }
+      });
+    } catch (error) {
+      console.error("[MAILBOX DRAFT DELETE]", error.message);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to delete draft."
+      });
+    }
+  }
+);
+
 
 app.post(
   "/api/mailbox/send",
@@ -1533,6 +2171,7 @@ app.post(
 
       const subject = cleanString(req.body?.subject, 200);
       const textBody = cleanString(req.body?.body, 10000);
+      const draftId = cleanString(req.body?.draftId, 100);
 
       if (!to.length || to.some((email) => !isValidEmail(email))) {
         return res.status(400).json({
@@ -1572,6 +2211,36 @@ app.post(
       }
 
       const mailbox = mailboxResult.rows[0];
+
+      let draftMessage = null;
+
+      if (draftId) {
+        const draftResult = await queryWithRetry(
+          `SELECT id, folder
+           FROM mail_messages
+           WHERE id = $1
+             AND mailbox_id = $2
+           LIMIT 1`,
+          [draftId, mailbox.id]
+        );
+
+        draftMessage = draftResult.rows[0] || null;
+
+        if (!draftMessage) {
+          return res.status(404).json({
+            success: false,
+            error: "Draft not found."
+          });
+        }
+
+        if (draftMessage.folder !== "drafts") {
+          return res.status(409).json({
+            success: false,
+            error: "Only a draft can be sent using draftId."
+          });
+        }
+      }
+
       const generatedMessageId = `<${crypto.randomUUID()}@uscourier.app>`;
 
       let parentMessage = null;
@@ -1676,6 +2345,23 @@ app.post(
            ) VALUES ($1, $2, $3)`,
           [messageId, recipient.type, recipient.email]
         );
+      }
+
+      if (draftMessage) {
+        try {
+          await queryWithRetry(
+            `DELETE FROM mail_messages
+             WHERE id = $1
+               AND mailbox_id = $2
+               AND folder = 'drafts'`,
+            [draftMessage.id, mailbox.id]
+          );
+        } catch (draftCleanupError) {
+          console.error(
+            "[MAILBOX SEND] Draft cleanup failed:",
+            draftCleanupError.message
+          );
+        }
       }
 
       return res.status(200).json({

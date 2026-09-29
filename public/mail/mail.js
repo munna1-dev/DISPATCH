@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const refreshMail = document.getElementById("refreshMail");
 
   let replyToMessageId = null;
+  let editingDraftId = null;
 
   const mailLogin = document.getElementById("mailLogin");
   const mailShell = document.getElementById("mailShell");
@@ -42,6 +43,79 @@ document.addEventListener("DOMContentLoaded", () => {
     archive: "Archive",
     trash: "Trash"
   };
+
+
+  async function mailboxAction(url, method = "PATCH", body = {}) {
+    const response = await fetch(url, {
+      method,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: method === "DELETE" ? undefined : JSON.stringify(body)
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Mailbox action failed.");
+    }
+
+    return data;
+  }
+
+  async function updateReadState(messageId, isRead = true) {
+    return mailboxAction(
+      "/api/mailbox/messages/" +
+        encodeURIComponent(messageId) +
+        "/read",
+      "PATCH",
+      { isRead }
+    );
+  }
+
+  async function updateStarState(messageId, isStarred) {
+    return mailboxAction(
+      "/api/mailbox/messages/" +
+        encodeURIComponent(messageId) +
+        "/star",
+      "PATCH",
+      { isStarred }
+    );
+  }
+
+  async function archiveMessage(messageId) {
+    return mailboxAction(
+      "/api/mailbox/messages/" +
+        encodeURIComponent(messageId) +
+        "/archive"
+    );
+  }
+
+  async function trashMessage(messageId) {
+    return mailboxAction(
+      "/api/mailbox/messages/" +
+        encodeURIComponent(messageId) +
+        "/trash"
+    );
+  }
+
+  async function restoreMessage(messageId) {
+    return mailboxAction(
+      "/api/mailbox/messages/" +
+        encodeURIComponent(messageId) +
+        "/restore"
+    );
+  }
+
+  async function permanentlyDeleteMessage(messageId) {
+    return mailboxAction(
+      "/api/mailbox/messages/" +
+        encodeURIComponent(messageId),
+      "DELETE"
+    );
+  }
+
 
   function setLoginStatus(message, type = "error") {
     if (!mailLoginStatus) return;
@@ -219,36 +293,190 @@ document.addEventListener("DOMContentLoaded", () => {
     list.innerHTML = "";
     title.textContent = labels[folder];
     listHead.textContent = labels[folder];
-    listCount.textContent = messages.length + (messages.length === 1 ? " message" : " messages");
+    listCount.textContent =
+      messages.length +
+      (messages.length === 1 ? " message" : " messages");
 
     if (!messages.length) {
       empty.hidden = false;
-      empty.textContent = folder === "trash" ? "Trash is empty" : "No messages yet";
+
+      if (folder === "trash") {
+        empty.textContent = "Trash is empty";
+      } else if (folder === "starred") {
+        empty.textContent = "No starred messages";
+      } else {
+        empty.textContent = "No messages yet";
+      }
+
       return;
     }
 
     empty.hidden = true;
 
     messages.forEach((message) => {
-      const row = document.createElement("button");
-      row.type = "button";
-      row.className = "message-row" + (message.is_read ? "" : " unread");
+      const row = document.createElement("div");
+      row.className =
+        "message-row-wrap" +
+        (message.is_read ? "" : " unread");
+
+      const openButton = document.createElement("button");
+      openButton.type = "button";
+      openButton.className =
+        "message-row" +
+        (message.is_read ? "" : " unread");
 
       const sender = document.createElement("strong");
-      sender.textContent = message.sender_name || message.sender_email || "Unknown sender";
+      sender.textContent =
+        message.sender_name ||
+        message.sender_email ||
+        "Unknown sender";
 
       const subject = document.createElement("span");
-      subject.textContent = message.subject || "(No subject)";
+      subject.textContent =
+        message.subject || "(No subject)";
 
       const preview = document.createElement("small");
-      preview.textContent = message.text_body || "";
+      preview.textContent =
+        message.text_body || "";
 
-      row.append(sender, subject, preview);
+      openButton.append(sender, subject, preview);
 
-      row.addEventListener("click", () => {
+      openButton.addEventListener("click", () => {
+        if (folder === "drafts") {
+          openDraft(message);
+          return;
+        }
+
         openMessage(message);
       });
 
+      const actions = document.createElement("div");
+      actions.className = "message-row-actions";
+
+      const starButton = document.createElement("button");
+      starButton.type = "button";
+      starButton.className = "message-action star-action";
+      starButton.title =
+        message.is_starred
+          ? "Remove star"
+          : "Star message";
+      starButton.textContent =
+        message.is_starred ? "★" : "☆";
+
+      starButton.addEventListener("click", async (event) => {
+        event.stopPropagation();
+
+        try {
+          await updateStarState(
+            message.id,
+            !message.is_starred
+          );
+
+          message.is_starred = !message.is_starred;
+
+          if (folder === "starred" && !message.is_starred) {
+            await loadMessages();
+          } else {
+            renderMessages();
+          }
+        } catch (error) {
+          subtitle.textContent = error.message;
+        }
+      });
+
+      actions.appendChild(starButton);
+
+      if (folder !== "trash" && folder !== "archive") {
+        const archiveButton = document.createElement("button");
+        archiveButton.type = "button";
+        archiveButton.className = "message-action";
+        archiveButton.title = "Archive";
+        archiveButton.textContent = "Archive";
+
+        archiveButton.addEventListener("click", async (event) => {
+          event.stopPropagation();
+
+          try {
+            await archiveMessage(message.id);
+            subtitle.textContent = "Message archived.";
+            await loadMessages();
+          } catch (error) {
+            subtitle.textContent = error.message;
+          }
+        });
+
+        actions.appendChild(archiveButton);
+      }
+
+      if (folder === "trash") {
+        const restoreButton = document.createElement("button");
+        restoreButton.type = "button";
+        restoreButton.className = "message-action";
+        restoreButton.title = "Restore";
+        restoreButton.textContent = "Restore";
+
+        restoreButton.addEventListener("click", async (event) => {
+          event.stopPropagation();
+
+          try {
+            await restoreMessage(message.id);
+            subtitle.textContent = "Message restored.";
+            await loadMessages();
+          } catch (error) {
+            subtitle.textContent = error.message;
+          }
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className =
+          "message-action message-action-danger";
+        deleteButton.title = "Delete permanently";
+        deleteButton.textContent = "Delete";
+
+        deleteButton.addEventListener("click", async (event) => {
+          event.stopPropagation();
+
+          const confirmed = window.confirm(
+            "Permanently delete this message? This cannot be undone."
+          );
+
+          if (!confirmed) return;
+
+          try {
+            await permanentlyDeleteMessage(message.id);
+            subtitle.textContent = "Message permanently deleted.";
+            await loadMessages();
+          } catch (error) {
+            subtitle.textContent = error.message;
+          }
+        });
+
+        actions.append(restoreButton, deleteButton);
+      } else {
+        const trashButton = document.createElement("button");
+        trashButton.type = "button";
+        trashButton.className =
+          "message-action message-action-danger";
+        trashButton.title = "Move to trash";
+        trashButton.textContent = "Trash";
+
+        trashButton.addEventListener("click", async (event) => {
+          event.stopPropagation();
+
+          try {
+            await trashMessage(message.id);
+            subtitle.textContent = "Message moved to trash.";
+            await loadMessages();
+          } catch (error) {
+            subtitle.textContent = error.message;
+          }
+        });
+
+        actions.appendChild(trashButton);
+      }
+
+      row.append(openButton, actions);
       list.appendChild(row);
     });
   }
@@ -278,7 +506,91 @@ document.addEventListener("DOMContentLoaded", () => {
     return body;
   }
 
+  async function openDraft(message) {
+    try {
+      const response = await fetch(
+        "/api/mailbox/drafts/" +
+          encodeURIComponent(message.id),
+        {
+          credentials: "include"
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success || !data.draft) {
+        throw new Error(
+          data.error || "Unable to open draft."
+        );
+      }
+
+      const draft = data.draft;
+
+      editingDraftId = draft.id;
+
+      // in_reply_to is the stored RFC Message-ID, not the
+      // database UUID expected by replyToMessageId.
+      // Keep it unset while editing an existing draft so
+      // the server does not mistake the Message-ID for a UUID.
+      replyToMessageId = null;
+
+      const recipients = Array.isArray(draft.recipients)
+        ? draft.recipients
+        : [];
+
+      const to = recipients
+        .filter((item) => item.type === "to")
+        .map((item) => item.email)
+        .filter(Boolean);
+
+      const cc = recipients
+        .filter((item) => item.type === "cc")
+        .map((item) => item.email)
+        .filter(Boolean);
+
+      const bcc = recipients
+        .filter((item) => item.type === "bcc")
+        .map((item) => item.email)
+        .filter(Boolean);
+
+      document.getElementById("composeTo").value =
+        to.join(", ");
+
+      document.getElementById("composeCc").value =
+        cc.join(", ");
+
+      document.getElementById("composeBcc").value =
+        bcc.join(", ");
+
+      document.getElementById("composeSubject").value =
+        draft.subject || "";
+
+      document.getElementById("composeBody").value =
+        draft.text_body || "";
+
+      attachment.value = "";
+      attachmentStatus.textContent =
+        "No file attached";
+
+      const composeTitle =
+        document.querySelector(".compose-head strong");
+
+      if (composeTitle) {
+        composeTitle.textContent = "Edit draft";
+      }
+
+      modal.hidden = false;
+      document.getElementById("composeTo").focus();
+
+    } catch (error) {
+      subtitle.textContent =
+        error.message || "Unable to open draft.";
+    }
+  }
+
   function startReply(message) {
+    editingDraftId = null;
+
     const sender = message.sender_email || "";
     const subject = message.subject || "";
 
@@ -401,44 +713,82 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function openMessage(message) {
-    title.textContent = message.subject || "(No subject)";
-    subtitle.textContent = "Loading conversation…";
+    title.textContent =
+      message.subject || "(No subject)";
+    subtitle.textContent =
+      "Loading conversation…";
 
     try {
+      if (!message.is_read) {
+        try {
+          await updateReadState(message.id, true);
+          message.is_read = true;
+        } catch (readError) {
+          console.warn(
+            "[MAILBOX READ]",
+            readError.message
+          );
+        }
+      }
+
       const response = await fetch(
         "/api/mailbox/messages/" +
           encodeURIComponent(message.id) +
           "/thread",
-        { credentials: "include" }
+        {
+          credentials: "include"
+        }
       );
 
-      const data = await response.json().catch(() => ({}));
+      const data =
+        await response.json().catch(() => ({}));
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "Unable to load conversation.");
+        throw new Error(
+          data.error ||
+          "Unable to load conversation."
+        );
       }
 
-      const threadMessages = Array.isArray(data.messages)
-        ? data.messages
-        : [message];
+      const threadMessages =
+        Array.isArray(data.messages)
+          ? data.messages
+          : [message];
 
-      renderReader(threadMessages, message.id);
+      renderReader(
+        threadMessages,
+        message.id
+      );
 
       if (mailContent) {
-        mailContent.classList.add("reader-open");
+        mailContent.classList.add(
+          "reader-open"
+        );
       }
 
-      subtitle.textContent = message.sender_email || "Conversation";
+      subtitle.textContent =
+        message.sender_email ||
+        "Conversation";
+
+      renderMessages();
+
     } catch (error) {
       reader.innerHTML = "";
 
-      const state = document.createElement("div");
-      state.className = "reader-empty";
+      const state =
+        document.createElement("div");
+
+      state.className =
+        "reader-empty";
+
       state.textContent =
-        error.message || "Unable to load conversation.";
+        error.message ||
+        "Unable to load conversation.";
 
       reader.appendChild(state);
-      subtitle.textContent = "Unable to load conversation";
+
+      subtitle.textContent =
+        "Unable to load conversation";
     }
   }
 
@@ -458,6 +808,25 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   compose.addEventListener("click", () => {
+    editingDraftId = null;
+    replyToMessageId = null;
+
+    document.getElementById("composeTo").value = "";
+    document.getElementById("composeCc").value = "";
+    document.getElementById("composeBcc").value = "";
+    document.getElementById("composeSubject").value = "";
+    document.getElementById("composeBody").value = "";
+
+    attachment.value = "";
+    attachmentStatus.textContent = "No file attached";
+
+    const composeTitle =
+      document.querySelector(".compose-head strong");
+
+    if (composeTitle) {
+      composeTitle.textContent = "New message";
+    }
+
     modal.hidden = false;
     document.getElementById("composeTo").focus();
   });
@@ -477,8 +846,16 @@ document.addEventListener("DOMContentLoaded", () => {
     save.textContent = "Saving...";
 
     try {
-      const response = await fetch("/api/mailbox/drafts", {
-        method: "POST",
+      const isEditing = Boolean(editingDraftId);
+
+      // The mailbox draft endpoint uses POST for both
+      // creating and updating drafts. An existing draft is
+      // identified by draftId in the request body.
+      const url = "/api/mailbox/drafts";
+      const method = "POST";
+
+      const response = await fetch(url, {
+        method,
         credentials: "include",
         headers: {
           "Content-Type": "application/json"
@@ -489,21 +866,34 @@ document.addEventListener("DOMContentLoaded", () => {
           bcc,
           subject,
           body,
-          replyToMessageId
+          replyToMessageId,
+          draftId: editingDraftId || undefined
         })
       });
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "Unable to save draft.");
+        throw new Error(
+          data.error || "Unable to save draft."
+        );
       }
 
+      editingDraftId =
+        data.draft_id ||
+        data.draft?.id ||
+        editingDraftId;
+
       modal.hidden = true;
-      subtitle.textContent = "Draft saved successfully.";
+      subtitle.textContent = isEditing
+        ? "Draft updated successfully."
+        : "Draft saved successfully.";
+
       showFolder("drafts");
+
     } catch (error) {
-      subtitle.textContent = error.message;
+      subtitle.textContent =
+        error.message || "Unable to save draft.";
     } finally {
       save.disabled = false;
       save.textContent = "Save draft";
@@ -532,7 +922,15 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ to, cc, bcc, subject, body })
+        body: JSON.stringify({
+          to,
+          cc,
+          bcc,
+          subject,
+          body,
+          replyToMessageId,
+          draftId: editingDraftId || undefined
+        })
       });
 
       const data = await response.json().catch(() => ({}));
@@ -550,7 +948,10 @@ document.addEventListener("DOMContentLoaded", () => {
       attachment.value = "";
       attachmentStatus.textContent = "No file attached";
       replyToMessageId = null;
-      const composeTitle = document.querySelector(".compose-head strong");
+      editingDraftId = null;
+
+      const composeTitle =
+        document.querySelector(".compose-head strong");
       if (composeTitle) composeTitle.textContent = "New message";
       subtitle.textContent = "Message sent successfully.";
       showFolder("sent");

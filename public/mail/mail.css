@@ -323,3 +323,135 @@
     gap:4px;
   }
 }
+
+
+/* MAILBOX ACTION CONTROLS */
+.message-row-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  border-bottom: 1px solid #e7ebf1;
+}
+
+.message-row-wrap .message-row {
+  min-width: 0;
+  width: 100%;
+}
+
+.message-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 10px 8px 0;
+  flex-shrink: 0;
+}
+
+.message-action {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #718096;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  transition:
+    background-color .15s ease,
+    border-color .15s ease,
+    color .15s ease,
+    transform .15s ease;
+}
+
+.message-action:hover {
+  background: #f3f6fa;
+  border-color: #dbe2ea;
+  color: #173b76;
+}
+
+.message-action:focus-visible {
+  outline: 2px solid #173b76;
+  outline-offset: 2px;
+}
+
+.message-action:active {
+  transform: scale(.95);
+}
+
+.message-action-danger:hover {
+  background: #fff2f2;
+  border-color: #f3c7c7;
+  color: #b42318;
+}
+
+.message-action[disabled] {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.message-row-wrap .message-row.unread {
+  font-weight: 600;
+}
+
+.message-row-wrap .message-row.unread + .message-row-actions {
+  background: rgba(23, 59, 118, .025);
+}
+
+.message-star {
+  color: #8a96a8;
+}
+
+.message-star.is-starred,
+.message-action[aria-pressed="true"] {
+  color: #b7791f;
+}
+
+.message-star.is-starred:hover,
+.message-action[aria-pressed="true"]:hover {
+  color: #9c5f08;
+  background: #fff8e8;
+  border-color: #f1dfb5;
+}
+
+/* Keep mailbox controls usable on narrow screens. */
+@media (max-width: 900px) {
+  .message-row-wrap {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .message-row-actions {
+    gap: 2px;
+    padding-right: 6px;
+  }
+
+  .message-action {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .message-row-wrap {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .message-row-actions {
+    justify-content: flex-end;
+    padding: 0 10px 8px;
+  }
+
+  .message-action {
+    width: 34px;
+    height: 30px;
+  }
+}
