@@ -169,9 +169,15 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-if (!process.env.DATABASE_URL) {
+const DATABASE_CONFIGURED = Boolean(process.env.DATABASE_URL);
+
+if (!DATABASE_CONFIGURED && IS_PRODUCTION) {
   console.error("[DATABASE] DATABASE_URL is not configured.");
   process.exit(1);
+}
+
+if (!DATABASE_CONFIGURED) {
+  console.warn("[DATABASE] DATABASE_URL is not configured. Starting in local routing-only mode.");
 }
 
 if (!process.env.RESEND_API_KEY) {
@@ -384,7 +390,6 @@ function requireSameOrigin(req, res, next) {
 
   const allowedOrigins = new Set([
     "https://uscourier.app",
-    "https://account.uscourier.app",
     "https://mail.uscourier.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
@@ -506,7 +511,6 @@ app.use(
   cors({
     origin: [
       "https://uscourier.app",
-      "https://account.uscourier.app",
       "https://mail.uscourier.app"
     ],
     credentials: true,
@@ -872,26 +876,17 @@ function getRequestHostname(req) {
 function adminSubdomainOnly(req, res, next) {
   const hostname = getRequestHostname(req);
 
-  if (hostname === "account.uscourier.app") {
+  if (hostname === "uscourier.app") {
     return next();
   }
 
-  /*
-   * The admin portal has one canonical hostname.
-   * Browser page/static requests sent to /admin from the
-   * public hostname are moved to the dedicated account host.
-   *
-   * Never redirect non-GET admin requests across origins.
-   * API authorization remains server-side and must not be
-   * weakened by a cross-origin redirect.
-   */
-  if (req.method === "GET" || req.method === "HEAD") {
-    const originalUrl = req.originalUrl || "/admin";
-
-    return res.redirect(
-      302,
-      "https://account.uscourier.app" + originalUrl
-    );
+  if (
+    hostname === "account.uscourier.app" &&
+    (req.method === "GET" || req.method === "HEAD")
+  ) {
+    const originalUrl = req.originalUrl || "/";
+    const target = originalUrl === "/" ? "/admin" : "/admin" + originalUrl;
+    return res.redirect(302, "https://uscourier.app" + target);
   }
 
   return res.status(404).send("Not Found");
@@ -995,7 +990,7 @@ async function adminPageMiddleware(req, res, next) {
   }
 
   if (!token) {
-    return res.redirect("https://account.uscourier.app/");
+    return res.redirect("https://uscourier.app/admin");
   }
 
   try {
@@ -1005,7 +1000,7 @@ async function adminPageMiddleware(req, res, next) {
     );
 
     if (!decoded || !decoded.id || !decoded.sid) {
-      return res.redirect("https://account.uscourier.app/");
+      return res.redirect("https://uscourier.app/admin");
     }
 
     /*
@@ -1019,7 +1014,7 @@ async function adminPageMiddleware(req, res, next) {
     const session = await validateStaffSession(decoded);
 
     if (!session) {
-      return res.redirect("https://account.uscourier.app/");
+      return res.redirect("https://uscourier.app/admin");
     }
 
     /*
@@ -1028,7 +1023,7 @@ async function adminPageMiddleware(req, res, next) {
      * directly from PostgreSQL.
      */
     if (!ADMIN_ALLOWED_ROLES.has(session.role)) {
-      return res.redirect("https://account.uscourier.app/");
+      return res.redirect("https://uscourier.app/admin");
     }
 
     req.user = decoded;
@@ -1049,44 +1044,54 @@ async function adminPageMiddleware(req, res, next) {
       error.message
     );
 
-    return res.redirect("https://account.uscourier.app/");
+    return res.redirect("https://uscourier.app/admin");
   }
 }
 
 app.get("/admin", adminSubdomainOnly, (req, res) => {
-  if (getRequestHostname(req) !== "account.uscourier.app") {
-    return res.status(404).send("Not Found");
-  }
-
-  return res.redirect(302, "/");
+  return res.sendFile(
+    path.join(__dirname, "public", "admin", "login.html")
+  );
 });
 
 app.get("/admin/", adminSubdomainOnly, (req, res) => {
-  if (getRequestHostname(req) !== "account.uscourier.app") {
-    return res.status(404).send("Not Found");
-  }
-
-  return res.redirect(302, "/");
+  return res.sendFile(
+    path.join(__dirname, "public", "admin", "login.html")
+  );
 });
 
 // ============================================================
 // FALLBACK
 // ============================================================
 
-// Admin Portal is available only through account.uscourier.app.
+// Admin Portal is available through the canonical main-domain /admin path.
 app.use("/admin", adminSubdomainOnly);
 
 // The admin subdomain root must never be handled by public/index.html.
 // ============================================================
-// ADMIN PORTAL ROUTING
-// account.uscourier.app/          -> login
-// account.uscourier.app/dashboard -> protected dashboard
+// CANONICAL ADMIN + MAIL ROUTING
+// /admin           -> Admin login
+// /admin/dashboard -> protected Admin dashboard
+// /mail            -> Mailbox
+// Legacy subdomains redirect to the canonical main domain.
 // ============================================================
 app.get("/mail", (req, res) => {
-  if (getRequestHostname(req) !== "mail.uscourier.app") {
-    return res.status(404).send("Not Found");
+  const hostname = getRequestHostname(req);
+
+  if (hostname === "uscourier.app") {
+    return res.sendFile(
+      path.join(__dirname, "public", "mail", "index.html")
+    );
   }
-  return res.sendFile(path.join(__dirname, "public", "mail", "index.html"));
+
+  if (
+    hostname === "mail.uscourier.app" &&
+    (req.method === "GET" || req.method === "HEAD")
+  ) {
+    return res.redirect(302, "https://uscourier.app/mail");
+  }
+
+  return res.status(404).send("Not Found");
 });
 
 
@@ -1102,21 +1107,15 @@ app.get("/", (req, res, next) => {
     return next();
   }
 
-  // Admin hostname root = login page
+  // Legacy admin hostname redirects to the canonical main-domain Admin Portal.
   if (hostname === "account.uscourier.app") {
-    return res.sendFile(
-      path.join(__dirname, "public", "admin", "login.html")
-    );
+    return res.redirect(302, "https://uscourier.app/admin");
   }
 
   return next();
 });
 
-app.get("/dashboard", (req, res, next) => {
-  if (getRequestHostname(req) !== "account.uscourier.app") {
-    return res.status(404).send("Not Found");
-  }
-
+app.get("/admin/dashboard", adminSubdomainOnly, (req, res, next) => {
   return adminPageMiddleware(req, res, () => {
     return res.sendFile(
       path.join(__dirname, "public", "admin", "index.html")
@@ -1128,23 +1127,17 @@ app.get("/login.html", (req, res) => {
   return res.status(404).send("Not Found");
 });
 
-app.get("/dashboard.html", (req, res, next) => {
-  if (getRequestHostname(req) !== "account.uscourier.app") {
+app.get("/dashboard.html", (req, res) => {
+  if (getRequestHostname(req) !== "uscourier.app") {
     return res.status(404).send("Not Found");
   }
 
-  return adminPageMiddleware(req, res, () => {
-    return res.sendFile(
-      path.join(__dirname, "public", "admin", "index.html")
-    );
-  });
+  return res.redirect(302, "/admin/dashboard");
 });
 
 app.get("/index.html", (req, res, next) => {
   if (getRequestHostname(req) === "account.uscourier.app") {
-    return res.sendFile(
-      path.join(__dirname, "public", "admin", "login.html")
-    );
+    return res.redirect(302, "https://uscourier.app/admin");
   }
 
   next();
@@ -2636,11 +2629,14 @@ async function adminMiddleware(req, res, next) {
 async function adminPortalMiddleware(req, res, next) {
   try {
     /*
-     * The Admin API has the same canonical hostname as the
-     * Admin Portal. Never allow an authenticated admin request
-     * to operate through the public hostname.
+     * The Admin API uses the same canonical main-domain origin
+     * as the Admin Portal: https://uscourier.app/admin
+     *
+     * The legacy account subdomain is no longer an API origin.
+     * Keep the hostname check server-side so authenticated
+     * admin APIs cannot be operated through another hostname.
      */
-    if (getRequestHostname(req) !== "account.uscourier.app") {
+    if (getRequestHostname(req) !== "uscourier.app") {
       return res.status(404).json({
         error: "Not Found"
       });
@@ -6117,9 +6113,35 @@ app.use(
   })
 );
 
+// ============================================================
+// API 404 BOUNDARY
+// Prevent unknown /api/* requests from falling through to the
+// public website catch-all.
+// ============================================================
+
+app.use("/api", (req, res) => {
+  return res.status(404).json({
+    success: false,
+    error: "API endpoint not found"
+  });
+});
+
 app.get("*", (req, res) => {
-  // The admin subdomain must never fall through to the public portal.
-  if (getRequestHostname(req) === "account.uscourier.app") {
+  const hostname = getRequestHostname(req);
+
+  // Legacy admin hostname redirects to the canonical Admin Portal.
+  if (
+    hostname === "account.uscourier.app" &&
+    (req.method === "GET" || req.method === "HEAD")
+  ) {
+    const originalUrl = req.originalUrl || "/";
+    const target = originalUrl === "/" ? "/admin" : "/admin" + originalUrl;
+    return res.redirect(302, "https://uscourier.app" + target);
+  }
+
+  // Never expose the public portal through the legacy admin hostname
+  // for non-browser methods.
+  if (hostname === "account.uscourier.app") {
     return res.status(404).send("Not Found");
   }
 
@@ -6138,6 +6160,16 @@ app.get("*", (req, res) => {
 // ============================================================
 
 async function testDatabaseConnectionSafe() {
+  if (!DATABASE_CONFIGURED) {
+    if (IS_PRODUCTION) {
+      console.error("[DATABASE] DATABASE_URL is required in production.");
+      return false;
+    }
+
+    console.warn("[DATABASE] Local routing-only mode: database connection test skipped.");
+    return true;
+  }
+
   try {
     await testDatabaseConnection();
     return true;
@@ -6159,7 +6191,7 @@ async function startServer() {
     console.log(`Environment: ${NODE_ENV}`);
     console.log("Database: Supabase PostgreSQL");
     console.log("Live URL: https://uscourier.app");
-console.log("Admin Portal: https://account.uscourier.app");
+console.log("Admin Portal: https://uscourier.app/admin");
   });
 
   const shutdown = async (signal) => {

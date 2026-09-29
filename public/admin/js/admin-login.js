@@ -221,7 +221,7 @@
           "success"
         );
 
-        window.location.replace("/dashboard");
+        window.location.replace("/admin/dashboard");
 
       } catch (error) {
         console.error(

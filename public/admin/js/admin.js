@@ -137,7 +137,7 @@ async function handleAdminLogin(e) {
      * successful authentication.
      */
     window.location.replace(
-      '/dashboard'
+      '/admin/dashboard'
     );
 
   } catch (err) {
@@ -194,7 +194,7 @@ async function handleAdminLogout() {
   } finally {
 
     window.location.replace(
-      'https://account.uscourier.app/'
+      '/admin'
     );
   }
 }
@@ -8111,7 +8111,7 @@ async function saveAdminSettings() {
           })
           .finally(function() {
             window.location.replace(
-              'https://account.uscourier.app/'
+              '/admin'
             );
           });
 
@@ -8186,7 +8186,7 @@ function handleAdminSessionExpired() {
   );
 
   window.location.replace(
-    'https://account.uscourier.app/'
+    '/admin'
   );
 }
 
@@ -11314,7 +11314,7 @@ window.initAdminStaffManagement = initAdminStaffManagement;
       closeMobileSidebar();
 
       window.location.assign(
-        'https://mail.uscourier.app/'
+        '/mail'
       );
 
       return;
@@ -11492,7 +11492,7 @@ window.initAdminStaffManagement = initAdminStaffManagement;
             error
           );
         } finally {
-          window.location.replace('https://account.uscourier.app/');
+          window.location.replace('/admin');
         }
 
       }
