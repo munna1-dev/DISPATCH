@@ -204,7 +204,13 @@
 
       <div class="compose-foot">
         <label class="attach-btn" for="composeAttachment">Attach file</label>
-        <input id="composeAttachment" type="file" hidden>
+        <input
+          id="composeAttachment"
+          type="file"
+          multiple
+          accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.csv,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+          hidden
+        >
         <span id="attachmentStatus">No file attached</span>
         <button type="button" id="sendMail">Send</button>
         <button type="button" id="saveDraft">Save draft</button>

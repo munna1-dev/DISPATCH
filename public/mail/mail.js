@@ -916,21 +916,30 @@ document.addEventListener("DOMContentLoaded", () => {
     send.textContent = "Sending...";
 
     try {
+      const formData = new FormData();
+
+      formData.append("to", to);
+      formData.append("cc", cc);
+      formData.append("bcc", bcc);
+      formData.append("subject", subject);
+      formData.append("body", body);
+
+      if (replyToMessageId) {
+        formData.append("replyToMessageId", replyToMessageId);
+      }
+
+      if (editingDraftId) {
+        formData.append("draftId", editingDraftId);
+      }
+
+      for (const file of Array.from(attachment.files || [])) {
+        formData.append("attachments", file);
+      }
+
       const response = await fetch("/api/mailbox/send", {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          to,
-          cc,
-          bcc,
-          subject,
-          body,
-          replyToMessageId,
-          draftId: editingDraftId || undefined
-        })
+        body: formData
       });
 
       const data = await response.json().catch(() => ({}));
@@ -990,8 +999,55 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   attachment.addEventListener("change", () => {
-    const file = attachment.files[0];
-    attachmentStatus.textContent = file ? file.name + " attached" : "No file attached";
+    const files = Array.from(attachment.files || []);
+
+    if (!files.length) {
+      attachmentStatus.textContent = "No file attached";
+      return;
+    }
+
+    const maxFiles = 5;
+    const maxFileSize = 2 * 1024 * 1024;
+    const maxTotalSize = 3 * 1024 * 1024;
+
+    if (files.length > maxFiles) {
+      attachment.value = "";
+      attachmentStatus.textContent =
+        "Maximum 5 attachments allowed.";
+      return;
+    }
+
+    const oversized = files.find(
+      (file) => file.size > maxFileSize
+    );
+
+    if (oversized) {
+      attachment.value = "";
+      attachmentStatus.textContent =
+        `${oversized.name} exceeds the 2 MB file limit.`;
+      return;
+    }
+
+    const totalSize = files.reduce(
+      (total, file) => total + file.size,
+      0
+    );
+
+    if (totalSize > maxTotalSize) {
+      attachment.value = "";
+      attachmentStatus.textContent =
+        "Attachments exceed the 3 MB combined limit.";
+      return;
+    }
+
+    if (files.length === 1) {
+      attachmentStatus.textContent =
+        `${files[0].name} attached`;
+      return;
+    }
+
+    attachmentStatus.textContent =
+      `${files.length} files attached`;
   });
 
   document.addEventListener("keydown", (event) => {

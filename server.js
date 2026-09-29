@@ -11,6 +11,144 @@ const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const multer = require("multer");
+
+const MAIL_ATTACHMENT_MAX_FILES = 5;
+const MAIL_ATTACHMENT_MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+const MAIL_ATTACHMENT_MAX_TOTAL_SIZE = 3 * 1024 * 1024; // 3 MB
+
+const MAIL_ATTACHMENT_ALLOWED_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "text/plain",
+  "text/csv",
+  "application/zip",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+]);
+
+const MAIL_ATTACHMENT_BLOCKED_EXTENSIONS = new Set([
+  ".exe",
+  ".bat",
+  ".cmd",
+  ".com",
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".ps1",
+  ".sh",
+  ".bash",
+  ".php",
+  ".phtml",
+  ".html",
+  ".htm",
+  ".svg"
+]);
+
+const mailAttachmentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    files: MAIL_ATTACHMENT_MAX_FILES,
+    fileSize: MAIL_ATTACHMENT_MAX_FILE_SIZE,
+    fieldSize: 100 * 1024
+  },
+  fileFilter: (req, file, callback) => {
+    const filename = String(file.originalname || "").trim();
+    const lowerName = filename.toLowerCase();
+    const extension = lowerName.includes(".")
+      ? lowerName.slice(lowerName.lastIndexOf("."))
+      : "";
+
+    if (!filename) {
+      return callback(new Error("Attachment filename is required."));
+    }
+
+    if (MAIL_ATTACHMENT_BLOCKED_EXTENSIONS.has(extension)) {
+      return callback(new Error("This attachment file type is not allowed."));
+    }
+
+    if (!MAIL_ATTACHMENT_ALLOWED_TYPES.has(file.mimetype)) {
+      return callback(new Error("This attachment file type is not allowed."));
+    }
+
+    callback(null, true);
+  }
+});
+
+function validateMailAttachments(files) {
+  const attachments = Array.isArray(files) ? files : [];
+
+  const totalSize = attachments.reduce(
+    (total, file) => total + Number(file.size || 0),
+    0
+  );
+
+  if (totalSize > MAIL_ATTACHMENT_MAX_TOTAL_SIZE) {
+    return {
+      valid: false,
+      error: "Attachments exceed the maximum combined size."
+    };
+  }
+
+  return {
+    valid: true,
+    error: null
+  };
+}
+
+function handleMailAttachmentUpload(req, res, next) {
+  mailAttachmentUpload.array(
+    "attachments",
+    MAIL_ATTACHMENT_MAX_FILES
+  )(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    if (error instanceof multer.MulterError) {
+      if (error.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          success: false,
+          error: "Each attachment must be 2 MB or smaller."
+        });
+      }
+
+      if (error.code === "LIMIT_FILE_COUNT") {
+        return res.status(400).json({
+          success: false,
+          error: "You can attach a maximum of 5 files."
+        });
+      }
+
+      if (error.code === "LIMIT_FIELD_SIZE") {
+        return res.status(400).json({
+          success: false,
+          error: "Attachment form data is too large."
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: "Invalid attachment upload."
+      });
+    }
+
+    console.error("[MAILBOX ATTACHMENT]", error.message);
+
+    return res.status(400).json({
+      success: false,
+      error: error.message || "Invalid attachment."
+    });
+  });
+}
+
 const helmet = require("helmet");
 const cors = require("cors");
 const path = require("path");
@@ -2145,6 +2283,7 @@ app.post(
   rateLimit("mail-send", MAIL_SEND_WINDOW_MS, MAIL_SEND_MAX_ATTEMPTS),
   requireSameOrigin,
   authMiddleware,
+  handleMailAttachmentUpload,
   async (req, res) => {
     try {
       if (!resend) {
@@ -2172,6 +2311,24 @@ app.post(
       const subject = cleanString(req.body?.subject, 200);
       const textBody = cleanString(req.body?.body, 10000);
       const draftId = cleanString(req.body?.draftId, 100);
+      const replyToMessageId = cleanString(
+        req.body?.replyToMessageId,
+        100
+      );
+
+      const uploadedFiles = Array.isArray(req.files)
+        ? req.files
+        : [];
+
+      const attachmentValidation =
+        validateMailAttachments(uploadedFiles);
+
+      if (!attachmentValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: attachmentValidation.error
+        });
+      }
 
       if (!to.length || to.some((email) => !isValidEmail(email))) {
         return res.status(400).json({
@@ -2282,6 +2439,13 @@ app.post(
         subject,
         text: textBody,
         html: `<div style="font-family:Arial,sans-serif;line-height:1.6">${htmlBody}</div>`,
+        attachments: uploadedFiles.length
+          ? uploadedFiles.map((file) => ({
+              content: file.buffer,
+              filename: file.originalname,
+              contentType: file.mimetype
+            }))
+          : undefined,
         headers: {
           "Message-ID": generatedMessageId,
           ...(inReplyTo ? { "In-Reply-To": inReplyTo } : {}),
@@ -2336,14 +2500,40 @@ app.post(
         ...bcc.map((email) => ({ type: "bcc", email }))
       ];
 
-      for (const recipient of recipients) {
-        await queryWithRetry(
-          `INSERT INTO mail_recipients (
-             message_id,
-             recipient_type,
-             email
-           ) VALUES ($1, $2, $3)`,
-          [messageId, recipient.type, recipient.email]
+      try {
+        for (const recipient of recipients) {
+          await queryWithRetry(
+            `INSERT INTO mail_recipients (
+               message_id,
+               recipient_type,
+               email
+             ) VALUES ($1, $2, $3)`,
+            [messageId, recipient.type, recipient.email]
+          );
+        }
+
+        for (const file of uploadedFiles) {
+          await queryWithRetry(
+            `INSERT INTO mail_attachments (
+               message_id,
+               filename,
+               content_type,
+               content_disposition,
+               size_bytes
+             ) VALUES ($1, $2, $3, $4, $5)`,
+            [
+              messageId,
+              file.originalname,
+              file.mimetype,
+              "attachment",
+              file.size
+            ]
+          );
+        }
+      } catch (metadataError) {
+        console.error(
+          "[MAILBOX SEND] Post-send metadata recording failed:",
+          metadataError.message
         );
       }
 
