@@ -1280,7 +1280,10 @@ async function adminMiddleware(req, res, next) {
 
     const user = result.rows[0];
 
-    if (user.role !== "Admin") {
+    if (
+      user.role !== "Admin" &&
+      user.role !== "Super Admin"
+    ) {
       return res.status(403).json({
         error: "Administrator privileges required"
       });
@@ -2450,6 +2453,44 @@ app.put(
  */
 
 const ADMIN_ROLE_PERMISSIONS = Object.freeze({
+  "Super Admin": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "shipments.create",
+    "shipments.update",
+    "shipments.delete",
+    "tracking.view",
+    "tracking.update",
+    "messages.view",
+    "messages.reply",
+    "messages.read",
+    "messages.delete",
+    "staff.view",
+    "staff.create",
+    "staff.update",
+    "staff.role",
+    "staff.password",
+    "settings.view",
+    "settings.update",
+    "profile.view",
+    "profile.update",
+    "profile.password",
+    "developer.view",
+    "developer.health",
+    "developer.database",
+    "developer.sessions",
+    "developer.audit",
+    "developer.environment",
+    "developer.deployments",
+    "developer.settings",
+    "mail.view",
+    "mail.users.view",
+    "mail.users.create",
+    "mail.users.update",
+    "mail.users.password",
+    "mail.users.disable"
+  ]),
+
   "Admin": new Set([
     "dashboard.view",
     "shipments.view",
@@ -2471,7 +2512,15 @@ const ADMIN_ROLE_PERMISSIONS = Object.freeze({
     "settings.update",
     "profile.view",
     "profile.update",
-    "profile.password"
+    "profile.password",
+    "developer.view",
+    "developer.health",
+    "developer.database",
+    "developer.sessions",
+    "developer.audit",
+    "developer.environment",
+    "developer.deployments",
+    "developer.settings"
   ]),
 
   "Operations Manager": new Set([
@@ -2610,6 +2659,7 @@ function requireAdminPermission(permission) {
 // ============================================================
 
 const ADMIN_ALLOWED_ROLES = new Set([
+  "Super Admin",
   "Admin",
   "Operations Manager",
   "Dispatcher",
@@ -2617,7 +2667,8 @@ const ADMIN_ALLOWED_ROLES = new Set([
   "Trunk Driver",
   "Cargo Personnel",
   "Warehouse Personnel",
-  "Customer Service"
+  "Customer Service",
+  "Customer"
 ]);
 
 function normalizeAdminRole(value) {
@@ -2723,6 +2774,23 @@ app.post(
       const role = normalizeAdminRole(
         req.body?.role || "Customer"
       );
+
+      /*
+       * Super Admin accounts may only be created
+       * by an existing Super Admin.
+       *
+       * Backend enforcement is required even when
+       * the frontend hides the role option.
+       */
+      if (
+        role === "Super Admin" &&
+        req.admin?.role !== "Super Admin"
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: "Only a Super Admin can create a Super Admin account."
+        });
+      }
 
       const nameError = validateAdminUserName(name);
 
@@ -3014,6 +3082,16 @@ app.put(
       req.body?.role
     );
 
+    if (
+      role === "Super Admin" &&
+      req.admin?.role !== "Super Admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Only a Super Admin can assign the Super Admin role."
+      });
+    }
+
     if (!role) {
       return res.status(400).json({
         success: false,
@@ -3051,9 +3129,19 @@ app.put(
        * Administrator privileges through this endpoint.
        */
 
+      const administratorRoles = new Set([
+        "Admin",
+        "Super Admin"
+      ]);
+
+      /*
+       * An administrator cannot remove their own
+       * administrator privileges through this endpoint.
+       */
+
       if (
         Number(req.admin.id) === userId &&
-        role !== "Admin"
+        !administratorRoles.has(role)
       ) {
         return res.status(400).json({
           success: false,
@@ -3062,19 +3150,20 @@ app.put(
       }
 
       /*
-       * Prevent the system from being left without an Admin.
+       * Prevent the system from being left without an
+       * administrator account.
        */
 
       if (
-        target.role === "Admin" &&
-        role !== "Admin"
+        administratorRoles.has(target.role) &&
+        !administratorRoles.has(role)
       ) {
         const adminCountResult =
           await queryWithRetry(
             `
             SELECT COUNT(*)::int AS count
             FROM users
-            WHERE role = 'Admin'
+            WHERE role IN ('Admin', 'Super Admin')
             `
           );
 
@@ -3235,6 +3324,85 @@ app.post(
       return res.status(500).json({
         success: false,
         error: "Failed to reset user password."
+      });
+    }
+  }
+);
+
+
+
+// ============================================================
+// ADMIN MAIL MANAGEMENT
+// ============================================================
+
+app.get(
+  "/api/admin/mail",
+  authMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("mail.users.view"),
+  async (req, res) => {
+    try {
+      const result = await queryWithRetry(
+        `
+        SELECT
+          u.id AS user_id,
+          u.name AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          u.status AS user_status,
+          m.id AS mailbox_id,
+          m.email AS mailbox_email,
+          m.display_name AS mailbox_display_name,
+          m.status AS mailbox_status,
+          m.created_at AS mailbox_created_at,
+          m.updated_at AS mailbox_updated_at
+        FROM users u
+        LEFT JOIN mailboxes m
+          ON m.user_id = u.id
+        ORDER BY
+          CASE
+            WHEN m.id IS NULL THEN 1
+            ELSE 0
+          END,
+          LOWER(COALESCE(m.email, u.email)),
+          u.id
+        `
+      );
+
+      const mailboxes = result.rows.map((row) => ({
+        user: {
+          id: row.user_id,
+          name: row.user_name,
+          email: row.user_email,
+          role: row.user_role,
+          status: row.user_status
+        },
+        mailbox: row.mailbox_id
+          ? {
+              id: row.mailbox_id,
+              email: row.mailbox_email,
+              display_name: row.mailbox_display_name,
+              status: row.mailbox_status,
+              created_at: row.mailbox_created_at,
+              updated_at: row.mailbox_updated_at
+            }
+          : null
+      }));
+
+      return res.json({
+        success: true,
+        count: mailboxes.length,
+        mailboxes
+      });
+    } catch (error) {
+      console.error(
+        "[ADMIN MAIL LIST]",
+        error.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to retrieve mail management data."
       });
     }
   }
@@ -4601,6 +4769,25 @@ app.post(
   }
 );
 
+
+// ============================================================
+// SECURED DEVELOPER CONSOLE
+// Must remain before the public catch-all.
+// ============================================================
+
+const createDeveloperConsoleRouter = require("./developerConsoleController");
+
+app.use(
+  "/api/admin/developer",
+  authMiddleware,
+  adminPortalMiddleware,
+  createDeveloperConsoleRouter({
+    queryWithRetry,
+    logAdminAction,
+    requireAdminPermission,
+    requireSameOrigin
+  })
+);
 
 app.get("*", (req, res) => {
   // The admin subdomain must never fall through to the public portal.

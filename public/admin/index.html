@@ -137,10 +137,32 @@
               <button
                 type="button"
                 class="admin-nav-item"
+                data-admin-nav="mail"
+              >
+                <span class="admin-nav-icon">✉</span>
+                <span class="admin-nav-label">Mail</span>
+              </button>
+
+              <button
+                type="button"
+                class="admin-nav-item"
                 data-admin-nav="settings"
               >
                 <span class="admin-nav-icon">⚙</span>
                 <span class="admin-nav-label">Settings</span>
+              </button>
+            </div>
+
+            <div class="admin-nav-section">
+              <span class="admin-nav-section-label">DEVELOPER</span>
+
+              <button
+                type="button"
+                class="admin-nav-item"
+                data-admin-nav="developer"
+              >
+                <span class="admin-nav-icon">⌘</span>
+                <span class="admin-nav-label">Developer Console</span>
               </button>
             </div>
 
@@ -1068,6 +1090,11 @@
             class="form-control"
             required
           >
+            <option
+              value="Super Admin"
+              data-super-admin-only="true"
+              hidden
+            >Super Admin</option>
             <option value="Admin">Admin</option>
             <option value="Operations Manager">Operations Manager</option>
             <option value="Dispatcher">Dispatcher</option>
@@ -1358,6 +1385,383 @@
 
 
 <!-- View: Admin Settings & Website Portal Configuration -->
+
+
+<!-- =========================================================
+     View: Developer Console
+     Restricted server-side administration interface
+========================================================= -->
+
+<section id="view-admin-developer" style="display: none;">
+
+  <div class="container">
+
+    <div class="admin-dashboard-identity">
+      <div class="admin-dashboard-identity-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <rect x="2.5" y="2.5" width="43" height="43" rx="12"></rect>
+          <path d="M14 17h20M14 24h20M14 31h12"></path>
+          <path d="M10 11h28v26H10z"></path>
+        </svg>
+      </div>
+
+      <div class="admin-dashboard-identity-copy">
+        <span>US COURIER • RESTRICTED ADMINISTRATION</span>
+        <h1>DEVELOPER CONSOLE</h1>
+        <p>
+          Secure platform health, infrastructure and administrative controls.
+        </p>
+      </div>
+    </div>
+
+    <!-- Console status -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">SECURITY</span>
+          <h3>Developer Access</h3>
+        </div>
+
+        <span
+          id="developer-access-status"
+          class="admin-status-badge"
+        >
+          Checking access...
+        </span>
+
+      </div>
+
+      <div
+        id="developer-console-message"
+        style="display:none; margin-top:1rem;"
+      ></div>
+
+    </div>
+
+
+    <!-- System health -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">SYSTEM</span>
+          <h3>Platform Health</h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-refresh-health"
+        >
+          ↻ Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="developer-health-grid"
+        class="admin-kpi-grid"
+      >
+
+        <article class="admin-kpi-card">
+          <div class="admin-kpi-icon">◉</div>
+          <div>
+            <span class="admin-panel-kicker">APPLICATION</span>
+            <strong id="developer-health-application">
+              Checking...
+            </strong>
+          </div>
+        </article>
+
+        <article class="admin-kpi-card">
+          <div class="admin-kpi-icon">▣</div>
+          <div>
+            <span class="admin-panel-kicker">DATABASE</span>
+            <strong id="developer-health-database">
+              Checking...
+            </strong>
+          </div>
+        </article>
+
+        <article class="admin-kpi-card">
+          <div class="admin-kpi-icon">◷</div>
+          <div>
+            <span class="admin-panel-kicker">UPTIME</span>
+            <strong id="developer-health-uptime">
+              Checking...
+            </strong>
+          </div>
+        </article>
+
+        <article class="admin-kpi-card">
+          <div class="admin-kpi-icon">✉</div>
+          <div>
+            <span class="admin-panel-kicker">MAIL</span>
+            <strong id="developer-health-mail">
+              Checking...
+            </strong>
+          </div>
+        </article>
+
+      </div>
+
+    </div>
+
+
+    <!-- Database -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">DATABASE</span>
+          <h3>Database Overview</h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-refresh-database"
+        >
+          ↻ Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="developer-database-table"
+        class="table-responsive"
+      >
+        <p style="color:var(--text-muted);">
+          Loading database information...
+        </p>
+      </div>
+
+    </div>
+
+
+    <!-- Database schema -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">DATABASE</span>
+          <h3>Database Schema</h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-refresh-schema"
+        >
+          ↻ Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="developer-schema-table"
+        class="table-responsive"
+      >
+        <p style="color:var(--text-muted);">
+          Loading database schema...
+        </p>
+      </div>
+
+    </div>
+
+
+    <!-- Security -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">SECURITY</span>
+          <h3>Active Sessions</h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-refresh-sessions"
+        >
+          ↻ Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="developer-sessions-table"
+        class="table-responsive"
+      >
+        <p style="color:var(--text-muted);">
+          Loading active sessions...
+        </p>
+      </div>
+
+    </div>
+
+
+    <!-- Audit -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">AUDIT</span>
+          <h3>Administrative Activity</h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-refresh-audit"
+        >
+          ↻ Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="developer-audit-table"
+        class="table-responsive"
+      >
+        <p style="color:var(--text-muted);">
+          Loading audit activity...
+        </p>
+      </div>
+
+    </div>
+
+
+    <!-- Environment -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">CONFIGURATION</span>
+          <h3>Environment Status</h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-refresh-environment"
+        >
+          ↻ Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="developer-environment-grid"
+        class="grid-2"
+      >
+        <p style="color:var(--text-muted);">
+          Loading configuration status...
+        </p>
+      </div>
+
+      <p
+        style="
+          margin-top:1rem;
+          color:var(--text-muted);
+          font-size:.85rem;
+        "
+      >
+        Secret values are intentionally never displayed.
+        This panel reports configuration status only.
+      </p>
+
+    </div>
+
+
+    <!-- Deployment -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">DEPLOYMENT</span>
+          <h3>Deployment Information</h3>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-refresh-deployments"
+        >
+          ↻ Refresh
+        </button>
+
+      </div>
+
+      <div
+        id="developer-deployments"
+      >
+        <p style="color:var(--text-muted);">
+          Loading deployment information...
+        </p>
+      </div>
+
+    </div>
+
+
+    <!-- Maintenance -->
+    <div class="admin-panel" style="margin-bottom:1.5rem;">
+
+      <div class="admin-panel-heading">
+
+        <div>
+          <span class="admin-panel-kicker">OPERATIONS</span>
+          <h3>Maintenance Mode</h3>
+        </div>
+
+        <span
+          id="developer-maintenance-status"
+          class="admin-status-badge"
+        >
+          Checking...
+        </span>
+
+      </div>
+
+      <p style="color:var(--text-muted); margin:1rem 0;">
+        Maintenance mode affects public platform availability.
+        Every state change is recorded in the administrative audit log.
+      </p>
+
+      <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="developer-enable-maintenance"
+        >
+          Enable Maintenance
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-gold"
+          id="developer-disable-maintenance"
+        >
+          Disable Maintenance
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
 
 <section id="view-admin-settings" style="display: none;">
       <div class="container">

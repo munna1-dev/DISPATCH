@@ -15,6 +15,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const attachment = document.getElementById("composeAttachment");
   const attachmentStatus = document.getElementById("attachmentStatus");
 
+  const mailLogin = document.getElementById("mailLogin");
+  const mailShell = document.getElementById("mailShell");
+  const mailLoginForm = document.getElementById("mailLoginForm");
+  const mailLoginEmail = document.getElementById("mailLoginEmail");
+  const mailLoginPassword = document.getElementById("mailLoginPassword");
+  const mailLoginSubmit = document.getElementById("mailLoginSubmit");
+  const mailLoginStatus = document.getElementById("mailLoginStatus");
+  const mailPasswordToggle = document.getElementById("mailPasswordToggle");
+  const mailLogout = document.getElementById("mailLogout");
+  const mailAccountEmail = document.getElementById("mailAccountEmail");
+
   let folder = "inbox";
   let messages = [];
 
@@ -26,6 +37,141 @@ document.addEventListener("DOMContentLoaded", () => {
     archive: "Archive",
     trash: "Trash"
   };
+
+  function setLoginStatus(message, type = "error") {
+    if (!mailLoginStatus) return;
+
+    mailLoginStatus.textContent = message || "";
+    mailLoginStatus.dataset.state = message ? type : "";
+    mailLoginStatus.hidden = !message;
+  }
+
+  function showLogin() {
+    if (mailLogin) mailLogin.hidden = false;
+    if (mailShell) mailShell.hidden = true;
+    if (mailLoginEmail) mailLoginEmail.focus();
+  }
+
+  function showMailShell(email = "") {
+    if (mailLogin) mailLogin.hidden = true;
+    if (mailShell) mailShell.hidden = false;
+
+    if (mailAccountEmail && email) {
+      mailAccountEmail.textContent = email;
+    }
+  }
+
+  async function checkMailSession() {
+    try {
+      const response = await fetch("/api/mailbox", {
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        showLogin();
+        return false;
+      }
+
+      const data = await response.json();
+
+      if (!data.mailbox) {
+        showLogin();
+        return false;
+      }
+
+      showMailShell(data.mailbox.email || "");
+      return true;
+    } catch (error) {
+      showLogin();
+      return false;
+    }
+  }
+
+  async function loginToMail(event) {
+    event.preventDefault();
+
+    const email = mailLoginEmail.value.trim().toLowerCase();
+    const password = mailLoginPassword.value;
+
+    if (!email || !password) {
+      setLoginStatus("Email and password are required.");
+      return;
+    }
+
+    mailLoginSubmit.disabled = true;
+    mailLoginSubmit.textContent = "Signing in...";
+    setLoginStatus("");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": window.location.origin
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Unable to sign in.");
+      }
+
+      const mailboxResponse = await fetch("/api/mailbox", {
+        credentials: "include"
+      });
+
+      const mailboxData =
+        await mailboxResponse.json().catch(() => ({}));
+
+      if (!mailboxResponse.ok || !mailboxData.mailbox) {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Origin": window.location.origin
+          }
+        }).catch(() => {});
+
+        throw new Error(
+          "This account does not have an active mailbox."
+        );
+      }
+
+      mailLoginPassword.value = "";
+      setLoginStatus("");
+      showMailShell(mailboxData.mailbox.email || email);
+
+      await loadMailbox();
+      await loadMessages();
+
+    } catch (error) {
+      setLoginStatus(error.message || "Unable to sign in.");
+    } finally {
+      mailLoginSubmit.disabled = false;
+      mailLoginSubmit.textContent = "Sign in securely";
+    }
+  }
+
+  async function logoutFromMail() {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Origin": window.location.origin
+        }
+      });
+    } finally {
+      messages = [];
+      showLogin();
+      setLoginStatus("You have been signed out.", "success");
+    }
+  }
 
   async function loadMailbox() {
     try {
@@ -243,6 +389,33 @@ document.addEventListener("DOMContentLoaded", () => {
     if (event.key === "Escape" && !modal.hidden) modal.hidden = true;
   });
 
-  loadMailbox();
-  loadMessages();
+  if (mailLoginForm) {
+    mailLoginForm.addEventListener("submit", loginToMail);
+  }
+
+  if (mailLogout) {
+    mailLogout.addEventListener("click", logoutFromMail);
+  }
+
+  if (mailPasswordToggle && mailLoginPassword) {
+    mailPasswordToggle.addEventListener("click", () => {
+      const visible =
+        mailLoginPassword.type === "text";
+
+      mailLoginPassword.type =
+        visible ? "password" : "text";
+
+      mailPasswordToggle.textContent =
+        visible ? "SHOW" : "HIDE";
+    });
+  }
+
+  (async () => {
+    const authenticated = await checkMailSession();
+
+    if (authenticated) {
+      await loadMailbox();
+      await loadMessages();
+    }
+  })();
 });

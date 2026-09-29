@@ -1,1 +1,220 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="USCourier secure business email"><title>USCourier Mail — Secure Business Email</title><link rel="stylesheet" href="/mail/mail.css"></head><body><div class="mail-shell"><header class="mail-header"><div class="brand">USCourier <span>MAIL</span></div><div class="search"><input type="search" placeholder="Search mail" aria-label="Search mail"></div><div aria-label="Account">●</div></header><div class="layout"><aside class="sidebar"><button class="compose" type="button">＋ Compose</button><nav aria-label="Mailbox folders"><div class="nav-item active"><span>Inbox</span><b>0</b></div><div class="nav-item"><span>★ Starred</span></div><div class="nav-item"><span>Drafts</span></div><div class="nav-item"><span>Sent</span></div><div class="nav-item"><span>Archive</span></div><div class="nav-item"><span>Trash</span></div></nav></aside><main class="main"><h2>Inbox</h2><div class="subtitle">Your business messages will appear here.</div><div class="mail-toolbar"><button type="button" aria-label="Select messages">□</button><button type="button" aria-label="Refresh">↻</button><span></span><button type="button" aria-label="Previous">‹</button><button type="button" aria-label="Next">›</button></div><div class="mail-content"><section class="message-list"><div class="list-head"><strong>Inbox</strong><span>0 messages</span></div><div class="message-empty">No messages yet</div></section><section class="reader"><div class="reader-empty"><div class="reader-icon">✉</div><h3>Open an email</h3><p>Select a message to read it here.</p></div></section></div></main></div></div><div class="compose-modal" id="composeModal" hidden><div class="compose-card"><div class="compose-head"><strong>New message</strong><button type="button" id="closeCompose">×</button></div><input id="composeTo" type="email" placeholder="To"><div class="compose-recipient-row"><input id="composeCc" type="text" placeholder="Cc"><input id="composeBcc" type="text" placeholder="Bcc"></div><input id="composeSubject" type="text" placeholder="Subject"><textarea id="composeBody" placeholder="Write your message…"></textarea><div class="compose-foot"><label class="attach-btn" for="composeAttachment">Attach file</label><input id="composeAttachment" type="file" hidden><span id="attachmentStatus">No file attached</span><button type="button" id="sendMail">Send</button><button type="button" id="saveDraft">Save draft</button></div></div></div><script src="/mail/mail.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="USCourier secure business email">
+  <title>USCourier Mail — Secure Business Email</title>
+  <link rel="stylesheet" href="/mail/mail.css">
+</head>
+<body>
+
+  <section class="mail-login" id="mailLogin" hidden>
+    <div class="mail-login-card">
+
+      <div class="mail-login-brand uc-mail-brand">
+        <span class="uc-mail-brand-mark">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="43" height="43" rx="12"></rect>
+            <path d="M9 27h19l5-7h6v12H9z"></path>
+            <path d="M12 16h15M12 21h10"></path>
+            <circle cx="17" cy="32" r="2.8"></circle>
+            <circle cx="34" cy="32" r="2.8"></circle>
+            <path d="M11 39h26"></path>
+          </svg>
+        </span>
+        <span class="uc-mail-brand-copy">
+          <strong>US COURIER</strong>
+          <small>SECURE BUSINESS MAIL</small>
+        </span>
+      </div>
+
+      <div class="mail-login-heading">
+        <p class="mail-login-eyebrow">Secure Mail Access</p>
+        <h1>Welcome to USCourier Mail</h1>
+        <p>Sign in with your authorized USCourier account to access your business mailbox.</p>
+      </div>
+
+      <form id="mailLoginForm" novalidate>
+
+        <label class="mail-login-field">
+          <span>Email address</span>
+          <input
+            id="mailLoginEmail"
+            type="email"
+            autocomplete="username"
+            placeholder="name@uscourier.app"
+            required
+          >
+        </label>
+
+        <label class="mail-login-field">
+          <span>Password</span>
+          <div class="mail-login-password">
+            <input
+              id="mailLoginPassword"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+              required
+            >
+            <button
+              type="button"
+              id="mailPasswordToggle"
+              aria-label="Show password"
+              aria-pressed="false"
+            >SHOW</button>
+          </div>
+        </label>
+
+        <button id="mailLoginSubmit" class="mail-login-submit" type="submit">
+          Sign in securely
+        </button>
+
+        <div id="mailLoginStatus" class="mail-login-status" role="alert" aria-live="polite"></div>
+
+      </form>
+
+      <div class="mail-login-security">
+        <span>●</span>
+        Authorized USCourier personnel only
+      </div>
+
+    </div>
+  </section>
+
+  <div class="mail-shell" id="mailShell" hidden>
+
+    <header class="mail-header">
+
+      <div class="brand uc-mail-brand">
+        <span class="uc-mail-brand-mark">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="43" height="43" rx="12"></rect>
+            <path d="M9 27h19l5-7h6v12H9z"></path>
+            <path d="M12 16h15M12 21h10"></path>
+            <circle cx="17" cy="32" r="2.8"></circle>
+            <circle cx="34" cy="32" r="2.8"></circle>
+            <path d="M11 39h26"></path>
+          </svg>
+        </span>
+        <span class="uc-mail-brand-copy">
+          <strong>US COURIER</strong>
+          <small>SECURE BUSINESS MAIL</small>
+        </span>
+      </div>
+
+      <div class="search">
+        <input type="search" placeholder="Search mail" aria-label="Search mail">
+      </div>
+
+      <div class="mail-account">
+        <span id="mailAccountEmail">●</span>
+        <button type="button" id="mailLogout">Sign out</button>
+      </div>
+
+    </header>
+
+    <div class="layout">
+
+      <aside class="sidebar">
+        <button class="compose" type="button">＋ Compose</button>
+
+        <nav aria-label="Mailbox folders">
+          <div class="nav-item active">
+            <span>Inbox</span>
+            <b>0</b>
+          </div>
+          <div class="nav-item">
+            <span>★ Starred</span>
+          </div>
+          <div class="nav-item">
+            <span>Drafts</span>
+          </div>
+          <div class="nav-item">
+            <span>Sent</span>
+          </div>
+          <div class="nav-item">
+            <span>Archive</span>
+          </div>
+          <div class="nav-item">
+            <span>Trash</span>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="main">
+
+        <h2>Inbox</h2>
+        <div class="subtitle">Secure business messaging</div>
+
+        <div class="mail-toolbar">
+          <button type="button" aria-label="Select messages">□</button>
+          <button type="button" id="refreshMail" aria-label="Refresh">↻</button>
+          <span></span>
+          <button type="button" aria-label="Previous">‹</button>
+          <button type="button" aria-label="Next">›</button>
+        </div>
+
+        <div class="mail-content">
+
+          <section class="message-list">
+            <div class="list-head">
+              <strong>Inbox</strong>
+              <span>0 messages</span>
+            </div>
+            <div class="message-empty">No messages yet</div>
+          </section>
+
+          <section class="reader">
+            <div class="reader-empty">
+              <div class="reader-icon">✉</div>
+              <h3>Open an email</h3>
+              <p>Select a message to read it here.</p>
+            </div>
+          </section>
+
+        </div>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <div class="compose-modal" id="composeModal" hidden>
+
+    <div class="compose-card">
+
+      <div class="compose-head">
+        <strong>New message</strong>
+        <button type="button" id="closeCompose">×</button>
+      </div>
+
+      <input id="composeTo" type="email" placeholder="To">
+
+      <div class="compose-recipient-row">
+        <input id="composeCc" type="text" placeholder="Cc">
+        <input id="composeBcc" type="text" placeholder="Bcc">
+      </div>
+
+      <input id="composeSubject" type="text" placeholder="Subject">
+
+      <textarea id="composeBody" placeholder="Write your message…"></textarea>
+
+      <div class="compose-foot">
+        <label class="attach-btn" for="composeAttachment">Attach file</label>
+        <input id="composeAttachment" type="file" hidden>
+        <span id="attachmentStatus">No file attached</span>
+        <button type="button" id="sendMail">Send</button>
+        <button type="button" id="saveDraft">Save draft</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="/mail/mail.js"></script>
+
+</body>
+</html>

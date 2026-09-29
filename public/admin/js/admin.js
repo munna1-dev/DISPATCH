@@ -6945,6 +6945,44 @@ async function deleteMessage(
 
 const ADMIN_FRONTEND_PERMISSIONS = Object.freeze({
 
+  "Super Admin": new Set([
+    "dashboard.view",
+    "shipments.view",
+    "shipments.create",
+    "shipments.update",
+    "shipments.delete",
+    "tracking.view",
+    "tracking.update",
+    "messages.view",
+    "messages.reply",
+    "messages.read",
+    "messages.delete",
+    "staff.view",
+    "staff.create",
+    "staff.update",
+    "staff.role",
+    "staff.password",
+    "settings.view",
+    "settings.update",
+    "profile.view",
+    "profile.update",
+    "profile.password",
+    "developer.view",
+    "developer.health",
+    "developer.database",
+    "developer.sessions",
+    "developer.audit",
+    "developer.environment",
+    "developer.deployments",
+    "developer.settings",
+    "mail.view",
+    "mail.users.view",
+    "mail.users.create",
+    "mail.users.update",
+    "mail.users.password",
+    "mail.users.disable"
+  ]),
+
   "Admin": new Set([
     "dashboard.view",
     "shipments.view",
@@ -6966,7 +7004,15 @@ const ADMIN_FRONTEND_PERMISSIONS = Object.freeze({
     "settings.update",
     "profile.view",
     "profile.update",
-    "profile.password"
+    "profile.password",
+    "developer.view",
+    "developer.health",
+    "developer.database",
+    "developer.sessions",
+    "developer.audit",
+    "developer.environment",
+    "developer.deployments",
+    "developer.settings"
   ]),
 
   "Operations Manager": new Set([
@@ -7197,6 +7243,22 @@ function adminRequireFrontendPermission(
 }
 
 
+
+function applySuperAdminRoleVisibility() {
+  const isSuperAdmin =
+    getAdminCurrentRole() === "Super Admin";
+
+  document
+    .querySelectorAll("[data-super-admin-only]")
+    .forEach(function(option) {
+      option.hidden = !isSuperAdmin;
+
+      if (!isSuperAdmin && option.selected) {
+        option.selected = false;
+      }
+    });
+}
+
 function applyAdminSidebarPermissions() {
 
   const permissionByNav = {
@@ -7205,7 +7267,9 @@ function applyAdminSidebarPermissions() {
     tracking: "tracking.view",
     messages: "messages.view",
     staff: "staff.view",
-    settings: "settings.view"
+    mail: "mail.view",
+    settings: "settings.view",
+    developer: "developer.view"
   };
 
   document
@@ -7269,7 +7333,9 @@ function adminGetFirstAllowedNav() {
     "tracking",
     "messages",
     "staff",
-    "settings"
+    "mail",
+    "settings",
+    "developer"
   ];
 
   return navigationOrder.find(
@@ -7281,7 +7347,9 @@ function adminGetFirstAllowedNav() {
         tracking: "tracking.view",
         messages: "messages.view",
         staff: "staff.view",
-        settings: "settings.view"
+        mail: "mail.view",
+        settings: "settings.view",
+        developer: "developer.view"
       };
 
       return hasAdminFrontendPermission(
@@ -7328,7 +7396,9 @@ async function bootstrapAdminRBAC() {
     tracking: "tracking.view",
     messages: "messages.view",
     staff: "staff.view",
-    settings: "settings.view"
+    mail: "mail.view",
+    settings: "settings.view",
+    developer: "developer.view"
   };
 
   const activeAllowed =
@@ -9121,6 +9191,7 @@ let adminStaffRecords = [];
 let adminStaffInitialized = false;
 
 const ADMIN_STAFF_ROLES = [
+  'Super Admin',
   'Admin',
   'Operations Manager',
   'Dispatcher',
@@ -9192,7 +9263,10 @@ function renderAdminStaffSummary(records) {
 
   const admins =
     list.filter(
-      user => String(user.role || '') === 'Admin'
+      user => [
+        'Admin',
+        'Super Admin'
+      ].includes(String(user.role || ''))
     ).length;
 
   const operations =
@@ -10771,7 +10845,8 @@ window.initAdminStaffManagement = initAdminStaffManagement;
     [
       'admin-staff-management',
       'view-admin-settings',
-      'admin-tracking-workspace'
+      'admin-tracking-workspace',
+      'view-admin-developer'
     ].forEach(function(id) {
 
       const workspace =
@@ -10814,7 +10889,8 @@ window.initAdminStaffManagement = initAdminStaffManagement;
       'admin-messages',
       'admin-staff-management',
       'view-admin-settings',
-      'admin-tracking-workspace'
+      'admin-tracking-workspace',
+      'view-admin-developer'
     ].forEach(function(id) {
 
       const workspace =
@@ -11232,6 +11308,51 @@ window.initAdminStaffManagement = initAdminStaffManagement;
     }
 
 
+
+    if (name === 'mail') {
+
+      closeMobileSidebar();
+
+      window.location.assign(
+        'https://mail.uscourier.app/'
+      );
+
+      return;
+    }
+
+
+    if (name === 'developer') {
+
+      const target =
+        showOnlyAdminWorkspace(
+          'view-admin-developer'
+        );
+
+      if (!target) {
+        console.warn(
+          '[ADMIN DEVELOPER] Developer Console view not found.'
+        );
+        return;
+      }
+
+      closeMobileSidebar();
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+
+      if (
+        typeof initDeveloperConsole ===
+        'function'
+      ) {
+        initDeveloperConsole();
+      }
+
+      return;
+    }
+
+
     if (name === 'settings') {
 
       const target =
@@ -11449,3 +11570,963 @@ function updateAdminSidebarMessageCount(count) {
       ? 'inline-flex'
       : 'none';
 }
+
+/* =========================================================
+   DEVELOPER CONSOLE CONTROLLER
+   Secure UI for the server-side Developer Console.
+========================================================= */
+
+(function initDeveloperConsoleController() {
+  'use strict';
+
+  const state = {
+    initialized: false,
+    loading: false,
+    listenersBound: false,
+    access: null
+  };
+
+  function developerElement(id) {
+    return document.getElementById(id);
+  }
+
+  function developerEscape(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function developerSetMessage(message, type) {
+    const element =
+      developerElement('developer-console-message');
+
+    if (!element) {
+      return;
+    }
+
+    element.textContent = message || '';
+    element.className =
+      'admin-alert ' +
+      (type === 'error'
+        ? 'admin-alert-danger'
+        : type === 'success'
+          ? 'admin-alert-success'
+          : 'admin-alert-info');
+
+    element.style.display =
+      message ? 'block' : 'none';
+  }
+
+  function developerSetStatus(message, type) {
+    const element =
+      developerElement('developer-access-status');
+
+    if (!element) {
+      return;
+    }
+
+    element.textContent = message || '';
+    element.className =
+      'admin-badge ' +
+      (type === 'error'
+        ? 'admin-badge-danger'
+        : type === 'success'
+          ? 'admin-badge-success'
+          : 'admin-badge-neutral');
+  }
+
+  function developerFormatNumber(value) {
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+      return '—';
+    }
+
+    return number.toLocaleString();
+  }
+
+  function developerFormatDate(value) {
+    if (!value) {
+      return '—';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return developerEscape(value);
+    }
+
+    return date.toLocaleString();
+  }
+
+  function developerFormatDuration(seconds) {
+    const value = Number(seconds);
+
+    if (!Number.isFinite(value)) {
+      return '—';
+    }
+
+    if (value < 60) {
+      return `${Math.round(value)}s`;
+    }
+
+    const minutes = Math.floor(value / 60);
+    const remainingSeconds =
+      Math.round(value % 60);
+
+    if (minutes < 60) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes =
+      minutes % 60;
+
+    return `${hours}h ${remainingMinutes}m`;
+  }
+
+  async function developerApi(path, options) {
+    const requestOptions = {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json',
+        ...(options && options.headers
+          ? options.headers
+          : {})
+      },
+      ...(options || {})
+    };
+
+    const response =
+      await fetch(path, requestOptions);
+
+    let payload = null;
+
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+
+    if (response.status === 401) {
+      developerSetStatus(
+        'Authentication required',
+        'error'
+      );
+
+      throw new Error(
+        'Your administrator session has expired. Please sign in again.'
+      );
+    }
+
+    if (response.status === 403) {
+      developerSetStatus(
+        'Access denied',
+        'error'
+      );
+
+      throw new Error(
+        payload?.message ||
+        'You do not have permission to access the Developer Console.'
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        payload?.message ||
+        `Developer Console request failed (${response.status}).`
+      );
+    }
+
+    return payload;
+  }
+
+  async function developerLoadAccess() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/access-check'
+      );
+
+    state.access = payload;
+
+    const admin =
+      payload?.admin || {};
+
+    developerSetStatus(
+      payload?.authenticated
+        ? `Authorized: ${admin.email || 'Administrator'}`
+        : 'Authentication required',
+      payload?.authenticated
+        ? 'success'
+        : 'error'
+    );
+
+    return payload;
+  }
+
+  function renderHealth(payload) {
+    const application =
+      payload?.application || {};
+
+    const database =
+      payload?.database || {};
+
+    const authentication =
+      payload?.authentication || {};
+
+    const mail =
+      payload?.mail || {};
+
+    const grid =
+      developerElement('developer-health-grid');
+
+    if (!grid) {
+      return;
+    }
+
+    grid.innerHTML = `
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Application</span>
+        <strong>${developerEscape(
+          application.status || '—'
+        )}</strong>
+        <small>
+          Node ${developerEscape(
+            application.nodeVersion || '—'
+          )}
+        </small>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Database</span>
+        <strong>${developerEscape(
+          database.status || '—'
+        )}</strong>
+        <small>
+          ${developerEscape(
+            database.latencyMs != null
+              ? `${database.latencyMs} ms`
+              : '—'
+          )}
+        </small>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Authentication</span>
+        <strong>${developerEscape(
+          authentication.status || '—'
+        )}</strong>
+        <small>
+          ${developerEscape(
+            authentication.architecture || 'JWT + database sessions'
+          )}
+        </small>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Mail</span>
+        <strong>${developerEscape(mail.status || '—')}</strong>
+        <small>Resend</small>
+      </div>
+    `;
+
+    const applicationElement =
+      developerElement('developer-health-application');
+
+    if (applicationElement) {
+      applicationElement.textContent =
+        application.status || '—';
+    }
+
+    const databaseElement =
+      developerElement('developer-health-database');
+
+    if (databaseElement) {
+      databaseElement.textContent =
+        database.status || '—';
+    }
+
+    const uptimeElement =
+      developerElement('developer-health-uptime');
+
+    if (uptimeElement) {
+      uptimeElement.textContent =
+        developerFormatDuration(
+          application.uptimeSeconds
+        );
+    }
+
+    const mailElement =
+      developerElement('developer-health-mail');
+
+    if (mailElement) {
+      mailElement.textContent =
+        mail.status || '—';
+    }
+  }
+
+  async function developerLoadHealth() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/health'
+      );
+
+    renderHealth(payload);
+
+    return payload;
+  }
+
+  async function developerLoadDatabase() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/database'
+      );
+
+    const table =
+      developerElement(
+        'developer-database-table'
+      );
+
+    if (!table) {
+      return payload;
+    }
+
+    const tables =
+      Array.isArray(payload?.tables)
+        ? payload.tables
+        : [];
+
+    if (!tables.length) {
+      table.innerHTML =
+        '<tbody><tr><td>No database statistics available.</td></tr></tbody>';
+
+      return payload;
+    }
+
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Rows</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tables.map(item => `
+          <tr>
+            <td>${developerEscape(
+              item.table || item.name || '—'
+            )}</td>
+            <td>${developerFormatNumber(
+              item.records
+            )}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    `;
+
+    return payload;
+  }
+
+  async function developerLoadSchema() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/database/schema'
+      );
+
+    const table =
+      developerElement(
+        'developer-schema-table'
+      );
+
+    if (!table) {
+      return payload;
+    }
+
+    const columns =
+      Array.isArray(payload?.columns)
+        ? payload.columns
+        : [];
+
+    table.innerHTML = columns.length
+      ? `
+        <thead>
+          <tr>
+            <th>Table</th>
+            <th>Column</th>
+            <th>Data Type</th>
+            <th>Nullable</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${columns.map(column => `
+            <tr>
+              <td>${developerEscape(column.table_name || '—')}</td>
+              <td>${developerEscape(column.column_name || '—')}</td>
+              <td>${developerEscape(column.data_type || '—')}</td>
+              <td>${developerEscape(column.is_nullable || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `
+      : '<tbody><tr><td>No database schema information available.</td></tr></tbody>';
+
+    return payload;
+  }
+
+  async function developerLoadSessions() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/sessions'
+      );
+
+    const table =
+      developerElement(
+        'developer-sessions-table'
+      );
+
+    if (!table) {
+      return payload;
+    }
+
+    const sessions =
+      Array.isArray(payload?.sessions)
+        ? payload.sessions
+        : [];
+
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Administrator</th>
+          <th>Status</th>
+          <th>Last Activity</th>
+          <th>Created</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          sessions.length
+            ? sessions.map(session => `
+              <tr>
+                <td>
+                  ${developerEscape(
+                    session.email ||
+                    session.admin_email ||
+                    session.user_email ||
+                    '—'
+                  )}
+                </td>
+                <td>
+                  ${developerEscape(
+                    session.status || '—'
+                  )}
+                </td>
+                <td>
+                  ${developerFormatDate(
+                    session.last_activity_at ||
+                    session.lastActivityAt
+                  )}
+                </td>
+                <td>
+                  ${developerFormatDate(
+                    session.created_at ||
+                    session.createdAt
+                  )}
+                </td>
+                <td>
+                  ${
+                    session.status === 'Active'
+                      ? `
+                        <button
+                          type="button"
+                          class="admin-btn admin-btn-danger developer-terminate-session"
+                          data-session-id="${developerEscape(
+                            session.id
+                          )}"
+                        >
+                          Terminate
+                        </button>
+                      `
+                      : '—'
+                  }
+                </td>
+              </tr>
+            `).join('')
+            : `
+              <tr>
+                <td colspan="5">
+                  No active sessions found.
+                </td>
+              </tr>
+            `
+        }
+      </tbody>
+    `;
+
+    table
+      .querySelectorAll(
+        '.developer-terminate-session'
+      )
+      .forEach(button => {
+        button.addEventListener(
+          'click',
+          async function() {
+            const sessionId =
+              this.dataset.sessionId;
+
+            if (!sessionId) {
+              return;
+            }
+
+            if (
+              !window.confirm(
+                'Terminate this administrator session?'
+              )
+            ) {
+              return;
+            }
+
+            this.disabled = true;
+
+            try {
+              await developerApi(
+                `/api/admin/developer/sessions/${encodeURIComponent(sessionId)}/terminate`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type':
+                      'application/json'
+                  }
+                }
+              );
+
+              developerSetMessage(
+                'Administrator session terminated successfully.',
+                'success'
+              );
+
+              await developerLoadSessions();
+            } catch (error) {
+              developerSetMessage(
+                error.message,
+                'error'
+              );
+
+              this.disabled = false;
+            }
+          }
+        );
+      });
+
+    return payload;
+  }
+
+  async function developerLoadAudit() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/audit?limit=100'
+      );
+
+    const table =
+      developerElement(
+        'developer-audit-table'
+      );
+
+    if (!table) {
+      return payload;
+    }
+
+    const logs =
+      Array.isArray(payload?.logs)
+        ? payload.logs
+        : [];
+
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Administrator</th>
+          <th>Action</th>
+          <th>Target</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          logs.length
+            ? logs.map(log => `
+              <tr>
+                <td>${developerFormatDate(
+                  log.created_at ||
+                  log.createdAt
+                )}</td>
+                <td>${developerEscape(
+                  log.admin_email ||
+                  log.adminEmail ||
+                  '—'
+                )}</td>
+                <td>${developerEscape(
+                  log.action || '—'
+                )}</td>
+                <td>${developerEscape(
+                  log.target_type ||
+                  log.targetType ||
+                  '—'
+                )}</td>
+              </tr>
+            `).join('')
+            : `
+              <tr>
+                <td colspan="4">
+                  No administrative activity found.
+                </td>
+              </tr>
+            `
+        }
+      </tbody>
+    `;
+
+    return payload;
+  }
+
+  async function developerLoadEnvironment() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/environment'
+      );
+
+    const grid =
+      developerElement(
+        'developer-environment-grid'
+      );
+
+    if (!grid) {
+      return payload;
+    }
+
+    const environment =
+      payload?.environment || {};
+
+    const entries =
+      Object.entries(environment);
+
+    grid.innerHTML = entries.length
+      ? entries.map(([key, value]) => `
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">
+              ${developerEscape(key)}
+            </span>
+            <strong>
+              ${developerEscape(
+                typeof value === 'string'
+                  ? value
+                  : value?.configured
+                    ? 'Configured'
+                    : 'Not configured'
+              )}
+            </strong>
+          </div>
+        `).join('')
+      : `
+        <div class="admin-stat-card">
+          <strong>No environment metadata available.</strong>
+        </div>
+      `;
+
+    return payload;
+  }
+
+  async function developerLoadDeployments() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/deployments'
+      );
+
+    const container =
+      developerElement(
+        'developer-deployments'
+      );
+
+    if (!container) {
+      return payload;
+    }
+
+    const deployment =
+      payload?.deployment || {};
+
+    container.innerHTML = `
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Platform</span>
+        <strong>${developerEscape(
+          deployment.platform || '—'
+        )}</strong>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Environment</span>
+        <strong>${developerEscape(
+          deployment.environment || '—'
+        )}</strong>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Deployment ID</span>
+        <strong>${developerEscape(
+          deployment.deploymentId || '—'
+        )}</strong>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">Commit</span>
+        <strong>${developerEscape(
+          deployment.commit || '—'
+        )}</strong>
+      </div>
+
+      <div class="admin-stat-card">
+        <span class="admin-stat-label">URL</span>
+        <strong>${developerEscape(
+          deployment.url || '—'
+        )}</strong>
+      </div>
+    `;
+
+    return payload;
+  }
+
+  async function developerLoadMaintenance() {
+    const payload =
+      await developerApi(
+        '/api/admin/developer/maintenance'
+      );
+
+    const status =
+      developerElement(
+        'developer-maintenance-status'
+      );
+
+    if (status) {
+      status.textContent =
+        payload?.enabled
+          ? 'Maintenance mode is ENABLED'
+          : 'Maintenance mode is DISABLED';
+    }
+
+    return payload;
+  }
+
+  async function developerSetMaintenance(enabled) {
+    const confirmation =
+      enabled
+        ? 'ENABLE_MAINTENANCE'
+        : 'DISABLE_MAINTENANCE';
+
+    const action =
+      enabled
+        ? 'enable'
+        : 'disable';
+
+    const confirmed =
+      window.prompt(
+        `Type ${confirmation} to ${action} maintenance mode.`
+      );
+
+    if (confirmed !== confirmation) {
+      developerSetMessage(
+        'Maintenance change cancelled.',
+        'info'
+      );
+
+      return;
+    }
+
+    try {
+      await developerApi(
+        '/api/admin/developer/maintenance',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body: JSON.stringify({
+            enabled,
+            confirmation
+          })
+        }
+      );
+
+      developerSetMessage(
+        `Maintenance mode ${enabled ? 'enabled' : 'disabled'} successfully.`,
+        'success'
+      );
+
+      await developerLoadMaintenance();
+    } catch (error) {
+      developerSetMessage(
+        error.message,
+        'error'
+      );
+    }
+  }
+
+  async function developerRefreshAll() {
+    if (state.loading) {
+      return;
+    }
+
+    state.loading = true;
+
+    developerSetMessage(
+      'Loading Developer Console data…',
+      'info'
+    );
+
+    const results =
+      await Promise.allSettled([
+        developerLoadAccess(),
+        developerLoadHealth(),
+        developerLoadDatabase(),
+        developerLoadSchema(),
+        developerLoadSessions(),
+        developerLoadAudit(),
+        developerLoadEnvironment(),
+        developerLoadDeployments(),
+        developerLoadMaintenance()
+      ]);
+
+    const failed =
+      results.filter(
+        result =>
+          result.status === 'rejected'
+      );
+
+    state.loading = false;
+
+    if (failed.length) {
+      developerSetMessage(
+        `${failed.length} Developer Console section(s) could not be loaded.`,
+        'error'
+      );
+    } else {
+      developerSetMessage(
+        'Developer Console synchronized successfully.',
+        'success'
+      );
+    }
+  }
+
+  function bindDeveloperListeners() {
+    if (state.listenersBound) {
+      return;
+    }
+
+    const refreshMap = {
+      'developer-refresh-health':
+        developerLoadHealth,
+      'developer-refresh-database':
+        developerLoadDatabase,
+      'developer-refresh-schema':
+        developerLoadSchema,
+      'developer-refresh-sessions':
+        developerLoadSessions,
+      'developer-refresh-audit':
+        developerLoadAudit,
+      'developer-refresh-environment':
+        developerLoadEnvironment,
+      'developer-refresh-deployments':
+        developerLoadDeployments
+    };
+
+    Object.entries(refreshMap).forEach(
+      ([id, handler]) => {
+        const button =
+          developerElement(id);
+
+        if (!button) {
+          return;
+        }
+
+        button.addEventListener(
+          'click',
+          async function() {
+            try {
+              await handler();
+            } catch (error) {
+              developerSetMessage(
+                error.message,
+                'error'
+              );
+            }
+          }
+        );
+      }
+    );
+
+    const enableButton =
+      developerElement(
+        'developer-enable-maintenance'
+      );
+
+    if (enableButton) {
+      enableButton.addEventListener(
+        'click',
+        function() {
+          developerSetMaintenance(true);
+        }
+      );
+    }
+
+    const disableButton =
+      developerElement(
+        'developer-disable-maintenance'
+      );
+
+    if (disableButton) {
+      disableButton.addEventListener(
+        'click',
+        function() {
+          developerSetMaintenance(false);
+        }
+      );
+    }
+
+    state.listenersBound = true;
+  }
+
+  window.initDeveloperConsole =
+    async function() {
+      if (
+        typeof adminActionAllowed ===
+        'function' &&
+        !adminActionAllowed(
+          'developer.view'
+        )
+      ) {
+        developerSetStatus(
+          'Access denied',
+          'error'
+        );
+
+        developerSetMessage(
+          'Your administrator role does not have Developer Console permission.',
+          'error'
+        );
+
+        return;
+      }
+
+      bindDeveloperListeners();
+
+      if (state.initialized) {
+        return;
+      }
+
+      state.initialized = true;
+
+      await developerRefreshAll();
+    };
+})();

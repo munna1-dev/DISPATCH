@@ -18,3 +18,20 @@ npm-debug.log*
 .env*
 
 *.bak
+
+# Local credential tooling
+/generate-mail-password-hash.js
+
+# Local development backups
+.backups/
+backups/
+*.backup-*
+*.backup
+*.before-*
+
+# Local Developer Console setup artifacts
+/USCourierDeveloperConsole.jsx
+/apply-developer-console.js
+/setup-developer-console.js
+/migrations_developer_console.sql
+/404
