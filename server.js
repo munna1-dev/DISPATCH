@@ -774,7 +774,7 @@ app.post(
           });
         }
       }
-      const receivedResult = await resend.receiving.get(event.data.email_id);
+      const receivedResult = await resend.emails.receiving.get(event.data.email_id);
 
       if (receivedResult.error || !receivedResult.data) {
         throw new Error("Unable to retrieve received email.");
