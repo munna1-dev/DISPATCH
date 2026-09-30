@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     starred: "Starred",
     drafts: "Drafts",
     sent: "Sent",
+    outbox: "Outbox",
     archive: "Archive",
     trash: "Trash"
   };
@@ -289,6 +290,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function retryOutboxMessage(messageId) {
+    const response = await fetch(
+      "/api/mailbox/messages/" +
+        encodeURIComponent(messageId) +
+        "/retry",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    let payload = null;
+
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok || !payload?.success) {
+      throw new Error(
+        payload?.error ||
+        "Unable to retry this email."
+      );
+    }
+
+    return payload;
+  }
+
   function renderMessages() {
     list.innerHTML = "";
 
@@ -310,6 +343,8 @@ document.addEventListener("DOMContentLoaded", () => {
         empty.textContent = "No saved drafts";
       } else if (folder === "sent") {
         empty.textContent = "No sent messages";
+      } else if (folder === "outbox") {
+        empty.textContent = "Outbox is empty";
       } else if (folder === "archive") {
         empty.textContent = "Archive is empty";
       } else {
@@ -390,6 +425,89 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const actions = document.createElement("div");
       actions.className = "message-row-actions";
+
+      if (folder === "outbox") {
+        const deliveryStatus =
+          document.createElement("span");
+
+        const rawStatus =
+          String(
+            message.delivery_status || "queued"
+          ).toLowerCase();
+
+        const statusLabels = {
+          queued: "Queued",
+          sending: "Sending…",
+          failed: "Failed",
+          sent: "Sent"
+        };
+
+        const statusClasses = {
+          queued: "queued",
+          sending: "sending",
+          failed: "failed",
+          sent: "sent"
+        };
+
+        deliveryStatus.className =
+          "message-delivery-status message-delivery-status-" +
+          (statusClasses[rawStatus] || "queued");
+
+        deliveryStatus.textContent =
+          statusLabels[rawStatus] ||
+          "Queued";
+
+        deliveryStatus.setAttribute(
+          "aria-label",
+          "Delivery status: " +
+            (statusLabels[rawStatus] || "Queued")
+        );
+
+        actions.appendChild(deliveryStatus);
+
+        if (rawStatus === "failed") {
+          const retry = document.createElement("button");
+
+          retry.type = "button";
+          retry.className =
+            "message-action message-retry-button";
+          retry.textContent = "Retry";
+          retry.setAttribute(
+            "aria-label",
+            "Retry sending message"
+          );
+
+          retry.addEventListener(
+            "click",
+            async (event) => {
+              event.stopPropagation();
+
+              retry.disabled = true;
+              retry.textContent = "Retrying…";
+
+              try {
+                await retryOutboxMessage(
+                  message.id
+                );
+
+                subtitle.textContent =
+                  "Message retry submitted.";
+
+                await loadMessages();
+              } catch (error) {
+                retry.disabled = false;
+                retry.textContent = "Retry";
+
+                subtitle.textContent =
+                  error.message ||
+                  "Unable to retry this email.";
+              }
+            }
+          );
+
+          actions.appendChild(retry);
+        }
+      }
 
       const star = document.createElement("button");
       star.type = "button";
@@ -909,10 +1027,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   nav.forEach((item) => {
     item.addEventListener("click", () => {
+      const nextFolder = item.dataset.folder;
+
+      if (!nextFolder || !labels[nextFolder]) {
+        return;
+      }
+
       nav.forEach((node) => node.classList.remove("active"));
       item.classList.add("active");
-      const label = item.querySelector("span").textContent.replace("★ ", "").trim().toLowerCase();
-      showFolder(label);
+
+      showFolder(nextFolder);
     });
   });
 

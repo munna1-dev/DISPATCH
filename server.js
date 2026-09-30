@@ -223,6 +223,38 @@ async function downloadMailAttachmentWithLimit(response, maxBytes) {
   return Buffer.concat(chunks, totalBytes);
 }
 
+async function readPrivateMailAttachmentBlob(blob, maxBytes) {
+  if (!blob || blob.statusCode !== 200 || !blob.stream) {
+    throw new Error("Private attachment was not found in Blob storage.");
+  }
+
+  const stream =
+    typeof blob.stream.pipe === "function"
+      ? blob.stream
+      : Readable.fromWeb(blob.stream);
+
+  const chunks = [];
+  let totalBytes = 0;
+
+  for await (const chunk of stream) {
+    const buffer = Buffer.isBuffer(chunk)
+      ? chunk
+      : Buffer.from(chunk);
+
+    totalBytes += buffer.length;
+
+    if (totalBytes > maxBytes) {
+      throw new Error(
+        `Attachment exceeds the ${Math.floor(maxBytes / (1024 * 1024))} MB size limit.`
+      );
+    }
+
+    chunks.push(buffer);
+  }
+
+  return Buffer.concat(chunks, totalBytes);
+}
+
 function validateMailAttachments(files) {
   const attachments = Array.isArray(files) ? files : [];
 
@@ -1804,6 +1836,7 @@ app.get("/api/mailbox/messages", authMiddleware, async (req, res) => {
       "starred",
       "sent",
       "drafts",
+      "outbox",
       "trash",
       "archive"
     ];
@@ -1826,6 +1859,11 @@ app.get("/api/mailbox/messages", authMiddleware, async (req, res) => {
          m.is_read,
          m.is_starred,
          m.thread_id,
+         m.delivery_status,
+         m.delivery_attempts,
+         m.last_delivery_error,
+         m.queued_at,
+         m.delivered_at,
          m.received_at,
          m.sent_at,
          m.created_at,
@@ -2436,6 +2474,430 @@ app.delete(
       return res.status(500).json({
         success: false,
         error: "Unable to permanently delete message."
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/mailbox/messages/:id/retry",
+  rateLimit("mail-retry", MAIL_SEND_WINDOW_MS, MAIL_SEND_MAX_ATTEMPTS),
+  requireSameOrigin,
+  authMiddleware,
+  async (req, res) => {
+    let message = null;
+    let providerAccepted = false;
+
+    try {
+      const messageId = cleanString(req.params.id, 100);
+
+      if (!messageId) {
+        return res.status(400).json({
+          success: false,
+          error: "Message ID is required."
+        });
+      }
+
+      if (!resend) {
+        return res.status(503).json({
+          success: false,
+          error: "Outbound email service is not configured."
+        });
+      }
+
+      /*
+       * Resolve the mailbox from the authenticated user.
+       * Never trust a mailbox ID supplied by the browser.
+       */
+      const mailboxResult = await queryWithRetry(
+        `SELECT id, email, display_name
+         FROM mailboxes
+         WHERE user_id = $1
+           AND status = 'active'
+         LIMIT 1`,
+        [req.user.id]
+      );
+
+      if (!mailboxResult.rows.length) {
+        return res.status(404).json({
+          success: false,
+          error: "Mailbox not provisioned."
+        });
+      }
+
+      const mailbox = mailboxResult.rows[0];
+
+      /*
+       * Atomically claim the failed Outbox message.
+       *
+       * The delivery_status='failed' condition prevents two browser
+       * requests from sending the same message concurrently.
+       */
+      const claimResult = await queryWithRetry(
+        `UPDATE mail_messages
+         SET delivery_status = 'sending',
+             delivery_attempts = delivery_attempts + 1,
+             last_delivery_error = NULL,
+             updated_at = now()
+         WHERE id = $1
+           AND mailbox_id = $2
+           AND folder = 'outbox'
+           AND delivery_status = 'failed'
+         RETURNING
+           id,
+           mailbox_id,
+           message_id,
+           in_reply_to,
+           thread_id,
+           sender_name,
+           sender_email,
+           subject,
+           text_body,
+           html_body,
+           delivery_attempts`,
+        [messageId, mailbox.id]
+      );
+
+      if (!claimResult.rows.length) {
+        const existingResult = await queryWithRetry(
+          `SELECT id, folder, delivery_status
+           FROM mail_messages
+           WHERE id = $1
+             AND mailbox_id = $2
+           LIMIT 1`,
+          [messageId, mailbox.id]
+        );
+
+        const existing = existingResult.rows[0];
+
+        if (!existing) {
+          return res.status(404).json({
+            success: false,
+            error: "Outbox message not found."
+          });
+        }
+
+        if (existing.folder !== "outbox") {
+          return res.status(409).json({
+            success: false,
+            error: "Only Outbox messages can be retried."
+          });
+        }
+
+        if (existing.delivery_status === "sending") {
+          return res.status(409).json({
+            success: false,
+            error: "This message is already being sent."
+          });
+        }
+
+        if (existing.delivery_status === "sent") {
+          return res.status(409).json({
+            success: false,
+            error: "This message has already been sent."
+          });
+        }
+
+        return res.status(409).json({
+          success: false,
+          error: "This message is not currently eligible for retry."
+        });
+      }
+
+      message = claimResult.rows[0];
+
+      /*
+       * Recipients were persisted when the original message was queued.
+       * Reuse them exactly rather than trusting browser-supplied values.
+       */
+      const recipientResult = await queryWithRetry(
+        `SELECT recipient_type, email
+         FROM mail_recipients
+         WHERE message_id = $1
+         ORDER BY created_at ASC, id ASC`,
+        [message.id]
+      );
+
+      const to = recipientResult.rows
+        .filter((row) => row.recipient_type === "to")
+        .map((row) => row.email)
+        .filter(Boolean);
+
+      const cc = recipientResult.rows
+        .filter((row) => row.recipient_type === "cc")
+        .map((row) => row.email)
+        .filter(Boolean);
+
+      const bcc = recipientResult.rows
+        .filter((row) => row.recipient_type === "bcc")
+        .map((row) => row.email)
+        .filter(Boolean);
+
+      if (!to.length && !cc.length && !bcc.length) {
+        throw new Error("No recipients are stored for this message.");
+      }
+
+      /*
+       * Reuse the existing private Blob attachments.
+       * Nothing is exposed to the browser.
+       */
+      const attachmentResult = await queryWithRetry(
+        `SELECT
+           id,
+           filename,
+           content_type,
+           content_disposition,
+           storage_provider,
+           storage_path,
+           size_bytes,
+           storage_size_bytes
+         FROM mail_attachments
+         WHERE message_id = $1
+         ORDER BY created_at ASC, id ASC`,
+        [message.id]
+      );
+
+      const attachmentRows = attachmentResult.rows;
+
+      if (attachmentRows.length > MAIL_ATTACHMENT_MAX_FILES) {
+        throw new Error(
+          `Message exceeds the ${MAIL_ATTACHMENT_MAX_FILES} attachment limit.`
+        );
+      }
+
+      const attachments = [];
+      let totalAttachmentBytes = 0;
+
+      if (attachmentRows.length) {
+        if (!isBlobStorageConfigured()) {
+          throw new Error("Attachment storage is not configured.");
+        }
+
+        for (const attachment of attachmentRows) {
+          if (
+            attachment.storage_provider !== "vercel_blob" ||
+            !attachment.storage_path
+          ) {
+            throw new Error(
+              `Attachment "${sanitizeMailAttachmentFilename(
+                attachment.filename || "attachment"
+              )}" is not available for retry.`
+            );
+          }
+
+          const blob = await get(attachment.storage_path, {
+            access: "private"
+          });
+
+          const buffer = await readPrivateMailAttachmentBlob(
+            blob,
+            MAIL_ATTACHMENT_MAX_FILE_SIZE
+          );
+
+          totalAttachmentBytes += buffer.length;
+
+          if (totalAttachmentBytes > MAIL_ATTACHMENT_MAX_TOTAL_SIZE) {
+            throw new Error(
+              `Attachments exceed the ${Math.floor(
+                MAIL_ATTACHMENT_MAX_TOTAL_SIZE / (1024 * 1024)
+              )} MB total size limit.`
+            );
+          }
+
+          attachments.push({
+            content: buffer,
+            filename: sanitizeMailAttachmentFilename(
+              attachment.filename || "attachment"
+            ),
+            contentType:
+              attachment.content_type || "application/octet-stream"
+          });
+        }
+      }
+
+      const generatedMessageId =
+        message.message_id ||
+        `<${crypto.randomUUID()}@uscourier.app>`;
+
+      const inReplyTo = message.in_reply_to || null;
+
+      /*
+       * The current schema does not store a separate References column.
+       * Preserve the existing reply relationship when available.
+       */
+      const references = inReplyTo || null;
+
+      let result;
+      let providerAccepted = false;
+
+      try {
+        result = await resend.emails.send({
+          from: `${mailbox.display_name} <${mailbox.email}>`,
+          to,
+          cc: cc.length ? cc : undefined,
+          bcc: bcc.length ? bcc : undefined,
+          subject: message.subject || "",
+          text: message.text_body || "",
+          html: message.html_body || undefined,
+          attachments: attachments.length ? attachments : undefined,
+          headers: {
+            "Message-ID": generatedMessageId,
+            ...(inReplyTo ? { "In-Reply-To": inReplyTo } : {}),
+            ...(references ? { References: references } : {})
+          }
+        });
+
+        if (!result?.error) {
+          providerAccepted = true;
+        }
+      } catch (sendError) {
+        console.error(
+          "[MAILBOX RETRY]",
+          sendError.message
+        );
+
+        await queryWithRetry(
+          `UPDATE mail_messages
+           SET delivery_status = 'failed',
+               last_delivery_error = $3,
+               updated_at = now()
+           WHERE id = $1
+             AND mailbox_id = $2
+             AND folder = 'outbox'`,
+          [
+            message.id,
+            mailbox.id,
+            sendError.message || "Unable to send email."
+          ]
+        );
+
+        return res.status(502).json({
+          success: false,
+          error: "Unable to send email. The message remains in Outbox for another retry."
+        });
+      }
+
+      if (result?.error) {
+        console.error(
+          "[MAILBOX RETRY]",
+          result.error.message
+        );
+
+        await queryWithRetry(
+          `UPDATE mail_messages
+           SET delivery_status = 'failed',
+               last_delivery_error = $3,
+               updated_at = now()
+           WHERE id = $1
+             AND mailbox_id = $2
+             AND folder = 'outbox'`,
+          [
+            message.id,
+            mailbox.id,
+            result.error.message || "Unable to send email."
+          ]
+        );
+
+        return res.status(502).json({
+          success: false,
+          error: "Unable to send email. The message remains in Outbox for another retry."
+        });
+      }
+
+      /*
+       * Resend accepted the retry.
+       * Convert the SAME Outbox row into Sent.
+       */
+      const finalizedResult = await queryWithRetry(
+        `UPDATE mail_messages
+         SET resend_email_id = $3,
+             folder = 'sent',
+             delivery_status = 'sent',
+             last_delivery_error = NULL,
+             sent_at = now(),
+             delivered_at = now(),
+             updated_at = now()
+         WHERE id = $1
+           AND mailbox_id = $2
+           AND folder = 'outbox'
+           AND delivery_status = 'sending'
+         RETURNING
+           id,
+           resend_email_id,
+           message_id,
+           thread_id,
+           created_at,
+           sent_at,
+           delivered_at`,
+        [
+          message.id,
+          mailbox.id,
+          result?.data?.id || null
+        ]
+      );
+
+      if (!finalizedResult.rows.length) {
+        throw new Error(
+          "The message was accepted by the mail provider but could not be finalized."
+        );
+      }
+
+      const finalized = finalizedResult.rows[0];
+
+      return res.status(200).json({
+        success: true,
+        message: {
+          id: finalized.id,
+          resend_email_id: finalized.resend_email_id,
+          message_id: finalized.message_id,
+          thread_id: finalized.thread_id,
+          sent_at: finalized.sent_at,
+          delivered_at: finalized.delivered_at
+        }
+      });
+    } catch (error) {
+      console.error("[MAILBOX RETRY]", error.message);
+
+      /*
+       * Only return the message to "failed" when the provider did NOT
+       * accept it. If Resend accepted the message but database
+       * finalization failed, leave it in "sending" so a retry cannot
+       * immediately send the same email twice.
+       */
+      if (message?.id && !providerAccepted) {
+        try {
+          await queryWithRetry(
+            `UPDATE mail_messages
+             SET delivery_status = 'failed',
+                 last_delivery_error = $3,
+                 updated_at = now()
+             WHERE id = $1
+               AND mailbox_id = $2
+               AND folder = 'outbox'
+               AND delivery_status = 'sending'`,
+            [
+              message.id,
+              message.mailbox_id,
+              error.message || "Unable to retry email."
+            ]
+          );
+        } catch (stateError) {
+          console.error(
+            "[MAILBOX RETRY] Failed to restore failed state:",
+            stateError.message
+          );
+        }
+      } else if (message?.id && providerAccepted) {
+        console.error(
+          "[MAILBOX RETRY] Provider accepted message but finalization failed; leaving delivery_status=sending to prevent duplicate retry."
+        );
+      }
+
+      return res.status(502).json({
+        success: false,
+        error: providerAccepted
+          ? "Email was accepted by the mail provider, but delivery status could not be finalized. Do not retry this message yet."
+          : "Unable to retry email. The message remains in Outbox for another retry."
       });
     }
   }
@@ -3179,6 +3641,53 @@ app.post(
 
 
       /*
+       * Create the persistent Outbox record BEFORE contacting Resend.
+       *
+       * This guarantees that an accepted message remains visible in
+       * the user's Outbox even when the external delivery provider
+       * later fails.
+       */
+      const outboxResult = await queryWithRetry(
+        `INSERT INTO mail_messages (
+           mailbox_id,
+           message_id,
+           in_reply_to,
+           thread_id,
+           sender_name,
+           sender_email,
+           subject,
+           text_body,
+           html_body,
+           folder,
+           is_read,
+           delivery_status,
+           delivery_attempts,
+           queued_at
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6, $7, $8, $9,
+           'outbox',
+           true,
+           'queued',
+           0,
+           now()
+         )
+         RETURNING id, message_id, thread_id, created_at, queued_at`,
+        [
+          mailbox.id,
+          generatedMessageId,
+          inReplyTo,
+          threadId,
+          mailbox.display_name,
+          mailbox.email,
+          subject,
+          textBody,
+          brandedHtmlBody
+        ]
+      );
+
+      const outboxMessageId = outboxResult.rows[0].id;
+
+      /*
        * Store outgoing attachments in private Vercel Blob before
        * sending the email.
        *
@@ -3190,6 +3699,28 @@ app.post(
 
       if (uploadedFiles.length) {
         if (!isBlobStorageConfigured()) {
+          try {
+            await queryWithRetry(
+              `UPDATE mail_messages
+               SET delivery_status = 'failed',
+                   last_delivery_error = $3,
+                   updated_at = now()
+               WHERE id = $1
+                 AND mailbox_id = $2
+                 AND folder = 'outbox'`,
+              [
+                outboxMessageId,
+                mailbox.id,
+                "Attachment storage is not configured."
+              ]
+            );
+          } catch (stateError) {
+            console.error(
+              "[MAILBOX OUTBOX] Failed to record attachment-storage state:",
+              stateError.message
+            );
+          }
+
           return res.status(503).json({
             success: false,
             error: "Attachment storage is not configured."
@@ -3217,6 +3748,28 @@ app.post(
 
           await deleteMailAttachmentBlobs(storedAttachments);
 
+          try {
+            await queryWithRetry(
+              `UPDATE mail_messages
+               SET delivery_status = 'failed',
+                   last_delivery_error = $3,
+                   updated_at = now()
+               WHERE id = $1
+                 AND mailbox_id = $2
+                 AND folder = 'outbox'`,
+              [
+                outboxMessageId,
+                mailbox.id,
+                "Unable to store one or more attachments."
+              ]
+            );
+          } catch (stateError) {
+            console.error(
+              "[MAILBOX OUTBOX] Failed to record attachment-storage failure:",
+              stateError.message
+            );
+          }
+
           return res.status(502).json({
             success: false,
             error: "Unable to store one or more attachments."
@@ -3224,7 +3777,113 @@ app.post(
         }
       }
 
+      /*
+       * Persist recipients and attachment metadata on the Outbox
+       * record BEFORE contacting Resend.
+       *
+       * This makes the Outbox record self-contained so a failed
+       * delivery can later be retried without losing recipients
+       * or attachment references.
+       */
+      const recipients = [
+        ...to.map((email) => ({ type: "to", email })),
+        ...cc.map((email) => ({ type: "cc", email })),
+        ...bcc.map((email) => ({ type: "bcc", email }))
+      ];
+
+      try {
+        for (const recipient of recipients) {
+          await queryWithRetry(
+            `INSERT INTO mail_recipients (
+               message_id,
+               recipient_type,
+               email
+             ) VALUES ($1, $2, $3)`,
+            [outboxMessageId, recipient.type, recipient.email]
+          );
+        }
+
+        for (const stored of storedAttachments) {
+          await queryWithRetry(
+            `INSERT INTO mail_attachments (
+               message_id,
+               filename,
+               content_type,
+               content_disposition,
+               size_bytes,
+               storage_provider,
+               storage_path,
+               storage_size_bytes,
+               storage_uploaded_at
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())`,
+            [
+              outboxMessageId,
+              stored.file.originalname,
+              stored.file.mimetype,
+              "attachment",
+              stored.file.size,
+              "vercel_blob",
+              stored.pathname,
+              stored.sizeBytes
+            ]
+          );
+        }
+      } catch (metadataError) {
+        console.error(
+          "[MAILBOX OUTBOX] Metadata preparation failed:",
+          metadataError.message
+        );
+
+        await deleteMailAttachmentBlobs(storedAttachments);
+
+        try {
+          await queryWithRetry(
+            `UPDATE mail_messages
+             SET delivery_status = 'failed',
+                 last_delivery_error = $3,
+                 updated_at = now()
+             WHERE id = $1
+               AND mailbox_id = $2
+               AND folder = 'outbox'`,
+            [
+              outboxMessageId,
+              mailbox.id,
+              "Unable to prepare message metadata for delivery."
+            ]
+          );
+        } catch (stateError) {
+          console.error(
+            "[MAILBOX OUTBOX] Failed to record metadata failure:",
+            stateError.message
+          );
+        }
+
+        return res.status(502).json({
+          success: false,
+          error: "Unable to prepare message for delivery."
+        });
+      }
+
+      /*
+       * Claim the queued message for delivery.
+       *
+       * This gives the Outbox a real delivery state while Resend
+       * is processing the message.
+       */
+      await queryWithRetry(
+        `UPDATE mail_messages
+         SET delivery_status = 'sending',
+             delivery_attempts = delivery_attempts + 1,
+             last_delivery_error = NULL,
+             updated_at = now()
+         WHERE id = $1
+           AND mailbox_id = $2
+           AND folder = 'outbox'`,
+        [outboxMessageId, mailbox.id]
+      );
+
       let result;
+      let providerAccepted = false;
 
       try {
         result = await resend.emails.send({
@@ -3248,13 +3907,43 @@ app.post(
             ...(references ? { "References": references } : {})
           }
         });
+
+        if (!result?.error) {
+          providerAccepted = true;
+        }
       } catch (sendError) {
         console.error(
           "[MAILBOX SEND]",
           sendError.message
         );
 
-        await deleteMailAttachmentBlobs(storedAttachments);
+        /*
+         * Keep the private Blob attachments when delivery fails.
+         * The Outbox record retains their metadata so a later retry
+         * can reuse the stored files.
+         */
+
+        try {
+          await queryWithRetry(
+            `UPDATE mail_messages
+             SET delivery_status = 'failed',
+                 last_delivery_error = $3,
+                 updated_at = now()
+             WHERE id = $1
+               AND mailbox_id = $2
+               AND folder = 'outbox'`,
+            [
+              outboxMessageId,
+              mailbox.id,
+              sendError.message || "Unable to send email."
+            ]
+          );
+        } catch (stateError) {
+          console.error(
+            "[MAILBOX OUTBOX] Failed to record send failure:",
+            stateError.message
+          );
+        }
 
         return res.status(502).json({
           success: false,
@@ -3265,7 +3954,32 @@ app.post(
       if (result?.error) {
         console.error("[MAILBOX SEND]", result.error.message);
 
-        await deleteMailAttachmentBlobs(storedAttachments);
+        /*
+         * Keep the private Blob attachments when Resend rejects the
+         * message. They remain available for Outbox retry.
+         */
+
+        try {
+          await queryWithRetry(
+            `UPDATE mail_messages
+             SET delivery_status = 'failed',
+                 last_delivery_error = $3,
+                 updated_at = now()
+             WHERE id = $1
+               AND mailbox_id = $2
+               AND folder = 'outbox'`,
+            [
+              outboxMessageId,
+              mailbox.id,
+              result.error.message || "Unable to send email."
+            ]
+          );
+        } catch (stateError) {
+          console.error(
+            "[MAILBOX OUTBOX] Failed to record provider failure:",
+            stateError.message
+          );
+        }
 
         return res.status(502).json({
           success: false,
@@ -3273,88 +3987,58 @@ app.post(
         });
       }
 
-      const messageResult = await queryWithRetry(
-        `INSERT INTO mail_messages (
-           mailbox_id,
-           resend_email_id,
-           message_id,
-           in_reply_to,
-           thread_id,
-           sender_name,
-           sender_email,
-           subject,
-           text_body,
-           html_body,
-           folder,
-           is_read,
-           sent_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'sent', true, now())
-         RETURNING id, resend_email_id, message_id, thread_id, created_at, sent_at`,
-        [
-          mailbox.id,
-          result?.data?.id || null,
-          generatedMessageId,
-          inReplyTo,
-          threadId,
-          mailbox.display_name,
-          mailbox.email,
-          subject,
-          textBody,
-          brandedHtmlBody
-        ]
-      );
-
-      const messageId = messageResult.rows[0].id;
-
-      const recipients = [
-        ...to.map((email) => ({ type: "to", email })),
-        ...cc.map((email) => ({ type: "cc", email })),
-        ...bcc.map((email) => ({ type: "bcc", email }))
-      ];
+      /*
+       * Resend accepted the message.
+       * Convert the existing Outbox record into the Sent record.
+       * Do NOT create a second mail_messages row.
+       */
+      let messageResult;
 
       try {
-        for (const recipient of recipients) {
-          await queryWithRetry(
-            `INSERT INTO mail_recipients (
-               message_id,
-               recipient_type,
-               email
-             ) VALUES ($1, $2, $3)`,
-            [messageId, recipient.type, recipient.email]
-          );
-        }
-
-        for (const stored of storedAttachments) {
-          await queryWithRetry(
-            `INSERT INTO mail_attachments (
-               message_id,
-               filename,
-               content_type,
-               content_disposition,
-               size_bytes,
-               storage_provider,
-               storage_path,
-               storage_size_bytes,
-               storage_uploaded_at
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())`,
-            [
-              messageId,
-              stored.file.originalname,
-              stored.file.mimetype,
-              "attachment",
-              stored.file.size,
-              "vercel_blob",
-              stored.pathname,
-              stored.sizeBytes
-            ]
-          );
-        }
-      } catch (metadataError) {
-        console.error(
-          "[MAILBOX SEND] Post-send metadata recording failed:",
-          metadataError.message
+        messageResult = await queryWithRetry(
+          `UPDATE mail_messages
+           SET resend_email_id = $3,
+               folder = 'sent',
+               delivery_status = 'sent',
+               last_delivery_error = NULL,
+               sent_at = now(),
+               delivered_at = now(),
+               updated_at = now()
+           WHERE id = $1
+             AND mailbox_id = $2
+             AND folder = 'outbox'
+           RETURNING id, resend_email_id, message_id, thread_id, created_at, sent_at, delivered_at`,
+          [
+            outboxMessageId,
+            mailbox.id,
+            result?.data?.id || null
+          ]
         );
+
+        if (!messageResult.rows.length) {
+          throw new Error("Outbox message could not be finalized as sent.");
+        }
+      } catch (finalizeError) {
+        console.error(
+          "[MAILBOX SEND] Provider accepted email but Sent finalization failed:",
+          finalizeError.message
+        );
+
+        /*
+         * Resend has already accepted the email.
+         * Keep the Outbox row in "sending" so the client cannot
+         * immediately retry and create a duplicate delivery.
+         */
+        return res.status(502).json({
+          success: false,
+          providerAccepted: true,
+          retryable: false,
+          error:
+            "Email was accepted by the mail provider, but delivery status could not be finalized. Do not retry this message yet."
+        });
       }
+
+      const messageId = messageResult.rows[0].id;
 
       if (draftMessage) {
         try {
