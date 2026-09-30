@@ -443,6 +443,26 @@ function renderAdminMessageCenter() {
           <div class="admin-message-actions">
 
             ${
+              adminActionAllowed('messages.view')
+                ? `
+                  <button
+                    type="button"
+                    class="btn-outline"
+                    data-message-action="view"
+                    data-message-id="${id}"
+                    aria-label="View message from ${sender}"
+                  >
+                    <span
+                      class="icon icon-eye"
+                      aria-hidden="true"
+                    ></span>
+                    View
+                  </button>
+                `
+                : ''
+            }
+
+            ${
               adminActionAllowed('messages.reply')
                 ? `
                   <button
@@ -683,6 +703,11 @@ function initAdminMessageCenter() {
 
       if (action === 'delete') {
         deleteMessage(message.id);
+        return;
+      }
+
+      if (action === 'view') {
+        openAdminMessageReader(message.id);
         return;
       }
 
@@ -5874,6 +5899,676 @@ async function handleUpdateShipmentSubmit(e) {
 /* =========================================================
    CUSTOMER MESSAGE REPLY
 ========================================================= */
+
+
+/* =========================================================
+   ADMIN MESSAGE READER
+   Displays the full customer message safely.
+========================================================= */
+
+function openAdminMessageReader(id) {
+
+  if (
+    typeof adminActionAllowed === "function" &&
+    !adminActionAllowed("messages.view")
+  ) {
+    return;
+  }
+
+  const messageId = Number(id);
+
+  if (
+    !Number.isSafeInteger(messageId) ||
+    messageId <= 0
+  ) {
+    return;
+  }
+
+  const message =
+    getAdminMessageRecords().find(
+      (item) =>
+        Number(item?.id) === messageId
+    );
+
+  if (!message) {
+    alert(
+      "Customer message could not be found."
+    );
+    return;
+  }
+
+  let modal =
+    document.getElementById(
+      "modal-admin-message-reader"
+    );
+
+  if (!modal) {
+    modal =
+      createAdminMessageReader();
+  }
+
+  const senderName =
+    String(
+      message?.sender_name ||
+      "Customer"
+    );
+
+  const email =
+    String(
+      message?.email ||
+      "No email address"
+    );
+
+  const subject =
+    String(
+      message?.subject ||
+      "No Subject"
+    );
+
+  const body =
+    String(
+      message?.message ||
+      "No message content."
+    );
+
+  const date =
+    String(
+      formatAdminDate(
+        message?.created_at
+      )
+    );
+
+  const unread =
+    isAdminMessageUnread(message);
+
+  const status =
+    String(
+      message?.status ||
+      "Unknown"
+    );
+
+  const senderEl =
+    document.getElementById(
+      "admin-reader-sender"
+    );
+
+  const emailEl =
+    document.getElementById(
+      "admin-reader-email"
+    );
+
+  const subjectEl =
+    document.getElementById(
+      "admin-reader-subject"
+    );
+
+  const dateEl =
+    document.getElementById(
+      "admin-reader-date"
+    );
+
+  const statusEl =
+    document.getElementById(
+      "admin-reader-status"
+    );
+
+  const bodyEl =
+    document.getElementById(
+      "admin-reader-body"
+    );
+
+  const markReadButton =
+    document.getElementById(
+      "admin-reader-mark-read"
+    );
+
+  const replyButton =
+    document.getElementById(
+      "admin-reader-reply"
+    );
+
+  if (senderEl) {
+    senderEl.textContent =
+      senderName;
+  }
+
+  if (emailEl) {
+    emailEl.textContent =
+      email;
+  }
+
+  if (subjectEl) {
+    subjectEl.textContent =
+      subject;
+  }
+
+  if (dateEl) {
+    dateEl.textContent =
+      date;
+  }
+
+  if (statusEl) {
+    statusEl.textContent =
+      status;
+  }
+
+  if (bodyEl) {
+    bodyEl.textContent =
+      body;
+  }
+
+  if (markReadButton) {
+
+    const canRead =
+      adminActionAllowed(
+        "messages.read"
+      );
+
+    markReadButton.hidden =
+      !unread || !canRead;
+
+    markReadButton.disabled =
+      false;
+
+    markReadButton.dataset.messageId =
+      String(messageId);
+  }
+
+  if (replyButton) {
+
+    const canReply =
+      adminActionAllowed(
+        "messages.reply"
+      );
+
+    replyButton.hidden =
+      !canReply;
+
+    replyButton.dataset.messageId =
+      String(messageId);
+  }
+
+  modal.dataset.messageId =
+    String(messageId);
+
+  modal.classList.add("is-open");
+
+  document.body.classList.add(
+    "admin-message-reader-open"
+  );
+
+  requestAnimationFrame(() => {
+
+    const closeButton =
+      document.getElementById(
+        "admin-reader-close"
+      );
+
+    if (closeButton) {
+      closeButton.focus();
+    }
+
+  });
+}
+
+
+/* =========================================================
+   CREATE ADMIN MESSAGE READER
+========================================================= */
+
+function createAdminMessageReader() {
+
+  const modal =
+    document.createElement(
+      "div"
+    );
+
+  modal.id =
+    "modal-admin-message-reader";
+
+  modal.setAttribute(
+    "role",
+    "dialog"
+  );
+
+  modal.setAttribute(
+    "aria-modal",
+    "true"
+  );
+
+  modal.setAttribute(
+    "aria-labelledby",
+    "admin-reader-subject"
+  );
+
+  modal.className = "admin-message-reader";
+
+  modal.innerHTML = `
+    <div class="admin-message-reader-card">
+
+      <div class="admin-message-reader-header">
+
+        <div class="admin-message-reader-heading">
+
+          <div class="admin-message-reader-kicker">
+            Customer Message
+          </div>
+
+          <h2
+            id="admin-reader-subject"
+            class="admin-message-reader-subject"
+          >
+            Message
+          </h2>
+
+        </div>
+
+        <button
+          type="button"
+          id="admin-reader-close"
+          class="btn-outline"
+          aria-label="Close message reader"
+        >
+          <span
+            class="icon icon-close"
+            aria-hidden="true"
+          ></span>
+          Close
+        </button>
+
+      </div>
+
+
+      <div class="admin-message-reader-meta">
+
+        <div class="admin-message-reader-meta-grid">
+
+          <div class="admin-message-reader-meta-item">
+            <span class="admin-message-reader-label">From</span>
+
+            <strong id="admin-reader-sender">
+              Customer
+            </strong>
+
+            <span
+              id="admin-reader-email"
+              class="admin-message-reader-email"
+            >
+              -
+            </span>
+          </div>
+
+          <div class="admin-message-reader-meta-item">
+            <span class="admin-message-reader-label">
+              Received
+            </span>
+
+            <span id="admin-reader-date">-</span>
+          </div>
+
+          <div class="admin-message-reader-meta-item">
+            <span class="admin-message-reader-label">
+              Status
+            </span>
+
+            <span
+              id="admin-reader-status"
+              class="badge"
+            >
+              Unknown
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="admin-message-reader-body">
+
+        <div
+          id="admin-reader-body"
+          class="admin-message-reader-content"
+        >
+          No message content.
+        </div>
+
+      </div>
+
+
+      <div class="admin-message-reader-footer">
+
+        <button
+          type="button"
+          id="admin-reader-mark-read"
+          class="btn-outline"
+        >
+          <span
+            class="icon icon-check"
+            aria-hidden="true"
+          ></span>
+          Mark as Read
+        </button>
+
+        <button
+          type="button"
+          id="admin-reader-reply"
+          class="btn-gold"
+        >
+          <span
+            class="icon icon-reply"
+            aria-hidden="true"
+          ></span>
+          Reply
+        </button>
+
+        <button
+          type="button"
+          id="admin-reader-close-bottom"
+          class="btn-outline"
+        >
+          Close
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(
+    modal
+  );
+
+
+  const close =
+    () => {
+      closeAdminMessageReader();
+    };
+
+
+  const closeButton =
+    document.getElementById(
+      "admin-reader-close"
+    );
+
+  if (closeButton) {
+    closeButton.addEventListener(
+      "click",
+      close
+    );
+  }
+
+
+  const closeBottom =
+    document.getElementById(
+      "admin-reader-close-bottom"
+    );
+
+  if (closeBottom) {
+    closeBottom.addEventListener(
+      "click",
+      close
+    );
+  }
+
+
+  modal.addEventListener(
+    "click",
+    (event) => {
+
+      if (
+        event.target === modal
+      ) {
+        close();
+      }
+
+    }
+  );
+
+
+  const markReadButton =
+    document.getElementById(
+      "admin-reader-mark-read"
+    );
+
+  if (markReadButton) {
+
+    markReadButton.addEventListener(
+      "click",
+      () => {
+
+        const messageId =
+          Number(
+            modal.dataset.messageId
+          );
+
+        markAdminReaderMessageRead(
+          messageId
+        );
+
+      }
+    );
+
+  }
+
+
+  const replyButton =
+    document.getElementById(
+      "admin-reader-reply"
+    );
+
+  if (replyButton) {
+
+    replyButton.addEventListener(
+      "click",
+      () => {
+
+        const messageId =
+          Number(
+            modal.dataset.messageId
+          );
+
+        closeAdminMessageReader();
+
+        openMessageReply(
+          messageId
+        );
+
+      }
+    );
+
+  }
+
+
+  document.addEventListener(
+    "keydown",
+    handleAdminMessageReaderEscape
+  );
+
+  return modal;
+}
+
+
+/* =========================================================
+   MARK READER MESSAGE AS READ
+========================================================= */
+
+async function markAdminReaderMessageRead(
+  messageId
+) {
+
+  if (
+    !adminActionAllowed(
+      "messages.read"
+    )
+  ) {
+    return;
+  }
+
+  if (
+    !Number.isSafeInteger(
+      Number(messageId)
+    ) ||
+    Number(messageId) <= 0
+  ) {
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "admin-reader-mark-read"
+    );
+
+  if (button) {
+    button.disabled = true;
+    button.setAttribute(
+      "aria-busy",
+      "true"
+    );
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        `/api/admin/messages/${encodeURIComponent(
+          messageId
+        )}/read`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Accept":
+              "application/json"
+          }
+        }
+      );
+
+    let payload = {};
+
+    try {
+      payload =
+        await response.json();
+    } catch {
+      payload = {};
+    }
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      handleAdminSessionExpired();
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        payload.error ||
+        "Unable to mark message as read."
+      );
+    }
+
+    const record =
+      getAdminMessageRecords().find(
+        (item) =>
+          Number(item?.id) ===
+          Number(messageId)
+      );
+
+    if (record) {
+      record.status = "Read";
+
+      if (!record.read_at) {
+        record.read_at =
+          new Date().toISOString();
+      }
+    }
+
+    if (button) {
+      button.hidden = true;
+    }
+
+    updateAdminMessageSummary(
+      getAdminMessageRecords()
+    );
+
+    renderAdminMessageCenter();
+
+  } catch (err) {
+
+    console.error(
+      "Mark customer message read error:",
+      err
+    );
+
+    alert(
+      err.message ||
+      "Unable to mark message as read."
+    );
+
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute(
+        "aria-busy"
+      );
+    }
+
+  }
+}
+
+
+/* =========================================================
+   CLOSE ADMIN MESSAGE READER
+========================================================= */
+
+function closeAdminMessageReader() {
+
+  const modal =
+    document.getElementById(
+      "modal-admin-message-reader"
+    );
+
+  if (modal) {
+    modal.classList.remove("is-open");
+
+    delete modal.dataset.messageId;
+  }
+
+  document.body.classList.remove(
+    "admin-message-reader-open"
+  );
+}
+
+
+/* =========================================================
+   ADMIN MESSAGE READER ESCAPE
+========================================================= */
+
+function handleAdminMessageReaderEscape(
+  event
+) {
+
+  if (
+    event.key !== "Escape"
+  ) {
+    return;
+  }
+
+  const modal =
+    document.getElementById(
+      "modal-admin-message-reader"
+    );
+
+  if (
+    modal &&
+    modal.classList.contains("is-open")
+  ) {
+    closeAdminMessageReader();
+  }
+
+}
+
+
 
 async function openMessageReply(id) {
   if (!adminActionAllowed('messages.reply')) {
