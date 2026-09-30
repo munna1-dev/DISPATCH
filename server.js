@@ -806,10 +806,25 @@ app.post(
           });
         }
       }
-      const receivedResult = await resend.emails.receiving.get(event.data.email_id);
+      const receivedResult =
+        await resend.emails.receiving.get(event.data.email_id);
 
       if (receivedResult.error || !receivedResult.data) {
-        throw new Error("Unable to retrieve received email.");
+        const providerError = receivedResult.error || {};
+
+        console.error(
+          "[RESEND WEBHOOK] Receiving API error:",
+          JSON.stringify({
+            name: providerError.name || null,
+            message: providerError.message || null,
+            statusCode: providerError.statusCode || null
+          })
+        );
+
+        throw new Error(
+          providerError.message ||
+          "Unable to retrieve received email."
+        );
       }
 
       const received = receivedResult.data;
