@@ -882,7 +882,7 @@ app.post(
       if (inReplyTo || references) {
         const referenceIds = [
           inReplyTo,
-          ...references.split(/\s+/)
+          ...(references ? references.split(/\s+/) : [])
         ].filter(Boolean);
 
         const parentResult = await pool.query(
@@ -4588,34 +4588,45 @@ app.get(
   requireAdminPermission("dashboard.view"),
   async (req, res) => {
     try {
-      const counts = await queryWithRetry(`
+      const shipmentScope =
+        shipmentScopeSql(req);
+
+      const counts = await queryWithRetry(
+        `
         SELECT
           (
             SELECT COUNT(*)
             FROM shipments
+            WHERE 1 = 1
+              ${shipmentScope.sql}
           ) AS total,
 
           (
             SELECT COUNT(*)
             FROM shipments
             WHERE status ILIKE '%transit%'
+              ${shipmentScope.sql}
           ) AS in_transit,
 
           (
             SELECT COUNT(*)
             FROM shipments
             WHERE status ILIKE '%delivered%'
+              ${shipmentScope.sql}
           ) AS delivered,
 
           (
             SELECT COUNT(*)
             FROM shipments
             WHERE
-              status ILIKE '%pending%'
-              OR status ILIKE '%exception%'
-              OR status ILIKE '%delay%'
-              OR status ILIKE '%held%'
-              OR status ILIKE '%failed%'
+              (
+                status ILIKE '%pending%'
+                OR status ILIKE '%exception%'
+                OR status ILIKE '%delay%'
+                OR status ILIKE '%held%'
+                OR status ILIKE '%failed%'
+              )
+              ${shipmentScope.sql}
           ) AS pending_exceptions,
 
           (
@@ -4636,7 +4647,9 @@ app.get(
             FROM contact_messages
             WHERE LOWER(COALESCE(status, '')) = 'unread'
           ) AS unread_messages
-      `);
+        `,
+        shipmentScope.values
+      );
 
       return res.json({
         success: true,
@@ -4662,7 +4675,8 @@ app.get(
 app.get(
   "/api/admin/customers",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("customers.view"),
   async (req, res) => {
     try {
       const result = await queryWithRetry(`
@@ -4707,6 +4721,9 @@ app.get(
   requireAdminPermission("shipments.view"),
   async (req, res) => {
     try {
+      const shipmentScope =
+        shipmentScopeSql(req);
+
       const result = await queryWithRetry(
         `
         SELECT
@@ -4730,11 +4747,15 @@ app.get(
           declared_value,
           description,
           created_at,
-          updated_at
+          updated_at,
+          created_by
         FROM shipments
+        WHERE 1 = 1
+          ${shipmentScope.sql}
         ORDER BY created_at DESC
         LIMIT 100
-        `
+        `,
+        shipmentScope.values
       );
 
       return res.json({
@@ -4917,13 +4938,14 @@ app.post(
           recipient_name,
           recipient_country,
           currency,
-          declared_value
+          declared_value,
+          created_by
         )
         VALUES
         (
           $1,$2,$3,$4,
           'Shipment Created',
-          $2,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+          $2,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15
         )
         RETURNING
           id,
@@ -4962,7 +4984,8 @@ app.post(
           recipientName,
           recipientCountry,
           currency,
-          declaredValue
+          declaredValue,
+          Number(req.admin?.id || req.user?.id)
         ]
       );
 
@@ -5043,7 +5066,8 @@ app.delete(
         `
         SELECT
           id,
-          tracking_number
+          tracking_number,
+          created_by
         FROM shipments
         WHERE id = $1
         FOR UPDATE
@@ -5061,6 +5085,21 @@ app.delete(
       }
 
       const shipment = existing.rows[0];
+
+      if (
+        !shipmentScopeAllows(
+          req,
+          shipment.created_by
+        )
+      ) {
+        await c.query("ROLLBACK");
+
+        return res.status(403).json({
+          success: false,
+          error:
+            "Your assigned parcel scope does not allow this shipment."
+        });
+      }
 
       // Remove dependent tracking history first.
       // This keeps deletion deterministic even when the FK does
@@ -5165,7 +5204,8 @@ function normalizeSettingsObject(input) {
 app.get(
   "/api/admin/settings",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("settings.view"),
   async (req, res) => {
     try {
       const result = await queryWithRetry(
@@ -5214,7 +5254,8 @@ app.get(
 app.put(
   "/api/admin/settings",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("settings.update"),
   requireSameOrigin,
   async (req, res) => {
     const settings = normalizeSettingsObject(
@@ -5317,6 +5358,7 @@ const ADMIN_ROLE_PERMISSIONS = Object.freeze({
     "staff.view",
     "staff.create",
     "staff.update",
+    "customers.view",
     "staff.role",
     "staff.password",
     "settings.view",
@@ -5470,37 +5512,683 @@ const ADMIN_ROLE_PERMISSIONS = Object.freeze({
 });
 
 
-function hasAdminPermission(role, permission) {
-  const permissions =
-    ADMIN_ROLE_PERMISSIONS[String(role || "")];
 
-  return Boolean(
-    permissions &&
-    permissions.has(permission)
+/*
+ * ============================================================
+ * EXPLICIT STAFF ACCESS POLICY
+ * ============================================================
+ *
+ * Role = operational identity.
+ * staff_access_policies = explicit authorization.
+ *
+ * Super Admin remains the highest administrative authority.
+ * Other staff must have an approved policy and the requested
+ * permission explicitly enabled.
+ */
+
+const ADMIN_PERMISSION_KEYS = Object.freeze(
+  Array.from(
+    new Set(
+      Object.values(ADMIN_ROLE_PERMISSIONS)
+        .flatMap((permissionSet) =>
+          Array.from(permissionSet)
+        )
+    )
+  )
+);
+
+const ADMIN_PERMISSION_KEY_SET =
+  new Set(ADMIN_PERMISSION_KEYS);
+
+function isSuperAdmin(req) {
+  return String(
+    req.admin?.role ||
+    req.user?.role ||
+    ""
+  ) === "Super Admin";
+}
+
+async function loadStaffAccessPolicyForUser(userId) {
+  const result = await queryWithRetry(
+    `
+    SELECT
+      user_id,
+      access_approved,
+      parcel_scope,
+      permissions,
+      dashboard_access,
+      approved_by,
+      approved_at,
+      updated_by,
+      created_at,
+      updated_at
+    FROM staff_access_policies
+    WHERE user_id = $1
+    LIMIT 1
+    `,
+    [userId]
+  );
+
+  if (!result.rowCount) {
+    return null;
+  }
+
+  const policy = result.rows[0];
+
+  return {
+    user_id: Number(policy.user_id),
+    access_approved: Boolean(policy.access_approved),
+    parcel_scope: ["own", "all", "none"].includes(
+      policy.parcel_scope
+    )
+      ? policy.parcel_scope
+      : "none",
+    permissions:
+      policy.permissions &&
+      typeof policy.permissions === "object"
+        ? policy.permissions
+        : {},
+    dashboard_access:
+      policy.dashboard_access &&
+      typeof policy.dashboard_access === "object"
+        ? policy.dashboard_access
+        : {},
+    approved_by: policy.approved_by
+      ? Number(policy.approved_by)
+      : null,
+    approved_at: policy.approved_at || null,
+    updated_by: policy.updated_by
+      ? Number(policy.updated_by)
+      : null,
+    created_at: policy.created_at || null,
+    updated_at: policy.updated_at || null
+  };
+}
+
+async function requireStaffAccessPolicy(
+  req,
+  res,
+  permission
+) {
+  /*
+   * Super Admin remains fully authorized.
+   * This preserves the existing admin account and its
+   * existing production permissions.
+   */
+  if (isSuperAdmin(req)) {
+    return {
+      allowed: true,
+      policy: {
+        access_approved: true,
+        parcel_scope: "all",
+        permissions: Object.fromEntries(
+          ADMIN_PERMISSION_KEYS.map((key) => [key, true])
+        )
+      }
+    };
+  }
+
+  const userId = Number(
+    req.admin?.id ||
+    req.user?.id
+  );
+
+  if (
+    !Number.isSafeInteger(userId) ||
+    userId < 1
+  ) {
+    return {
+      allowed: false,
+      status: 401,
+      error: "Authenticated user could not be resolved."
+    };
+  }
+
+  let policy;
+
+  try {
+    policy =
+      await loadStaffAccessPolicyForUser(userId);
+  } catch (error) {
+    console.error(
+      "[STAFF ACCESS POLICY]",
+      error.message
+    );
+
+    return {
+      allowed: false,
+      status: 500,
+      error: "Unable to verify staff access policy."
+    };
+  }
+
+  if (!policy) {
+    return {
+      allowed: false,
+      status: 403,
+      error:
+        "Staff access has not been approved by a Super Admin."
+    };
+  }
+
+  if (!policy.access_approved) {
+    return {
+      allowed: false,
+      status: 403,
+      error:
+        "Staff access is pending Super Admin approval."
+    };
+  }
+
+  if (
+    permission &&
+    policy.permissions?.[permission] !== true
+  ) {
+    return {
+      allowed: false,
+      status: 403,
+      error:
+        "Your assigned staff permissions do not allow this action."
+    };
+  }
+
+  return {
+    allowed: true,
+    policy
+  };
+}
+
+function requireAdminPermission(permission) {
+  return async function(req, res, next) {
+    try {
+      /*
+       * Preserve the existing role definition as a baseline,
+       * but require explicit access-policy approval for all
+       * non-Super-Admin users.
+       */
+      const role =
+        req.admin?.role ||
+        req.user?.role ||
+        "";
+
+      if (!ADMIN_ROLE_PERMISSIONS[String(role || "")]) {
+        return res.status(403).json({
+          success: false,
+          error: "Insufficient permissions."
+        });
+      }
+
+      const result =
+        await requireStaffAccessPolicy(
+          req,
+          res,
+          permission
+        );
+
+      if (!result.allowed) {
+        return res.status(
+          result.status || 403
+        ).json({
+          success: false,
+          error:
+            result.error ||
+            "Insufficient permissions."
+        });
+      }
+
+      req.staffAccessPolicy =
+        result.policy || null;
+
+      next();
+    } catch (error) {
+      console.error(
+        "[ADMIN PERMISSION]",
+        error.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Authorization check failed."
+      });
+    }
+  };
+}
+
+/*
+ * Returns true when the current request is allowed to operate
+ * on the supplied shipment according to parcel_scope.
+ *
+ * Super Admin = all.
+ * all = all shipments.
+ * own = shipments created by this user.
+ * none = no shipment access.
+ */
+function shipmentScopeAllows(
+  req,
+  shipmentCreatedBy
+) {
+  if (isSuperAdmin(req)) {
+    return true;
+  }
+
+  const scope =
+    req.staffAccessPolicy?.parcel_scope ||
+    "none";
+
+  if (scope === "all") {
+    return true;
+  }
+
+  if (scope === "none") {
+    return false;
+  }
+
+  const userId = Number(
+    req.admin?.id ||
+    req.user?.id
+  );
+
+  return (
+    scope === "own" &&
+    Number(shipmentCreatedBy) === userId
   );
 }
 
+function shipmentScopeSql(
+  req,
+  column = "created_by"
+) {
+  if (isSuperAdmin(req)) {
+    return {
+      sql: "",
+      values: []
+    };
+  }
 
-function requireAdminPermission(permission) {
+  const scope =
+    req.staffAccessPolicy?.parcel_scope ||
+    "none";
 
-  return function(req, res, next) {
+  if (scope === "all") {
+    return {
+      sql: "",
+      values: []
+    };
+  }
 
-    const role =
-      req.admin?.role ||
-      req.user?.role ||
-      "";
+  if (scope === "own") {
+    return {
+      sql: ` AND ${column} = $1 `,
+      values: [
+        Number(
+          req.admin?.id ||
+          req.user?.id
+        )
+      ]
+    };
+  }
 
-    if (!hasAdminPermission(role, permission)) {
-      return res.status(403).json({
+  return {
+    sql: " AND 1 = 0 ",
+    values: []
+  };
+}
+
+
+/*
+ * ============================================================
+ * SUPER ADMIN — STAFF ACCESS POLICY API
+ * ============================================================
+ */
+
+app.get(
+  "/api/admin/users/:id/access-policy",
+  authMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("staff.view"),
+  requireSameOrigin,
+  async (req, res) => {
+    try {
+      if (!isSuperAdmin(req)) {
+        return res.status(403).json({
+          success: false,
+          error:
+            "Only a Super Admin can view staff access policies."
+        });
+      }
+
+      const userId =
+        Number(req.params.id);
+
+      if (
+        !Number.isSafeInteger(userId) ||
+        userId < 1
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid user ID."
+        });
+      }
+
+      const targetResult =
+        await queryWithRetry(
+          `
+          SELECT
+            id,
+            name,
+            email,
+            role,
+            created_at
+          FROM users
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [userId]
+        );
+
+      if (!targetResult.rowCount) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found."
+        });
+      }
+
+      const policy =
+        await loadStaffAccessPolicyForUser(
+          userId
+        );
+
+      return res.json({
+        success: true,
+        user: targetResult.rows[0],
+        policy: policy || {
+          user_id: userId,
+          access_approved: false,
+          parcel_scope: "none",
+          permissions: {},
+          dashboard_access: {}
+        }
+      });
+    } catch (error) {
+      console.error(
+        "[ACCESS POLICY GET]",
+        error.message
+      );
+
+      return res.status(500).json({
         success: false,
-        error: "Insufficient permissions."
+        error:
+          "Failed to load staff access policy."
       });
     }
+  }
+);
 
-    next();
-  };
+app.put(
+  "/api/admin/users/:id/access-policy",
+  authMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("staff.update"),
+  requireSameOrigin,
+  async (req, res) => {
+    try {
+      /*
+       * Only the Super Admin can assign or change explicit
+       * staff permissions.
+       */
+      if (!isSuperAdmin(req)) {
+        return res.status(403).json({
+          success: false,
+          error:
+            "Only a Super Admin can manage staff access policies."
+        });
+      }
 
-}
+      const userId =
+        Number(req.params.id);
+
+      if (
+        !Number.isSafeInteger(userId) ||
+        userId < 1
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid user ID."
+        });
+      }
+
+      const targetResult =
+        await queryWithRetry(
+          `
+          SELECT
+            id,
+            name,
+            email,
+            role
+          FROM users
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [userId]
+        );
+
+      if (!targetResult.rowCount) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found."
+        });
+      }
+
+      const target =
+        targetResult.rows[0];
+
+      /*
+       * The Super Admin policy itself cannot accidentally be
+       * downgraded through the staff-policy UI.
+       */
+      if (
+        String(target.email || "").toLowerCase() ===
+        "admin@uscourier.app"
+      ) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "The primary Super Admin policy is protected."
+        });
+      }
+
+      const body =
+        req.body || {};
+
+      const accessApproved =
+        body.access_approved === true;
+
+      const parcelScope =
+        ["own", "all", "none"].includes(
+          String(body.parcel_scope || "")
+        )
+          ? String(body.parcel_scope)
+          : "none";
+
+      const incomingPermissions =
+        body.permissions &&
+        typeof body.permissions === "object" &&
+        !Array.isArray(body.permissions)
+          ? body.permissions
+          : {};
+
+      const permissions = {};
+
+      /*
+       * Only known permissions may be persisted.
+       * Unknown client-supplied keys are discarded.
+       */
+      for (
+        const permission
+        of ADMIN_PERMISSION_KEYS
+      ) {
+        permissions[permission] =
+          incomingPermissions[permission] === true;
+      }
+
+      const incomingDashboard =
+        body.dashboard_access &&
+        typeof body.dashboard_access === "object" &&
+        !Array.isArray(body.dashboard_access)
+          ? body.dashboard_access
+          : {};
+
+      const dashboardAccess = {};
+
+      for (
+        const [key, value]
+        of Object.entries(incomingDashboard)
+      ) {
+        if (
+          typeof key === "string" &&
+          key.length <= 100 &&
+          typeof value === "boolean"
+        ) {
+          dashboardAccess[key] = value;
+        }
+      }
+
+      /*
+       * A staff member cannot receive shipment scope without
+       * shipment viewing permission.
+       */
+      if (
+        parcelScope !== "none" &&
+        permissions["shipments.view"] !== true
+      ) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "Shipment scope requires shipments.view permission."
+        });
+      }
+
+      /*
+       * Explicitly revoke all permissions when access is not
+       * approved. This keeps the policy unambiguous.
+       */
+      if (!accessApproved) {
+        for (
+          const permission
+          of ADMIN_PERMISSION_KEYS
+        ) {
+          permissions[permission] = false;
+        }
+      }
+
+      const approvedBy =
+        accessApproved
+          ? Number(req.admin.id)
+          : null;
+
+      const approvedAt =
+        accessApproved
+          ? new Date()
+          : null;
+
+      const result =
+        await queryWithRetry(
+          `
+          INSERT INTO staff_access_policies
+          (
+            user_id,
+            access_approved,
+            parcel_scope,
+            permissions,
+            dashboard_access,
+            approved_by,
+            approved_at,
+            updated_by
+          )
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4::jsonb,
+            $5::jsonb,
+            $6,
+            $7,
+            $8
+          )
+          ON CONFLICT (user_id)
+          DO UPDATE SET
+            access_approved = EXCLUDED.access_approved,
+            parcel_scope = EXCLUDED.parcel_scope,
+            permissions = EXCLUDED.permissions,
+            dashboard_access = EXCLUDED.dashboard_access,
+            approved_by = EXCLUDED.approved_by,
+            approved_at = EXCLUDED.approved_at,
+            updated_by = EXCLUDED.updated_by,
+            updated_at = NOW()
+          RETURNING
+            user_id,
+            access_approved,
+            parcel_scope,
+            permissions,
+            dashboard_access,
+            approved_by,
+            approved_at,
+            updated_by,
+            created_at,
+            updated_at
+          `,
+          [
+            userId,
+            accessApproved,
+            parcelScope,
+            JSON.stringify(permissions),
+            JSON.stringify(dashboardAccess),
+            approvedBy,
+            approvedAt,
+            Number(req.admin.id)
+          ]
+        );
+
+      await logAdminAction({
+        adminId:
+          req.admin?.id || null,
+        adminEmail:
+          req.admin?.email || null,
+        action:
+          "staff.access_policy_update",
+        targetType: "user",
+        targetId: userId,
+        details: JSON.stringify({
+          target_email: target.email,
+          access_approved: accessApproved,
+          parcel_scope: parcelScope,
+          permissions
+        }),
+        ipAddress:
+          req.ip || null
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Staff access policy updated successfully.",
+        policy: result.rows[0]
+      });
+    } catch (error) {
+      console.error(
+        "[ACCESS POLICY UPDATE]",
+        error.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        error:
+          "Failed to update staff access policy."
+      });
+    }
+  }
+);
 
 
 // ============================================================
@@ -5912,7 +6600,8 @@ app.put(
 app.put(
   "/api/admin/users/:id/role",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("staff.role"),
   requireSameOrigin,
   async (req, res) => {
     const userId = Number(req.params.id);
@@ -6082,7 +6771,8 @@ app.put(
 app.post(
   "/api/admin/users/:id/reset-password",
   authMiddleware,
-  adminMiddleware,
+  adminPortalMiddleware,
+  requireAdminPermission("staff.password"),
   requireSameOrigin,
   async (req, res) => {
     const userId = Number(req.params.id);
@@ -7077,6 +7767,43 @@ app.put(
 
     try {
       await c.query("BEGIN");
+
+      const existingShipment =
+        await c.query(
+          `
+          SELECT
+            id,
+            created_by
+          FROM shipments
+          WHERE id = $1
+          FOR UPDATE
+          `,
+          [shipmentId]
+        );
+
+      if (!existingShipment.rowCount) {
+        await c.query("ROLLBACK");
+
+        return res.status(404).json({
+          success: false,
+          error: "Shipment not found."
+        });
+      }
+
+      if (
+        !shipmentScopeAllows(
+          req,
+          existingShipment.rows[0].created_by
+        )
+      ) {
+        await c.query("ROLLBACK");
+
+        return res.status(403).json({
+          success: false,
+          error:
+            "Your assigned parcel scope does not allow this shipment."
+        });
+      }
 
       const q = await c.query(
         `
