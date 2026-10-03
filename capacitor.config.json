@@ -1,0 +1,26 @@
+{
+  "appId": "usc.courier.app",
+  "appName": "dispatchUSC",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https",
+    "url": "https://uscourier.app"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#ffffff"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
+    }
+  }
+}

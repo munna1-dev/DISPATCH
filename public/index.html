@@ -31,6 +31,7 @@
     }
   }
   </script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/core@latest/dist/capacitor.js"></script>
 </head>
 <body>
 
@@ -520,6 +521,27 @@
 
 
   <script src="/js/app.js"></script>
+<script type="module">
+    import { App } from 'https://cdn.jsdelivr.net/npm/@capacitor/app@latest/+esm';
+    import { StatusBar, Style } from 'https://cdn.jsdelivr.net/npm/@capacitor/status-bar@latest/+esm';
+    import { SplashScreen } from 'https://cdn.jsdelivr.net/npm/@capacitor/splash-screen@latest/+esm';
+
+    // Status bar styling
+    StatusBar.setStyle({ style: Style.Dark });
+    StatusBar.setBackgroundColor({ color: '#ffffff' });
+
+    // Hide splash when ready
+    SplashScreen.hide();
+
+    // Hardware back button (Android)
+    App.addListener('backButton', ({ canGoBack }) => {
+      if (canGoBack) {
+        window.history.back();
+      } else {
+        App.exitApp();
+      }
+    });
+  </script>
 
 </body>
 </html>
