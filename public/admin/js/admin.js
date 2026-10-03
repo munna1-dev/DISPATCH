@@ -27,6 +27,12 @@ function bindCreateParcelButton() {
     return;
   }
 
+  if (button.dataset.createParcelBound === 'true') {
+    return;
+  }
+
+  button.dataset.createParcelBound = 'true';
+
   button.addEventListener(
     'click',
     function(event) {
@@ -8072,6 +8078,17 @@ async function bootstrapAdminRBAC() {
   }
 
   applyAdminSidebarPermissions();
+
+  /*
+   * RBAC profile loading is asynchronous. The original
+   * create-parcel binding can run before adminCurrentRole
+   * has been populated, which incorrectly hides the button.
+   * Re-bind the existing action after the authenticated
+   * profile has been resolved.
+   */
+  if (typeof bindCreateParcelButton === "function") {
+    bindCreateParcelButton();
+  }
 
   /*
    * Keep the currently selected navigation item
