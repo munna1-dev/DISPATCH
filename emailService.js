@@ -4,7 +4,7 @@ const https = require("https");
 
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL ||
-  "US COURIER <support@uscourier.app>";
+  "US COURIER MAILBOX <support@uscourier.app>";
 
 const ADMIN_EMAIL =
   process.env.RESEND_ADMIN_EMAIL ||
@@ -77,28 +77,26 @@ function emailLayout(title, content) {
             <td style="
               padding:22px 28px;
               background:#111827;
-              border-bottom:4px solid #c9a227;
+              border-bottom:4px solid #D4AF37;
             ">
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td width="52" valign="middle">
 
-                    <!-- Inline USCourier brand mark -->
-                    <div style="
-                      width:42px;
-                      height:42px;
-                      line-height:42px;
-                      text-align:center;
-                      background:#111827;
-                      border:2px solid #c9a227;
-                      border-radius:9px;
-                      color:#ffffff;
-                      font-size:21px;
-                      font-weight:900;
-                    ">
-                      UC
-                    </div>
+                    <!-- USCOURIER brand logo -->
+                    <img
+                      src="${escapeHtml(PUBLIC_APP_URL)}/assets/brand/uscourier-icon.svg"
+                      width="46"
+                      height="46"
+                      alt="USCOURIER"
+                      style="
+                        display:block;
+                        width:46px;
+                        height:46px;
+                        border:0;
+                      "
+                    />
 
                   </td>
 
@@ -114,7 +112,7 @@ function emailLayout(title, content) {
                     </div>
 
                     <div style="
-                      color:#c9a227;
+                      color:#D4AF37;
                       font-size:9px;
                       line-height:14px;
                       font-weight:800;
@@ -146,7 +144,7 @@ function emailLayout(title, content) {
                 width:48px;
                 height:3px;
                 margin-top:12px;
-                background:#c9a227;
+                background:#D4AF37;
               "></div>
 
             </td>
@@ -215,7 +213,7 @@ function emailLayout(title, content) {
                 font-size:11px;
                 line-height:17px;
               ">
-                This is an official communication from US COURIER.
+                This is an official communication from US COURIER MAILBOX.
                 Please do not share confidential account or shipment
                 information with unauthorized persons.
               </div>
@@ -425,7 +423,7 @@ async function sendShipmentCreated({
       ">
         <strong>Tracking Number</strong><br>
         <span style="
-          color:#c9a227;
+          color:#D4AF37;
           font-size:20px;
         ">
           ${escapeHtml(
@@ -611,9 +609,9 @@ async function sendContactReply({
 }) {
   const html =
     emailLayout(
-      "US COURIER Support Reply",
+      "US COURIER MAILBOX Reply",
       `
-      <h1>US COURIER Support</h1>
+      <h1>US COURIER MAILBOX</h1>
 
       <p>
         Hello ${escapeHtml(
@@ -635,7 +633,7 @@ async function sendContactReply({
       <p>
         Regards,<br>
         <strong>
-          US COURIER Support Team
+          US COURIER MAILBOX
         </strong>
       </p>
       `
@@ -645,7 +643,7 @@ async function sendContactReply({
     to: recipientEmail,
     subject:
       subject ||
-      "US COURIER Support",
+      "US COURIER MAILBOX",
     html,
     replyTo: REPLY_TO
   });
@@ -685,7 +683,7 @@ async function sendPasswordReset({
           style="
             display:inline-block;
             padding:12px 20px;
-            background:#c9a227;
+            background:#D4AF37;
             color:#111827;
             text-decoration:none;
             border-radius:8px;

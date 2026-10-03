@@ -1,0 +1,14 @@
+{
+  "name": "USCOURIER",
+  "displayName": "US COURIER",
+  "descriptor": "Professional Courier & Logistics Services",
+  "mailboxName": "US COURIER MAILBOX",
+  "primary": "#38BDF8",
+  "primaryDark": "#0284C7",
+  "white": "#FFFFFF",
+  "accent": "#D4AF37",
+  "text": "#0F172A",
+  "logo": "/assets/brand/uscourier-logo.svg",
+  "icon": "/assets/brand/uscourier-icon.svg",
+  "website": "https://uscourier.app"
+}

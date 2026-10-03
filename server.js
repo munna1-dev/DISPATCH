@@ -3493,7 +3493,7 @@ app.post(
             <td style="
               padding:22px 28px;
               background:#111827;
-              border-bottom:4px solid #c9a227;
+              border-bottom:4px solid #D4AF37;
             ">
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -3505,7 +3505,7 @@ app.post(
                       line-height:42px;
                       text-align:center;
                       background:#111827;
-                      border:2px solid #c9a227;
+                      border:2px solid #D4AF37;
                       border-radius:9px;
                       color:#ffffff;
                       font-size:21px;
@@ -3523,7 +3523,7 @@ app.post(
                     ">US COURIER</div>
 
                     <div style="
-                      color:#c9a227;
+                      color:#D4AF37;
                       font-size:9px;
                       line-height:14px;
                       font-weight:800;
@@ -3550,7 +3550,7 @@ app.post(
                 width:48px;
                 height:3px;
                 margin-top:12px;
-                background:#c9a227;
+                background:#D4AF37;
               "></div>
 
             </td>
@@ -3567,7 +3567,7 @@ app.post(
               <div style="
                 background:#f7f9fc;
                 border:1px solid #e2e7ef;
-                border-left:4px solid #c9a227;
+                border-left:4px solid #D4AF37;
                 border-radius:8px;
                 padding:20px;
                 white-space:normal;
@@ -8061,7 +8061,7 @@ app.post(
         recipientName: customerMessage.name,
         subject:
           customerMessage.subject ||
-          "US COURIER Support",
+          "US COURIER MAILBOX",
         message
       });
 
@@ -8293,7 +8293,7 @@ app.post(
         const result =
           await resend.emails.send({
             from:
-              `US COURIER Support <support@uscourier.app>`,
+              `US COURIER MAILBOX <support@uscourier.app>`,
             to: [
               process.env.CONTACT_RECIPIENT ||
               "contact@uscourier.app"
@@ -8443,7 +8443,8 @@ async function startServer() {
     console.log(`Environment: ${NODE_ENV}`);
     console.log("Database: Supabase PostgreSQL");
     console.log("Live URL: https://uscourier.app");
-console.log("Admin Portal: https://uscourier.app/admin");
+    console.log("Admin Portal: https://uscourier.app/admin");
+    console.log("Mail Portal: https://uscourier.app/mail");
   });
 
   const shutdown = async (signal) => {

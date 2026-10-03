@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 760 180"
+     role="img"
+     aria-labelledby="title desc">
+  <title id="title">USCOURIER</title>
+  <desc id="desc">USCOURIER professional courier and logistics logo</desc>
+
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Parcel / forward-motion symbol -->
+  <g transform="translate(22 25)">
+    <path
+      d="M68 15 L126 46 L126 111 L68 142 L10 111 L10 46 Z"
+      fill="#FFFFFF"
+      stroke="url(#sky)"
+      stroke-width="10"
+      stroke-linejoin="round"/>
+
+    <path
+      d="M10 46 L68 78 L126 46"
+      fill="none"
+      stroke="#38BDF8"
+      stroke-width="10"
+      stroke-linejoin="round"/>
+
+    <path
+      d="M68 78 L68 142"
+      fill="none"
+      stroke="#D4AF37"
+      stroke-width="10"/>
+
+    <!-- Directional delivery arrow -->
+    <path
+      d="M42 94 L82 94"
+      fill="none"
+      stroke="#0284C7"
+      stroke-width="10"
+      stroke-linecap="round"/>
+
+    <path
+      d="M72 82 L86 94 L72 106"
+      fill="none"
+      stroke="#0284C7"
+      stroke-width="10"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text
+    x="185"
+    y="88"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="62"
+    font-weight="800"
+    letter-spacing="2"
+    fill="#0F172A">
+    USCOURIER
+  </text>
+
+  <rect x="188" y="105" width="330" height="4" rx="2" fill="#D4AF37"/>
+
+  <text
+    x="188"
+    y="137"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="20"
+    font-weight="600"
+    letter-spacing="4"
+    fill="#475569">
+    COURIER • LOGISTICS • DELIVERY
+  </text>
+</svg>

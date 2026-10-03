@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 180 180"
+     role="img"
+     aria-label="USCOURIER">
+  <rect width="180" height="180" rx="36" fill="#FFFFFF"/>
+  <path
+    d="M90 22 L148 54 L148 126 L90 158 L32 126 L32 54 Z"
+    fill="#FFFFFF"
+    stroke="#38BDF8"
+    stroke-width="12"
+    stroke-linejoin="round"/>
+  <path
+    d="M32 54 L90 87 L148 54"
+    fill="none"
+    stroke="#38BDF8"
+    stroke-width="12"
+    stroke-linejoin="round"/>
+  <path
+    d="M90 87 L90 158"
+    fill="none"
+    stroke="#D4AF37"
+    stroke-width="12"/>
+  <path
+    d="M58 108 L105 108"
+    fill="none"
+    stroke="#0284C7"
+    stroke-width="12"
+    stroke-linecap="round"/>
+  <path
+    d="M95 93 L111 108 L95 123"
+    fill="none"
+    stroke="#0284C7"
+    stroke-width="12"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+</svg>

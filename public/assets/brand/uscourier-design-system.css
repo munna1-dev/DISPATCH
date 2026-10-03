@@ -1,0 +1,263 @@
+:root {
+  /* ========================================================
+     USCOURIER OFFICIAL BRAND
+     Sky Blue + White + Royal Gold
+     ======================================================== */
+
+  --brand-sky: #38BDF8;
+  --brand-sky-dark: #0284C7;
+  --brand-sky-deep: #0369A1;
+  --brand-sky-light: #E0F2FE;
+  --brand-sky-soft: #F0F9FF;
+
+  --brand-gold: #D4AF37;
+  --brand-gold-dark: #A67C00;
+  --brand-gold-light: #F8E7A1;
+  --brand-gold-soft: #FFF9E6;
+
+  --brand-white: #FFFFFF;
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-on-brand: #FFFFFF;
+
+  --surface: #F8FAFC;
+  --surface-alt: #F1F5F9;
+  --border: #E2E8F0;
+  --border-brand: #BAE6FD;
+
+  --success: #16A34A;
+  --warning: #D97706;
+  --error: #DC2626;
+  --info: #0284C7;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, .08);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, .10);
+  --shadow-lg: 0 18px 45px rgba(15, 23, 42, .13);
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 220ms ease;
+
+  --brand-font:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* ============================================================
+   GLOBAL BRANDING
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--brand-font);
+  color: var(--text-primary);
+  background: var(--brand-white);
+}
+
+a {
+  color: var(--brand-sky-dark);
+}
+
+a:hover {
+  color: var(--brand-sky-deep);
+}
+
+button,
+.btn,
+button[type="submit"],
+input[type="submit"] {
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, .35);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   STANDARD BRAND COMPONENTS
+   ============================================================ */
+
+.usc-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.usc-brand-logo {
+  width: 42px;
+  height: 42px;
+  display: block;
+  object-fit: contain;
+}
+
+.usc-brand-name {
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.usc-brand-tagline {
+  color: var(--text-secondary);
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.usc-brand-primary {
+  background: var(--brand-sky);
+  color: var(--brand-white);
+  border-color: var(--brand-sky);
+}
+
+.usc-brand-primary:hover {
+  background: var(--brand-sky-dark);
+  border-color: var(--brand-sky-dark);
+}
+
+.usc-brand-secondary {
+  background: var(--brand-white);
+  color: var(--brand-sky-dark);
+  border: 1px solid var(--brand-sky);
+}
+
+.usc-brand-gold {
+  background: var(--brand-gold);
+  color: var(--text-primary);
+  border-color: var(--brand-gold);
+}
+
+.usc-brand-card {
+  background: var(--brand-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.usc-brand-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.usc-mail-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usc-mail-avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--brand-white);
+  border: 1px solid var(--border-brand);
+}
+
+.usc-mail-name {
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.usc-mail-subtitle {
+  color: var(--text-secondary);
+  font-size: .8rem;
+}
+
+/* ============================================================
+   TRACKING
+   ============================================================ */
+
+.usc-tracking-progress {
+  background: var(--brand-sky);
+}
+
+.usc-tracking-active {
+  color: var(--brand-sky-dark);
+}
+
+.usc-tracking-premium {
+  color: var(--brand-gold-dark);
+  background: var(--brand-gold-soft);
+  border-color: var(--brand-gold-light);
+}
+
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
+
+.usc-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.usc-status-info {
+  color: var(--brand-sky-deep);
+  background: var(--brand-sky-light);
+}
+
+.usc-status-success {
+  color: #166534;
+  background: #DCFCE7;
+}
+
+.usc-status-warning {
+  color: #92400E;
+  background: #FEF3C7;
+}
+
+.usc-status-error {
+  color: #991B1B;
+  background: #FEE2E2;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .usc-brand-logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .usc-brand-tagline {
+    display: none;
+  }
+
+  .usc-mail-avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+}

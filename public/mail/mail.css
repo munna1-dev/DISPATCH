@@ -528,7 +528,7 @@ body {
   }
 }
 
-.uc-mail-brand{display:flex;align-items:center;gap:.65rem}.uc-mail-brand-mark{width:38px;height:38px;flex:0 0 38px;display:inline-flex;align-items:center;justify-content:center}.uc-mail-brand-mark svg{width:100%;height:100%;display:block}.uc-mail-brand-mark rect{fill:#111827;stroke:#c9a227;stroke-width:2}.uc-mail-brand-mark path{fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}.uc-mail-brand-mark path:first-of-type{fill:#b30000;stroke:#fff;stroke-width:1.8}.uc-mail-brand-mark circle{fill:#c9a227;stroke:#111827;stroke-width:1.5}.uc-mail-brand-copy{display:flex;flex-direction:column;gap:.16rem}.uc-mail-brand-copy strong{color:#f5f7fa;font-size:.9rem;font-weight:900;letter-spacing:.07em}.uc-mail-brand-copy small{color:#c9a227;font-size:.52rem;font-weight:800;letter-spacing:.12em}
+.uc-mail-brand{display:flex;align-items:center;gap:.65rem}.uc-mail-brand-mark{width:38px;height:38px;flex:0 0 38px;display:inline-flex;align-items:center;justify-content:center}.uc-mail-brand-mark svg{width:100%;height:100%;display:block}.uc-mail-brand-mark rect{fill:#111827;stroke:#D4AF37;stroke-width:2}.uc-mail-brand-mark path{fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}.uc-mail-brand-mark path:first-of-type{fill:#38BDF8;stroke:#fff;stroke-width:1.8}.uc-mail-brand-mark circle{fill:#D4AF37;stroke:#111827;stroke-width:1.5}.uc-mail-brand-copy{display:flex;flex-direction:column;gap:.16rem}.uc-mail-brand-copy strong{color:#f5f7fa;font-size:.9rem;font-weight:900;letter-spacing:.07em}.uc-mail-brand-copy small{color:#D4AF37;font-size:.52rem;font-weight:800;letter-spacing:.12em}
 
 .mail-login{
   min-height:100vh;
@@ -560,7 +560,7 @@ body {
 
 .mail-login-eyebrow{
   margin:0 0 8px;
-  color:#c9a227;
+  color:#D4AF37;
   font-size:.72rem;
   font-weight:800;
   letter-spacing:.12em;
@@ -610,7 +610,7 @@ body {
 }
 
 .mail-login-field input:focus{
-  border-color:#c9a227;
+  border-color:#D4AF37;
   box-shadow:0 0 0 3px rgba(201,162,39,.12);
 }
 
@@ -629,7 +629,7 @@ body {
   transform:translateY(-50%);
   border:0;
   background:transparent;
-  color:#c9a227;
+  color:#D4AF37;
   font-size:.7rem;
   font-weight:900;
   cursor:pointer;
@@ -641,7 +641,7 @@ body {
   padding:14px 18px;
   border:0;
   border-radius:11px;
-  background:#c9a227;
+  background:#D4AF37;
   color:#111827;
   font-weight:900;
   cursor:pointer;
@@ -1463,7 +1463,7 @@ body {
   --ucm-blue: #173b76;
   --ucm-blue-dark: #102f61;
   --ucm-blue-soft: #eaf1ff;
-  --ucm-gold: #c9a227;
+  --ucm-gold: #D4AF37;
   --ucm-bg: #f5f7fa;
   --ucm-surface: #ffffff;
   --ucm-surface-soft: #f8fafc;
@@ -1719,4 +1719,51 @@ textarea:focus-visible,
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
   }
+}
+
+
+/* ============================================================
+   USCOURIER MAILBOX BRAND IDENTITY
+============================================================ */
+
+.mail-brand-mark {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  overflow:hidden;
+}
+
+.mail-brand-mark img {
+  display:block;
+  width:44px;
+  height:44px;
+  object-fit:contain;
+}
+
+.brand {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.brand > img {
+  display:block;
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  flex:0 0 36px;
+}
+
+.brand > span {
+  display:inline-block;
+}
+
+.uc-mail-brand-logo {
+  display:block;
+  width:38px;
+  height:38px;
+  object-fit:contain;
 }
