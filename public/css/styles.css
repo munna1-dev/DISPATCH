@@ -6379,4 +6379,640 @@ body.admin-message-reader-open {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-}\n
+}
+/* ============================================================
+   USCOURIER ADMIN — RESPONSIVE HARDENING V2
+   Extends the existing admin responsive system without
+   replacing page-specific layouts or operational table widths.
+   ============================================================ */
+
+.admin-portal-shell,
+.admin-portal-main,
+.admin-sidebar,
+.admin-sidebar-nav,
+.admin-sidebar-user,
+.admin-sidebar-footer {
+  min-width: 0;
+}
+
+.admin-portal-main {
+  overflow-x: hidden;
+}
+
+.admin-portal-main > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-portal-main img,
+.admin-portal-main video,
+.admin-portal-main iframe {
+  max-width: 100%;
+}
+
+.admin-portal-main input,
+.admin-portal-main select,
+.admin-portal-main textarea,
+.admin-portal-main button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-portal-main .card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-portal-main table {
+  max-width: 100%;
+}
+
+.admin-portal-main .table-responsive,
+.admin-portal-main .admin-parcel-table-wrap,
+.admin-portal-main .admin-message-table-wrap,
+.admin-portal-main .admin-recent-shipments {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-portal-main th,
+.admin-portal-main td {
+  overflow-wrap: anywhere;
+}
+
+/* Compact desktop: preserve the existing layout while reducing
+   unnecessary outer spacing at medium desktop widths. */
+@media (max-width: 1200px) {
+  .admin-portal-main {
+    overflow-x: hidden;
+  }
+
+  .admin-dashboard-identity,
+  .admin-command-center,
+  .admin-parcel-workspace,
+  .admin-tracking-workspace,
+  .admin-staff-management {
+    max-width: 100%;
+  }
+
+  .admin-command-header,
+  .admin-parcel-workspace-header,
+  .admin-tracking-card-header {
+    min-width: 0;
+  }
+}
+
+/* Tablet: controls may wrap, but operational tables remain
+   horizontally scrollable inside their own containers. */
+@media (max-width: 900px) {
+  .admin-portal-main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .admin-command-header,
+  .admin-parcel-workspace-header,
+  .admin-tracking-card-header,
+  .admin-message-toolbar {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .admin-command-header > *,
+  .admin-parcel-workspace-header > *,
+  .admin-tracking-card-header > *,
+  .admin-message-toolbar > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-parcel-toolbar {
+    min-width: 0;
+  }
+
+  .admin-parcel-toolbar > * {
+    min-width: 0;
+  }
+
+  .admin-view-user-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .admin-view-user-role {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .admin-tracking-overview-grid,
+  .admin-tracking-content-grid {
+    min-width: 0;
+  }
+}
+
+/* Mobile: compact, touch-friendly controls and full-width
+   content without changing the existing mobile drawer. */
+@media (max-width: 640px) {
+  .admin-portal-main {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .admin-dashboard-identity,
+  .admin-command-center,
+  .admin-parcel-workspace,
+  .admin-tracking-workspace,
+  .admin-staff-management {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .admin-command-header,
+  .admin-parcel-workspace-header,
+  .admin-tracking-card-header {
+    align-items: flex-start;
+  }
+
+  .admin-command-header button,
+  .admin-parcel-workspace-header button,
+  .admin-tracking-card-header button,
+  .admin-message-toolbar button {
+    min-height: 42px;
+  }
+
+  .admin-parcel-toolbar,
+  .admin-message-toolbar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .admin-parcel-toolbar input,
+  .admin-parcel-toolbar select,
+  .admin-message-toolbar input,
+  .admin-message-toolbar select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-view-user-hero {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .admin-view-user-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .admin-view-user-role {
+    grid-column: auto;
+    justify-self: start;
+  }
+
+  .admin-view-user-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-staff-summary {
+    min-width: 0;
+  }
+
+  .admin-staff-table {
+    min-width: 0;
+  }
+
+  .admin-staff-modal-card {
+    width: min(100%, 680px);
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+    overflow-y: auto;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 400px) {
+  .admin-view-user-card {
+    padding: 1rem;
+  }
+
+  .admin-command-header,
+  .admin-parcel-workspace-header,
+  .admin-tracking-card-header {
+    gap: .65rem;
+  }
+
+  .admin-command-header button,
+  .admin-parcel-workspace-header button,
+  .admin-tracking-card-header button {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   USCOURIER PLATFORM CONFIGURATION
+   Responsive configuration workspace
+   Frontend-only UI; existing APIs/backend preserved.
+   ============================================================ */
+
+.platform-config-shell {
+  width: 100%;
+  max-width: 1500px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 1.25rem 0 3rem;
+}
+
+.platform-config-shell,
+.platform-config-shell * {
+  box-sizing: border-box;
+}
+
+.platform-config-shell button,
+.platform-config-shell input,
+.platform-config-shell select,
+.platform-config-shell textarea {
+  max-width: 100%;
+}
+
+.platform-config-nav {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  margin-bottom: 1rem;
+  padding: .35rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+}
+
+.platform-config-nav [data-platform-section] {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: .55rem .8rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.platform-config-nav [data-platform-section]:hover {
+  background: rgba(255,255,255,.045);
+  color: var(--text-main);
+}
+
+.platform-config-nav [data-platform-section].active {
+  border-color: rgba(212,175,55,.22);
+  background: rgba(212,175,55,.09);
+  color: var(--accent-gold, #d4af37);
+}
+
+.platform-config-section {
+  width: 100%;
+  min-width: 0;
+}
+
+.platform-config-section[hidden] {
+  display: none !important;
+}
+
+.platform-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  min-width: 0;
+}
+
+.platform-config-grid > * {
+  min-width: 0;
+}
+
+.platform-config-wide {
+  grid-column: 1 / -1;
+}
+
+.platform-config-section .admin-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.platform-config-section .admin-panel-heading,
+.platform-config-section .admin-panel-heading > * {
+  min-width: 0;
+}
+
+.platform-config-section .admin-panel-kicker {
+  overflow-wrap: anywhere;
+}
+
+.platform-config-section .form-control {
+  width: 100%;
+  min-width: 0;
+}
+
+.platform-config-message,
+.platform-config-notice,
+.platform-config-error {
+  width: 100%;
+  min-width: 0;
+  margin: .75rem 0;
+  padding: .75rem .9rem;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  font-size: .82rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.platform-config-message.is-info {
+  background: rgba(59,130,246,.08);
+  border-color: rgba(59,130,246,.2);
+}
+
+.platform-config-message.is-success {
+  background: rgba(46,204,113,.08);
+  border-color: rgba(46,204,113,.22);
+}
+
+.platform-config-message.is-error,
+.platform-config-error {
+  background: rgba(231,76,60,.08);
+  border-color: rgba(231,76,60,.24);
+  color: #f1a3a3;
+}
+
+.platform-config-notice {
+  background: rgba(212,175,55,.06);
+  border-color: rgba(212,175,55,.18);
+}
+
+.platform-config-muted {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.platform-staff-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, .72fr) minmax(0, 1.5fr);
+  gap: 1rem;
+  min-width: 0;
+}
+
+.platform-staff-list,
+.platform-staff-profile {
+  min-width: 0;
+}
+
+.platform-staff-list {
+  max-height: 650px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: .15rem;
+}
+
+.platform-staff-item {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: .7rem;
+  padding: .75rem;
+  margin-bottom: .45rem;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.platform-staff-item:hover {
+  background: rgba(255,255,255,.045);
+  border-color: rgba(255,255,255,.12);
+}
+
+.platform-staff-item.active {
+  border-color: rgba(212,175,55,.3);
+  background: rgba(212,175,55,.07);
+}
+
+.platform-staff-item > * {
+  min-width: 0;
+}
+
+.platform-staff-item strong,
+.platform-staff-item small,
+.platform-staff-item span {
+  overflow-wrap: anywhere;
+}
+
+.platform-staff-item strong {
+  display: block;
+  margin-bottom: .15rem;
+}
+
+.platform-staff-item small {
+  display: block;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.platform-staff-profile-card {
+  min-width: 0;
+  padding: 1rem;
+  margin-bottom: .85rem;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+}
+
+.platform-staff-profile-card strong,
+.platform-staff-profile-card span,
+.platform-staff-profile-card small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.platform-staff-profile-card strong {
+  font-size: 1rem;
+}
+
+.platform-staff-profile-card span {
+  margin-top: .2rem;
+  color: var(--text-muted);
+}
+
+.platform-staff-profile-card small {
+  margin-top: .55rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.platform-permissions {
+  min-width: 0;
+}
+
+.platform-permission-group {
+  min-width: 0;
+  margin-top: 1rem;
+  padding: .9rem;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 11px;
+  background: rgba(255,255,255,.018);
+}
+
+.platform-permission-group h4 {
+  margin: 0 0 .7rem;
+  font-size: .78rem;
+  color: var(--text-main);
+}
+
+.platform-permission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  min-width: 0;
+}
+
+.platform-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  min-width: 0;
+  padding: .7rem;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 9px;
+  background: rgba(255,255,255,.018);
+  cursor: pointer;
+}
+
+.platform-toggle:hover {
+  background: rgba(255,255,255,.04);
+}
+
+.platform-toggle input {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin-top: .12rem;
+}
+
+.platform-toggle > span {
+  min-width: 0;
+}
+
+.platform-toggle strong,
+.platform-toggle small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.platform-toggle strong {
+  font-size: .78rem;
+  line-height: 1.35;
+}
+
+.platform-toggle small {
+  margin-top: .16rem;
+  color: var(--text-muted);
+  font-size: .68rem;
+  line-height: 1.4;
+}
+
+.platform-mail-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .8rem;
+  min-width: 0;
+}
+
+.platform-mail-summary > * {
+  min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  .platform-staff-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .platform-staff-list {
+    max-height: 360px;
+  }
+
+  .platform-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .platform-config-wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .platform-config-shell {
+    padding: 1rem 0 2rem;
+  }
+
+  .platform-config-nav {
+    border-radius: 10px;
+  }
+
+  .platform-permission-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .platform-permission-grid,
+  .platform-mail-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .platform-config-section .admin-panel {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .platform-config-shell {
+    padding-top: .75rem;
+  }
+
+  .platform-config-nav [data-platform-section] {
+    min-height: 42px;
+    padding-inline: .72rem;
+  }
+
+  .platform-staff-item {
+    padding: .7rem;
+  }
+
+  .platform-permission-group {
+    padding: .75rem;
+  }
+
+  .platform-toggle {
+    padding: .65rem;
+  }
+
+  .platform-config-section .btn {
+    width: 100%;
+    min-height: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .platform-config-nav *,
+  .platform-staff-item {
+    scroll-behavior: auto;
+    transition: none !important;
+  }
+}
