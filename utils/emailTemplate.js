@@ -53,7 +53,7 @@ function contactEmailTemplate(name, email, subject, message) {
           <td style="
             padding:22px 28px;
             background:#111827;
-            border-bottom:4px solid #c9a227;
+            border-bottom:4px solid #D4AF37;
           ">
 
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -65,7 +65,7 @@ function contactEmailTemplate(name, email, subject, message) {
                     line-height:42px;
                     text-align:center;
                     background:#111827;
-                    border:2px solid #c9a227;
+                    border:2px solid #D4AF37;
                     border-radius:9px;
                     color:#ffffff;
                     font-size:21px;
@@ -83,7 +83,7 @@ function contactEmailTemplate(name, email, subject, message) {
                   ">US COURIER</div>
 
                   <div style="
-                    color:#c9a227;
+                    color:#D4AF37;
                     font-size:9px;
                     line-height:14px;
                     font-weight:800;
@@ -112,7 +112,7 @@ function contactEmailTemplate(name, email, subject, message) {
               width:48px;
               height:3px;
               margin-top:12px;
-              background:#c9a227;
+              background:#D4AF37;
             "></div>
           </td>
         </tr>
@@ -201,7 +201,7 @@ function contactEmailTemplate(name, email, subject, message) {
               padding:18px;
               background:#ffffff;
               border:1px solid #dfe5ee;
-              border-left:4px solid #c9a227;
+              border-left:4px solid #D4AF37;
               border-radius:8px;
             ">
               ${safeMessage}

@@ -4971,7 +4971,7 @@ body.admin-sidebar-collapsed .admin-nav-count {
   display: grid;
   place-items: center;
   border-radius: 18px;
-  background: linear-gradient(145deg, #c9a227, #8f6d12);
+  background: linear-gradient(145deg, #D4AF37, #8f6d12);
   color: #fff;
   font-size: 1.55rem;
   font-weight: 900;
@@ -5218,7 +5218,7 @@ body.admin-sidebar-collapsed .admin-nav-count {
 
 .uc-brand-mark rect {
   fill: #111827;
-  stroke: #c9a227;
+  stroke: #D4AF37;
   stroke-width: 2;
 }
 
@@ -5237,7 +5237,7 @@ body.admin-sidebar-collapsed .admin-nav-count {
 }
 
 .uc-brand-mark circle {
-  fill: #c9a227;
+  fill: #D4AF37;
   stroke: #111827;
   stroke-width: 1.5;
 }
@@ -7016,3 +7016,255 @@ body.admin-message-reader-open {
     transition: none !important;
   }
 }
+
+/* =========================================================
+   US COURIER — SKY BLUE / WHITE / ROYAL GOLD PUBLIC THEME
+   Incremental brand layer
+   ========================================================= */
+
+:root {
+  --bg-foundation: #ffffff;
+  --bg-secondary: #f7fbff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f9ff;
+  --bg-input: #ffffff;
+
+  --border-color: #d9e7f2;
+  --border-soft: rgba(3,105,161,.14);
+
+  --accent-sky: #38BDF8;
+  --accent-sky-dark: #0284C7;
+  --accent-sky-deep: #0369A1;
+  --accent-sky-light: #E0F2FE;
+
+  --accent-gold: #D4AF37;
+  --accent-gold-hover: #A67C00;
+  --accent-gold-soft: #FFF9E6;
+
+  --text-main: #102A43;
+  --text-muted: #526779;
+  --text-dim: #71879A;
+
+  --shadow-sm: 0 4px 14px rgba(3,105,161,.08);
+  --shadow-md: 0 12px 35px rgba(3,105,161,.12);
+  --shadow-lg: 0 24px 70px rgba(3,105,161,.16);
+}
+
+html {
+  background: var(--bg-foundation);
+}
+
+body {
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(56,189,248,.10),
+      transparent 32rem
+    ),
+    #ffffff;
+  color: var(--text-main);
+}
+
+::selection {
+  background: rgba(56,189,248,.28);
+  color: #102A43;
+}
+
+/* Header */
+
+header {
+  background: rgba(255,255,255,.96);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 14px rgba(3,105,161,.06);
+}
+
+.logo-brand {
+  color: var(--text-main);
+}
+
+.logo-brand span {
+  color: var(--accent-sky-dark);
+}
+
+nav a {
+  color: var(--text-muted);
+}
+
+nav a:hover,
+nav a.active {
+  color: var(--accent-sky-deep);
+  background: var(--accent-sky-light);
+}
+
+/* Hero */
+
+.hero {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3,105,161,.76),
+      rgba(3,105,161,.90)
+    ),
+    url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80')
+    center / cover no-repeat;
+
+  border-bottom-color: var(--border-color);
+  color: #ffffff;
+}
+
+.hero::after {
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(212,175,55,.9),
+      transparent
+    );
+}
+
+.hero p {
+  color: rgba(255,255,255,.88);
+}
+
+/* Cards */
+
+.card {
+  background: #ffffff;
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(56,189,248,.45);
+  box-shadow: var(--shadow-md);
+}
+
+/* Tracking */
+
+.tracking-search-card {
+  background: rgba(255,255,255,.98);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Buttons */
+
+.btn-gold {
+  color: #102A43;
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  box-shadow: 0 4px 16px rgba(212,175,55,.18);
+}
+
+.btn-gold:hover {
+  background: var(--accent-gold-hover);
+  border-color: var(--accent-gold-hover);
+  color: #ffffff;
+}
+
+.btn-outline {
+  color: var(--accent-sky-deep);
+  background: #ffffff;
+  border-color: var(--accent-sky);
+}
+
+.btn-outline:hover {
+  color: #ffffff;
+  border-color: var(--accent-sky-dark);
+  background: var(--accent-sky-dark);
+}
+
+/* Forms */
+
+.form-control {
+  color: var(--text-main);
+  background: #ffffff;
+  border-color: var(--border-color);
+}
+
+.form-control:hover {
+  border-color: rgba(56,189,248,.65);
+}
+
+.form-control:focus {
+  background: #ffffff;
+  border-color: var(--accent-sky-dark);
+  box-shadow: 0 0 0 3px rgba(56,189,248,.16);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-dim);
+}
+
+/* Unified brand mark */
+
+.uc-brand-mark rect {
+  fill: var(--accent-sky-deep);
+  stroke: var(--accent-gold);
+}
+
+.uc-brand-mark path {
+  stroke: #ffffff;
+}
+
+.uc-brand-mark path:first-of-type {
+  fill: var(--accent-sky);
+  stroke: #ffffff;
+}
+
+.uc-brand-mark circle {
+  fill: var(--accent-gold);
+  stroke: var(--accent-sky-deep);
+}
+
+.uc-brand-name {
+  color: var(--text-main);
+}
+
+.uc-brand-copy small {
+  color: var(--text-muted);
+}
+
+.uc-brand--public .uc-brand-name {
+  color: var(--accent-sky-deep);
+}
+
+.uc-brand--public .uc-brand-copy small {
+  color: var(--text-muted);
+}
+
+/* Public-site status / action accents */
+
+.timeline-dot {
+  background: #ffffff;
+  border-color: var(--accent-sky-dark);
+}
+
+.timeline-dot.active {
+  background: var(--accent-sky-dark);
+  box-shadow:
+    0 0 0 4px rgba(56,189,248,.16),
+    0 0 15px rgba(56,189,248,.24);
+}
+
+/* Modal */
+
+.modal-overlay {
+  background: rgba(16,42,67,.62);
+}
+
+/* Public theme utility accents */
+
+a:hover {
+  color: var(--accent-sky-dark);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(56,189,248,.42);
+  outline-offset: 2px;
+}
+
+/* Keep semantic status colors intact:
+   delivered / success, transit, pending / warning, delayed / error. */

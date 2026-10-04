@@ -1765,7 +1765,7 @@ function downloadPublicTrackingQr() {
   card.innerHTML =
     '<h3 style="margin:0 0 6px;">QR Verification</h3>' +
     '<div style="font-size:.75rem;color:#666;">Tracking Number</div>' +
-    '<div style="font-family:monospace;font-weight:700;color:#0b1f3a;margin:5px 0 16px;word-break:break-all;">' +
+    '<div style="font-family:monospace;font-weight:700;color:#0284C7;margin:5px 0 16px;word-break:break-all;">' +
     trackingNumber +
     '</div>' +
     '<div id="public-qr-modal-code" style="display:flex;align-items:center;justify-content:center;min-height:205px;padding:18px;background:#fff;border:2px solid #d9dee7;border-radius:10px;box-sizing:border-box;"></div>' +
