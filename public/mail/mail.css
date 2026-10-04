@@ -1767,3 +1767,167 @@ textarea:focus-visible,
   height:38px;
   object-fit:contain;
 }
+
+/* ============================================================
+   USCOURIER FINAL BRAND NORMALIZATION
+   Sky Blue + White + Royal Gold
+   Visual overrides only — mailbox logic remains unchanged.
+   ============================================================ */
+
+:root {
+  --accent: #38BDF8;
+  --accent-dark: #0284C7;
+  --accent-deep: #0369A1;
+  --accent-soft: #E0F2FE;
+
+  --ucm-blue: #38BDF8;
+  --ucm-blue-dark: #0284C7;
+  --ucm-blue-soft: #E0F2FE;
+  --ucm-gold: #D4AF37;
+  --ucm-bg: #F8FAFC;
+  --ucm-surface: #FFFFFF;
+  --ucm-surface-soft: #F8FAFC;
+  --ucm-border: #E2E8F0;
+  --ucm-text: #0F172A;
+  --ucm-muted: #64748B;
+}
+
+/* Mail application foundation */
+
+.mail-app,
+.mail-shell,
+.mail-layout,
+.mail-main,
+.mail-content {
+  color: #0F172A;
+}
+
+/* Primary mailbox actions */
+
+.mail-login-submit,
+.mail-compose-submit,
+.mail-send-button,
+.mail-primary,
+.mail-action-primary,
+[data-action="send"],
+[data-action="compose"] {
+  background: #38BDF8;
+  border-color: #38BDF8;
+  color: #FFFFFF;
+}
+
+.mail-login-submit:hover,
+.mail-compose-submit:hover,
+.mail-send-button:hover,
+.mail-primary:hover,
+.mail-action-primary:hover,
+[data-action="send"]:hover,
+[data-action="compose"]:hover {
+  background: #0284C7;
+  border-color: #0284C7;
+  color: #FFFFFF;
+}
+
+/* Mail identity / brand accents */
+
+.mail-brand-mark,
+.mail-logo,
+.mail-avatar {
+  border-color: #BAE6FD;
+}
+
+.mail-login-brand strong,
+.mail-brand-name,
+.mail-header-brand strong {
+  color: #0F172A;
+}
+
+.mail-login-eyebrow,
+.mail-brand-accent,
+.mail-header-brand small {
+  color: #0284C7;
+}
+
+/* Active navigation */
+
+.mail-nav a.active,
+.mail-nav button.active,
+.mail-folder.active,
+.mail-sidebar-item.active,
+.mail-nav-item.active {
+  background: #E0F2FE;
+  color: #0369A1;
+  border-color: #BAE6FD;
+}
+
+/* Focus */
+
+.mail-app input:focus,
+.mail-app select:focus,
+.mail-app textarea:focus,
+.mail-login input:focus,
+.mail-compose input:focus,
+.mail-compose textarea:focus {
+  border-color: #38BDF8;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .18);
+}
+
+/* Links */
+
+.mail-app a {
+  color: #0284C7;
+}
+
+.mail-app a:hover {
+  color: #0369A1;
+}
+
+/* Royal Gold premium accents */
+
+.mail-star.active,
+.mail-important.active,
+.mail-premium,
+.mail-gold-accent {
+  color: #A67C00;
+}
+
+.mail-badge-gold,
+.mail-status-gold {
+  background: #FFF9E6;
+  color: #A67C00;
+  border-color: #F8E7A1;
+}
+
+/* Compose / selected controls */
+
+.mail-compose,
+.mail-toolbar .active,
+.mail-toolbar button[aria-pressed="true"] {
+  border-color: #BAE6FD;
+}
+
+.mail-compose-header,
+.mail-toolbar {
+  border-color: #E2E8F0;
+}
+
+/* Accessible keyboard focus */
+
+.mail-app :focus-visible,
+.mail-login :focus-visible {
+  outline: 3px solid rgba(56, 189, 248, .55);
+  outline-offset: 2px;
+}
+
+/* Mobile browser/theme color alignment */
+
+@media (max-width: 700px) {
+  .mail-sidebar {
+    border-right-color: #E2E8F0;
+  }
+}
+
+/* ============================================================
+   END USCOURIER FINAL BRAND NORMALIZATION
+   ============================================================ */
