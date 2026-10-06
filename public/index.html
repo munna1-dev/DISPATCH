@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="stylesheet" href="/assets/brand/uscourier-design-system.css">
-<link rel="icon" type="image/svg+xml" href="/assets/brand/uscourier-icon.svg">
-<link rel="apple-touch-icon" href="/assets/brand/uscourier-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/assets/brand/icons/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/brand/icons/favicon.svg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>US Courier | Global Logistics & Verified Tracking Portal</title>
@@ -35,8 +34,169 @@
   }
   </script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/core@latest/dist/capacitor.js"></script>
-  <link rel="stylesheet" href="/assets/brand/uscourier-site-theme.css">
-<link rel="icon" type="image/svg+xml" href="/assets/brand/icons/favicon.svg"><link rel="stylesheet" href="/assets/brand/uscourier-brand.css"></head>
+
+<link rel="icon" type="image/svg+xml" href="/assets/brand/icons/favicon.svg"><style id="uscourier-tracking-brand-enforcement">
+/* ============================================================
+   USCOURIER TRACKING BRAND ENFORCEMENT
+   Presentation only — tracking logic/API remains unchanged.
+   ============================================================ */
+
+#view-tracking {
+  color: var(--text-primary, #0F172A);
+  font-family: var(--brand-font, Tahoma, Arial, Helvetica, sans-serif);
+}
+
+#view-tracking .card,
+#view-tracking .tracking-card,
+#tracking-results .card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
+}
+
+#view-tracking h1,
+#view-tracking h2,
+#view-tracking h3,
+#view-tracking h4 {
+  color: #0F172A;
+}
+
+#view-tracking .public-eyebrow,
+#view-tracking .eyebrow {
+  color: #0284C7;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+#view-tracking .btn-primary,
+#view-tracking .btn-primary:hover,
+#view-tracking button[type="submit"] {
+  background: #38BDF8;
+  border-color: #38BDF8;
+  color: #FFFFFF;
+}
+
+#view-tracking .btn-primary:hover,
+#view-tracking button[type="submit"]:hover {
+  background: #0284C7;
+  border-color: #0284C7;
+}
+
+#view-tracking input:focus,
+#view-tracking select:focus,
+#view-tracking textarea:focus {
+  outline: none;
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .18);
+}
+
+#view-tracking .tracking-number,
+#view-tracking [id*="tracking"],
+#view-tracking [id*="status"] {
+  font-family: Tahoma, Arial, Helvetica, sans-serif;
+}
+
+#tracking-results {
+  color: #0F172A;
+}
+
+#tracking-results table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #FFFFFF;
+}
+
+#tracking-results th {
+  background: #F0F9FF;
+  color: #0369A1;
+  font-weight: 800;
+}
+
+#tracking-results td,
+#tracking-results th {
+  border-color: #E2E8F0;
+}
+
+#tracking-results tr:hover td {
+  background: #F8FAFC;
+}
+
+#tracking-results .status-success,
+#tracking-results .status-delivered,
+#tracking-results .delivered {
+  color: #166534;
+}
+
+#tracking-results .status-pending,
+#tracking-results .pending,
+#tracking-results .status-transit,
+#tracking-results .in-transit {
+  color: #0284C7;
+}
+
+#tracking-results .status-delayed,
+#tracking-results .delayed {
+  color: #B45309;
+}
+
+#tracking-results .status-error,
+#tracking-results .error {
+  color: #B91C1C;
+}
+
+#tracking-results .gold,
+#tracking-results .accent-gold {
+  color: #A67C00;
+}
+
+#tracking-results .tracking-progress,
+#tracking-results .progress-bar {
+  background: #E0F2FE;
+}
+
+#tracking-results .tracking-progress > *,
+#tracking-results .progress-bar > * {
+  background: #38BDF8;
+}
+
+#tracking-results .tracking-brand,
+#tracking-results .tracking-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#tracking-results .tracking-brand img,
+#tracking-results .tracking-header-brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+@media (max-width: 700px) {
+  #view-tracking {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  #view-tracking .card,
+  #tracking-results .card {
+    border-radius: 12px;
+  }
+
+  #tracking-results {
+    overflow-x: auto;
+  }
+
+  #tracking-results table {
+    min-width: 620px;
+  }
+}
+</style>
+
+  <link rel="stylesheet" href="/assets/brand/uscourier-master.css">
+</head>
 <body>
 
 <section class="uc-public-logistics-hero" aria-labelledby="uc-logistics-hero-title">
@@ -406,11 +566,11 @@
           <p style="color: var(--text-muted); margin-bottom: 1.5rem;">US Courier operates a multi-modal freight network covering ground, air, and ocean transit routes.</p>
           <div class="grid-2">
             <div>
-              <h4 style="color: var(--accent-gold);">Domestic Ground Express</h4>
+              <h4 style="color: var(--uc-gold);">Domestic Ground Express</h4>
               <p style="font-size: 0.9rem; color: var(--text-muted);">Scheduled time-definite distribution across North American hubs with direct vehicle telemetry.</p>
             </div>
             <div>
-              <h4 style="color: var(--accent-gold);">International Air Cargo</h4>
+              <h4 style="color: var(--uc-gold);">International Air Cargo</h4>
               <p style="font-size: 0.9rem; color: var(--text-muted);">Priority global air gateways facilitating customs clearance and fast transit between US, TW, and EU hubs.</p>
             </div>
           </div>
@@ -460,7 +620,7 @@
             <div class="search-input-group">
               <input type="text" id="page-tracking-input" class="form-control" placeholder="Enter Tracking Waybill Number..." required>
               <button type="submit" class="btn-gold"><span class="icon icon-search"></span> Search</button>
-              <button type="button" onclick="openQrScannerModal('page-tracking-input')" class="btn-outline" style="border-color: var(--accent-gold); color: var(--accent-gold);">
+              <button type="button" onclick="openQrScannerModal('page-tracking-input')" class="btn-outline uc-secondary-button">
                 <span class="icon icon-qr"></span> Scan QR
               </button>
             </div>
@@ -468,16 +628,29 @@
         </div>
 
         <div id="tracking-loading" class="card" style="display: none; text-align: center;">
-          <span class="icon icon-spinner" style="font-size: 2rem; color: var(--accent-gold);"></span>
+          <span class="icon icon-spinner" style="font-size: 2rem; color: var(--uc-gold);"></span>
           <p style="margin-top: 0.5rem; color: var(--text-muted);">Fetching logistics telemetry & verifying signature...</p>
         </div>
 
         <div id="tracking-error" class="card" style="display: none; border-color: var(--status-delayed); color: var(--status-delayed);"></div>
 
         <div id="tracking-results" style="display: none;">
+          <div class="tracking-brand" aria-label="USCOURIER">
+            <img
+              src="/assets/brand/icons/uscourier-mark.svg"
+              alt="USCOURIER"
+              width="42"
+              height="42"
+              loading="eager"
+            >
+            <div>
+              <strong style="display:block;color:#0F172A;font-size:16px;">USCOURIER</strong>
+              <span style="display:block;color:#64748B;font-size:13px;">LOGISTICS &amp; DELIVERY</span>
+            </div>
+          </div>
           <div class="card">
             <div class="console-header">
-              <h3><span class="icon icon-map" style="color: var(--accent-gold);"></span> Operations Map & Live Telemetry</h3>
+              <h3><span class="icon icon-map" style="color: var(--uc-gold);"></span> Operations Map & Live Telemetry</h3>
               <span id="trk-status-badge" class="badge badge-transit">In Transit</span>
             </div>
 
@@ -492,7 +665,7 @@
               </div>
               <div class="telemetry-item">
                 <span class="telemetry-label">Active Facility / Location</span>
-                <span id="tel-current" class="telemetry-val" style="color: var(--accent-gold);">-</span>
+                <span id="tel-current" class="telemetry-val" style="color: var(--uc-gold);">-</span>
               </div>
               <div class="telemetry-item">
                 <span class="telemetry-label">Destination</span>
@@ -532,7 +705,7 @@
               <table style="width:100%;">
                 <tr>
                   <td><strong>Tracking Number:</strong></td>
-                  <td id="trk-number-val" style="font-family:monospace; color:var(--accent-gold);">-</td>
+                  <td id="trk-number-val" style="font-family:Tahoma, Arial, Helvetica, sans-serif; color:var(--uc-gold);">-</td>
                 </tr>
 
                 <tr>
@@ -607,7 +780,7 @@
   <div id="modal-qr-scanner" class="modal-overlay">
     <div class="card" style="max-width: 500px; width: 90%;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h3><span class="icon icon-qr" style="color: var(--accent-gold);"></span> Scan Parcel QR Code</h3>
+        <h3><span class="icon icon-qr" style="color: var(--uc-gold);"></span> Scan Parcel QR Code</h3>
         <button onclick="closeQrScannerModal()" class="btn-outline" style="padding: 0.2rem 0.6rem;">&times;</button>
       </div>
       <div id="qr-reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
@@ -644,7 +817,7 @@
 
 <div class="usc-brand" aria-label="USCOURIER">
   <img class="usc-brand-logo"
-       src="/assets/brand/uscourier-logo.svg"
+       src="/assets/brand/icons/uscourier-logo.svg"
        alt="USCOURIER - Professional Courier and Logistics Services">
 </div>
 

@@ -52,13 +52,13 @@ function emailLayout(title, content) {
   margin:0;
   padding:0;
   width:100%;
-  background:#f3f6fa;
-  color:#172033;
+  background:#F8FAFC;
+  color:#0F172A;
   font-family:Arial,Helvetica,sans-serif;
 ">
 
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-    style="width:100%;margin:0;padding:28px 12px;background:#f3f6fa;">
+    style="width:100%;margin:0;padding:28px 12px;background:#F8FAFC;">
     <tr>
       <td align="center">
 
@@ -67,7 +67,7 @@ function emailLayout(title, content) {
             width:100%;
             max-width:680px;
             background:#ffffff;
-            border:1px solid #dfe5ee;
+            border:1px solid #E2E8F0;
             border-radius:14px;
             overflow:hidden;
           ">
@@ -76,7 +76,7 @@ function emailLayout(title, content) {
           <tr>
             <td style="
               padding:22px 28px;
-              background:#111827;
+              background:#38BDF8;
               border-bottom:4px solid #D4AF37;
             ">
 
@@ -86,7 +86,7 @@ function emailLayout(title, content) {
 
                     <!-- USCOURIER brand logo -->
                     <img
-                      src="${escapeHtml(PUBLIC_APP_URL)}/assets/brand/uscourier-icon.svg"
+                      src="${escapeHtml(PUBLIC_APP_URL)}/assets/brand/icons/uscourier-mark.svg"
                       width="46"
                       height="46"
                       alt="USCOURIER"
@@ -132,7 +132,7 @@ function emailLayout(title, content) {
             <td style="padding:30px 30px 8px 30px;">
 
               <div style="
-                color:#173b76;
+                color:#0284C7;
                 font-size:26px;
                 line-height:34px;
                 font-weight:800;
@@ -154,7 +154,7 @@ function emailLayout(title, content) {
           <tr>
             <td style="
               padding:12px 30px 30px 30px;
-              color:#34445d;
+              color:#334155;
               font-size:15px;
               line-height:1.7;
             ">
@@ -166,12 +166,12 @@ function emailLayout(title, content) {
           <tr>
             <td style="
               padding:22px 30px;
-              background:#f7f9fc;
-              border-top:1px solid #e3e8ef;
+              background:#F8FAFC;
+              border-top:1px solid #E2E8F0;
             ">
 
               <div style="
-                color:#173b76;
+                color:#0284C7;
                 font-size:14px;
                 line-height:20px;
                 font-weight:800;
@@ -181,7 +181,7 @@ function emailLayout(title, content) {
 
               <div style="
                 margin-top:4px;
-                color:#68778c;
+                color:#64748B;
                 font-size:12px;
                 line-height:18px;
               ">
@@ -196,7 +196,7 @@ function emailLayout(title, content) {
                 <a
                   href="${escapeHtml(PUBLIC_APP_URL)}"
                   style="
-                    color:#173b76;
+                    color:#0284C7;
                     font-weight:700;
                     text-decoration:none;
                   "
@@ -208,8 +208,8 @@ function emailLayout(title, content) {
               <div style="
                 margin-top:14px;
                 padding-top:14px;
-                border-top:1px solid #dfe5ee;
-                color:#8793a4;
+                border-top:1px solid #E2E8F0;
+                color:#64748B;
                 font-size:11px;
                 line-height:17px;
               ">
@@ -684,7 +684,7 @@ async function sendPasswordReset({
             display:inline-block;
             padding:12px 20px;
             background:#D4AF37;
-            color:#111827;
+            color:#38BDF8;
             text-decoration:none;
             border-radius:8px;
             font-weight:700;

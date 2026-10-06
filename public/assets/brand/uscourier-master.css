@@ -1,0 +1,5447 @@
+/* ============================================================
+   USCOURIER MASTER DESIGN SYSTEM
+   USCOURIER — LOGISTICS & DELIVERY
+   Authoritative platform-wide visual layer
+   ============================================================ */
+
+:root {
+  --uc-primary: #38BDF8;
+  --uc-primary-dark: #0284C7;
+  --uc-primary-deep: #0369A1;
+  --uc-primary-light: #E0F2FE;
+  --uc-primary-soft: #F0F9FF;
+
+  --uc-gold: #D4AF37;
+  --uc-gold-dark: #A67C00;
+  --uc-gold-light: #F8E7A1;
+  --uc-gold-soft: #FFF9E6;
+
+  --uc-white: #FFFFFF;
+
+  --uc-text: #0F172A;
+  --uc-text-secondary: #334155;
+  --uc-text-muted: #64748B;
+
+  --uc-surface: #F8FAFC;
+  --uc-surface-alt: #F1F5F9;
+
+  --uc-border: #E2E8F0;
+  --uc-border-strong: #CBD5E1;
+  --uc-border-brand: #BAE6FD;
+
+  --uc-success: #16A34A;
+  --uc-warning: #D97706;
+  --uc-error: #DC2626;
+  --uc-info: #0284C7;
+
+  --uc-radius-sm: 8px;
+  --uc-radius-md: 12px;
+  --uc-radius-lg: 16px;
+  --uc-radius-xl: 22px;
+
+  --uc-shadow-sm: 0 1px 3px rgba(15, 23, 42, .08);
+  --uc-shadow-md: 0 8px 24px rgba(15, 23, 42, .10);
+  --uc-shadow-lg: 0 18px 45px rgba(15, 23, 42, .13);
+
+  --uc-font:
+    Tahoma,
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  --uc-transition: 180ms ease;
+
+  /* Legacy compatibility bridge — maps existing application tokens to USCOURIER */
+  --accent-gold: var(--uc-gold);
+  --accent-gold-hover: var(--uc-gold-dark);
+  --accent-gold-soft: var(--uc-gold-soft);
+
+  --accent: var(--uc-primary);
+  --accent-hover: var(--uc-primary-dark);
+  --accent-deep: var(--uc-primary-deep);
+  --accent-soft: var(--uc-primary-light);
+
+  --brand-sky: var(--uc-primary);
+  --brand-sky-dark: var(--uc-primary-dark);
+  --brand-sky-deep: var(--uc-primary-deep);
+  --brand-sky-light: var(--uc-primary-light);
+  --brand-sky-soft: var(--uc-primary-soft);
+
+  --brand-gold: var(--uc-gold);
+  --brand-gold-dark: var(--uc-gold-dark);
+  --brand-gold-light: var(--uc-gold-light);
+  --brand-gold-soft: var(--uc-gold-soft);
+
+  --admin-shell-bg: var(--uc-surface);
+  --admin-sidebar-bg: var(--uc-white);
+  --admin-sidebar-border: var(--uc-border);
+  --admin-sidebar-hover: var(--uc-primary-soft);
+  --admin-sidebar-active: var(--uc-primary-light);
+  --admin-card-bg: var(--uc-white);
+  --admin-border: var(--uc-border);
+  --admin-surface: var(--uc-white);
+  --admin-text: var(--uc-text);
+  --admin-text-secondary: var(--uc-text-secondary);
+  --admin-text-muted: var(--uc-text-muted);
+  --admin-sidebar-width: 252px;
+  --admin-sidebar-collapsed: 76px;
+}
+
+/* ------------------------------------------------------------
+   FOUNDATION
+   ------------------------------------------------------------ */
+
+html {
+  font-family: var(--uc-font);
+  font-size: 13px;
+  color: var(--uc-text);
+  background: var(--uc-white);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--uc-font);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--uc-text);
+  background: var(--uc-white);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--uc-primary-dark);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--uc-primary-deep);
+}
+
+::selection {
+  color: var(--uc-white);
+  background: var(--uc-primary-dark);
+}
+
+/* ------------------------------------------------------------
+   ACCESSIBILITY
+   ------------------------------------------------------------ */
+
+:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, .45);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   BRAND
+   ------------------------------------------------------------ */
+
+.uc-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.uc-brand-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+}
+
+.uc-brand-mark img {
+  display: block;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.uc-brand-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.uc-brand-name {
+  color: var(--uc-text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.uc-brand-copy small {
+  margin-top: 4px;
+  color: var(--uc-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   BUTTONS
+   ------------------------------------------------------------ */
+
+.uc-primary-button,
+.uc-secondary-button,
+.uc-gold-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--uc-radius-md);
+  font-family: var(--uc-font);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  transition:
+    background var(--uc-transition),
+    border-color var(--uc-transition),
+    color var(--uc-transition),
+    box-shadow var(--uc-transition),
+    transform var(--uc-transition);
+}
+
+.uc-primary-button {
+  color: var(--uc-white);
+  background: var(--uc-primary-dark);
+  border: 1px solid var(--uc-primary-dark);
+  box-shadow: var(--uc-shadow-sm);
+}
+
+.uc-primary-button:hover {
+  color: var(--uc-white);
+  background: var(--uc-primary-deep);
+  border-color: var(--uc-primary-deep);
+  transform: translateY(-1px);
+}
+
+.uc-secondary-button {
+  color: var(--uc-primary-deep);
+  background: var(--uc-white);
+  border: 1px solid var(--uc-border-brand);
+}
+
+.uc-secondary-button:hover {
+  color: var(--uc-primary-deep);
+  background: var(--uc-primary-light);
+  border-color: var(--uc-primary);
+}
+
+.uc-gold-button {
+  color: #1F2937;
+  background: var(--uc-gold);
+  border: 1px solid var(--uc-gold);
+}
+
+.uc-gold-button:hover {
+  color: #111827;
+  background: var(--uc-gold-light);
+  border-color: var(--uc-gold-dark);
+}
+
+.uc-primary-button:disabled,
+.uc-secondary-button:disabled,
+.uc-gold-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ------------------------------------------------------------
+   CARDS
+   ------------------------------------------------------------ */
+
+.uc-card,
+.uc-brand-card {
+  background: var(--uc-white);
+  border: 1px solid var(--uc-border);
+  border-radius: var(--uc-radius-lg);
+  box-shadow: var(--uc-shadow-sm);
+}
+
+.uc-card-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--uc-border);
+}
+
+.uc-card-body {
+  padding: 20px;
+}
+
+/* ------------------------------------------------------------
+   BADGES / STATUS
+   ------------------------------------------------------------ */
+
+.uc-badge,
+.uc-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.uc-badge--brand {
+  color: var(--uc-primary-deep);
+  background: var(--uc-primary-light);
+}
+
+.uc-badge--gold {
+  color: var(--uc-gold-dark);
+  background: var(--uc-gold-soft);
+}
+
+.uc-badge--success {
+  color: #166534;
+  background: #DCFCE7;
+}
+
+.uc-badge--warning {
+  color: #92400E;
+  background: #FEF3C7;
+}
+
+.uc-badge--error {
+  color: #991B1B;
+  background: #FEE2E2;
+}
+
+/* ------------------------------------------------------------
+   FORMS
+   ------------------------------------------------------------ */
+
+.uc-input,
+.uc-select,
+.uc-textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  color: var(--uc-text);
+  background: var(--uc-white);
+  border: 1px solid var(--uc-border-strong);
+  border-radius: var(--uc-radius-md);
+  transition:
+    border-color var(--uc-transition),
+    box-shadow var(--uc-transition);
+}
+
+.uc-input:focus,
+.uc-select:focus,
+.uc-textarea:focus {
+  outline: none;
+  border-color: var(--uc-primary);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .18);
+}
+
+/* ------------------------------------------------------------
+   TABLES
+   ------------------------------------------------------------ */
+
+.uc-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--uc-white);
+}
+
+.uc-table th {
+  color: var(--uc-text-secondary);
+  background: var(--uc-surface);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.uc-table th,
+.uc-table td {
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--uc-border);
+}
+
+.uc-table tbody tr:hover {
+  background: var(--uc-primary-soft);
+}
+
+/* ------------------------------------------------------------
+   BRAND BAR
+   ------------------------------------------------------------ */
+
+.uc-brand-bar {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--uc-white);
+  border-bottom: 1px solid var(--uc-border);
+  box-shadow: 0 1px 8px rgba(15, 23, 42, .05);
+}
+
+/* ------------------------------------------------------------
+   LOGISTICS HERO
+   ------------------------------------------------------------ */
+
+.uc-public-logistics-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      135deg,
+      var(--uc-primary-soft) 0%,
+      var(--uc-white) 62%,
+      #FFFDF4 100%
+    );
+}
+
+.uc-public-logistics-hero__inner {
+  display: grid;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 64px 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, .9fr);
+  gap: 48px;
+  align-items: center;
+}
+
+.uc-public-logistics-eyebrow {
+  display: inline-flex;
+  margin-bottom: 12px;
+  color: var(--uc-primary-deep);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.uc-public-logistics-copy h1 {
+  max-width: 720px;
+  margin: 0;
+  color: var(--uc-text);
+  font-size: clamp(34px, 5vw, 60px);
+  line-height: 1.04;
+  letter-spacing: -.035em;
+}
+
+.uc-public-logistics-copy p {
+  max-width: 640px;
+  margin: 20px 0 0;
+  color: var(--uc-text-secondary);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.uc-public-logistics-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.uc-public-logistics-visual {
+  position: relative;
+}
+
+.uc-logistics-image-main {
+  display: block;
+  width: 100%;
+  min-height: 360px;
+  object-fit: cover;
+  border-radius: var(--uc-radius-xl);
+  box-shadow: var(--uc-shadow-lg);
+}
+
+.uc-logistics-image-overlay {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  max-width: 230px;
+  padding: 14px;
+  color: var(--uc-white);
+  background: rgba(15, 23, 42, .88);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: var(--uc-radius-lg);
+}
+
+.uc-logistics-image-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.uc-logistics-image-card {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--uc-radius-md);
+}
+
+.uc-public-logistics-trust-strip {
+  display: grid;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.uc-public-logistics-trust-strip > * {
+  padding: 15px;
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--uc-border);
+  border-radius: var(--uc-radius-md);
+}
+
+/* ------------------------------------------------------------
+   ADMIN / PORTAL SURFACES
+   ------------------------------------------------------------ */
+
+.admin-page,
+.admin-shell,
+.admin-layout,
+.portal-shell,
+.customer-shell {
+  color: var(--uc-text);
+  background: var(--uc-surface);
+}
+
+.admin-sidebar,
+.portal-sidebar,
+.customer-sidebar {
+  background: var(--uc-white) !important;
+  border-color: var(--uc-border) !important;
+}
+
+.admin-sidebar a,
+.portal-sidebar a,
+.customer-sidebar a {
+  color: var(--uc-text-secondary);
+}
+
+.admin-sidebar a:hover,
+.portal-sidebar a:hover,
+.customer-sidebar a:hover {
+  color: var(--uc-primary-deep);
+  background: var(--uc-primary-light);
+}
+
+.admin-sidebar a.active,
+.portal-sidebar a.active,
+.customer-sidebar a.active,
+.admin-sidebar .active,
+.portal-sidebar .active,
+.customer-sidebar .active {
+  color: var(--uc-primary-deep) !important;
+  background: var(--uc-primary-light) !important;
+  border-color: var(--uc-primary) !important;
+}
+
+/* ------------------------------------------------------------
+   TRACKING
+   ------------------------------------------------------------ */
+
+.tracking-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 16px;
+}
+
+.tracking-brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.tracking-brand strong {
+  display: block;
+  color: var(--uc-text);
+  font-size: 16px;
+}
+
+.tracking-brand span {
+  display: block;
+  margin-top: 3px;
+  color: var(--uc-text-muted);
+  font-size: 13px;
+}
+
+.tracking-status,
+.shipment-status,
+.status-badge {
+  border-color: var(--uc-border-brand);
+}
+
+.tracking-progress,
+.shipment-progress {
+  background: var(--uc-primary);
+}
+
+/* ------------------------------------------------------------
+   RECEIPTS
+   ------------------------------------------------------------ */
+
+.uc-brand--receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 18px;
+}
+
+.uc-brand--receipt .uc-brand-mark {
+  width: 42px;
+  height: 42px;
+}
+
+.uc-brand--receipt .uc-brand-mark img {
+  width: 42px;
+  height: 42px;
+}
+
+/* ------------------------------------------------------------
+   MOBILE
+   ------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+  .uc-public-logistics-hero__inner {
+    grid-template-columns: 1fr;
+    padding: 48px 20px;
+  }
+
+  .uc-public-logistics-trust-strip {
+    grid-template-columns: 1fr;
+    padding: 0 20px 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  html,
+  body {
+    font-size: 13px;
+  }
+
+  .uc-brand-bar {
+    min-height: 58px;
+    padding: 8px 14px;
+  }
+
+  .uc-public-logistics-hero__inner {
+    padding: 36px 16px;
+  }
+
+  .uc-public-logistics-copy h1 {
+    font-size: 36px;
+  }
+
+  .uc-public-logistics-copy p {
+    font-size: 14px;
+  }
+
+  .uc-public-logistics-actions {
+    flex-direction: column;
+  }
+
+  .uc-public-logistics-actions > * {
+    width: 100%;
+  }
+
+  .uc-logistics-image-main {
+    min-height: 250px;
+  }
+
+  .uc-logistics-image-cards {
+    display: none;
+  }
+
+  .uc-logistics-image-overlay {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    max-width: none;
+  }
+
+  .uc-card-body {
+    padding: 15px;
+  }
+
+  .uc-table {
+    min-width: 620px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* ===== MERGED LEGACY SITE THEME RULES ===== */
+/* Preserved during CSS consolidation. Source: public/assets/brand/uscourier-site-theme.css */
+/* These rules remain here temporarily so existing page behavior is preserved. */
+
+/*
+ * USCOURIER SITE-WIDE BRAND THEME
+ * Sky Blue / White / Royal Gold
+ *
+ * Additive visual layer only.
+ * Do not use this file for authentication, API, database,
+ * mailbox authorization, or application logic.
+ */
+
+:root {
+  --usc-sky: #38BDF8;
+  --usc-sky-dark: #0284C7;
+  --usc-sky-deep: #0369A1;
+  --usc-sky-light: #E0F2FE;
+  --usc-sky-soft: #F0F9FF;
+
+  --usc-gold: #D4AF37;
+  --usc-gold-dark: #A67C00;
+  --usc-gold-light: #F8E7A1;
+  --usc-gold-soft: #FFF9E6;
+
+  --usc-white: #FFFFFF;
+  --usc-ink: #0F172A;
+  --usc-slate: #334155;
+  --usc-muted: #64748B;
+  --usc-border: #CBD5E1;
+  --usc-surface: #F8FAFC;
+}
+
+/* -----------------------------------------------------------
+   Global foundation
+----------------------------------------------------------- */
+
+body {
+  color: var(--usc-ink);
+  background: var(--usc-white);
+}
+
+a {
+  color: var(--usc-sky-dark);
+}
+
+a:hover {
+  color: var(--usc-sky-deep);
+}
+
+/* -----------------------------------------------------------
+   Common interactive controls
+----------------------------------------------------------- */
+
+button,
+.btn,
+.button,
+input[type="submit"],
+input[type="button"],
+input[type="reset"] {
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+button:not(:disabled):hover,
+.btn:not(:disabled):hover,
+.button:not(:disabled):hover,
+input[type="submit"]:not(:disabled):hover,
+input[type="button"]:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* Primary actions */
+
+.btn-primary,
+.button-primary,
+.primary-btn,
+button.primary,
+a.primary-btn {
+  background: var(--usc-sky);
+  border-color: var(--usc-sky);
+  color: var(--usc-white);
+}
+
+.btn-primary:hover,
+.button-primary:hover,
+.primary-btn:hover,
+button.primary:hover,
+a.primary-btn:hover {
+  background: var(--usc-sky-dark);
+  border-color: var(--usc-sky-dark);
+  color: var(--usc-white);
+}
+
+/* Gold emphasis */
+
+.btn-gold,
+.button-gold,
+.gold-btn {
+  background: var(--usc-gold);
+  border-color: var(--usc-gold);
+  color: var(--usc-white);
+}
+
+.btn-gold:hover,
+.button-gold:hover,
+.gold-btn:hover {
+  background: var(--usc-gold-dark);
+  border-color: var(--usc-gold-dark);
+}
+
+/* -----------------------------------------------------------
+   Form controls
+----------------------------------------------------------- */
+
+input,
+select,
+textarea {
+  border-color: var(--usc-border);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--usc-sky);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .18);
+}
+
+/* -----------------------------------------------------------
+   Cards / panels
+----------------------------------------------------------- */
+
+.card,
+.panel,
+.dashboard-card,
+.stat-card,
+.content-card {
+  border-color: var(--usc-border);
+  background: var(--usc-white);
+}
+
+.card:hover,
+.dashboard-card:hover,
+.stat-card:hover {
+  border-color: rgba(56, 189, 248, .55);
+}
+
+/* -----------------------------------------------------------
+   Brand accents
+----------------------------------------------------------- */
+
+.brand-accent,
+.gold-accent,
+.section-accent {
+  color: var(--usc-gold);
+}
+
+.brand-sky,
+.sky-accent {
+  color: var(--usc-sky-dark);
+}
+
+.brand-bg {
+  background: var(--usc-sky);
+  color: var(--usc-white);
+}
+
+.gold-bg {
+  background: var(--usc-gold);
+  color: var(--usc-white);
+}
+
+/* -----------------------------------------------------------
+   Badges
+----------------------------------------------------------- */
+
+.badge-primary,
+.badge-info {
+  background: var(--usc-sky-light);
+  color: var(--usc-sky-deep);
+}
+
+.badge-gold {
+  background: var(--usc-gold-soft);
+  color: var(--usc-gold-dark);
+}
+
+/* -----------------------------------------------------------
+   Focus accessibility
+----------------------------------------------------------- */
+
+:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, .55);
+  outline-offset: 2px;
+}
+
+/* -----------------------------------------------------------
+   USCOURIER brand utility
+----------------------------------------------------------- */
+
+.usc-brand-color {
+  color: var(--usc-sky);
+}
+
+.usc-brand-gold {
+  color: var(--usc-gold);
+}
+
+.usc-brand-surface {
+  background: var(--usc-sky-soft);
+}
+
+.usc-brand-border {
+  border-color: var(--usc-sky);
+}
+
+/* ===========================================================
+   USCOURIER PUBLIC SITE — VISUAL NORMALIZATION
+   =========================================================== */
+
+/* Header / navigation */
+
+header,
+.site-header,
+.public-header,
+.navbar,
+.topbar {
+  border-bottom-color: rgba(56, 189, 248, .22);
+}
+
+header a:hover,
+.site-header a:hover,
+.navbar a:hover {
+  color: var(--usc-sky-dark);
+}
+
+/* Brand / logo treatment */
+
+.uc-brand-name,
+.usc-brand-name {
+  color: var(--usc-ink);
+}
+
+.uc-brand-name strong,
+.usc-brand-name strong {
+  color: var(--usc-sky-dark);
+}
+
+.uc-brand-tagline,
+.usc-brand-tagline {
+  color: var(--usc-muted);
+}
+
+/* Primary navigation actions */
+
+.nav-cta,
+.nav-button,
+.header-cta,
+.cta-button {
+  background: var(--usc-sky);
+  border-color: var(--usc-sky);
+  color: var(--usc-white);
+}
+
+.nav-cta:hover,
+.nav-button:hover,
+.header-cta:hover,
+.cta-button:hover {
+  background: var(--usc-sky-dark);
+  border-color: var(--usc-sky-dark);
+  color: var(--usc-white);
+}
+
+/* Hero sections */
+
+.hero,
+.hero-section,
+.public-hero {
+  background:
+    linear-gradient(
+      180deg,
+      var(--usc-sky-soft) 0%,
+      var(--usc-white) 78%
+    );
+}
+
+.hero h1,
+.hero-section h1,
+.public-hero h1 {
+  color: var(--usc-ink);
+}
+
+.hero h1 strong,
+.hero-section h1 strong,
+.public-hero h1 strong {
+  color: var(--usc-sky-dark);
+}
+
+/* Gold eyebrow / section accents */
+
+.eyebrow,
+.section-eyebrow,
+.section-label {
+  color: var(--usc-gold-dark);
+}
+
+.section-title::after,
+.hero-title::after {
+  background: var(--usc-gold);
+}
+
+/* Feature / service cards */
+
+.feature-card,
+.service-card,
+.tracking-card,
+.info-card {
+  background: var(--usc-white);
+  border: 1px solid var(--usc-border);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
+}
+
+.feature-card:hover,
+.service-card:hover,
+.tracking-card:hover,
+.info-card:hover {
+  border-color: rgba(56, 189, 248, .5);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, .09);
+}
+
+/* Card icons */
+
+.feature-icon,
+.service-icon,
+.card-icon {
+  background: var(--usc-sky-light);
+  color: var(--usc-sky-deep);
+  border-color: rgba(56, 189, 248, .25);
+}
+
+/* Tracking */
+
+.tracking-number,
+.tracking-id,
+.waybill-number {
+  color: var(--usc-sky-deep);
+}
+
+.tracking-status,
+.shipment-status {
+  border-color: rgba(212, 175, 55, .45);
+}
+
+/* Tables */
+
+table thead th {
+  background: var(--usc-sky-soft);
+  color: var(--usc-slate);
+  border-bottom-color: var(--usc-sky);
+}
+
+table tbody tr:hover {
+  background: var(--usc-sky-soft);
+}
+
+/* Forms */
+
+.form-control:focus,
+.form-input:focus,
+.search-input:focus {
+  border-color: var(--usc-sky);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .15);
+}
+
+/* Search / tracking primary action */
+
+.track-btn,
+.track-button,
+.search-btn,
+.search-button {
+  background: var(--usc-sky);
+  border-color: var(--usc-sky);
+  color: var(--usc-white);
+}
+
+.track-btn:hover,
+.track-button:hover,
+.search-btn:hover,
+.search-button:hover {
+  background: var(--usc-sky-dark);
+  border-color: var(--usc-sky-dark);
+}
+
+/* Secondary / gold action */
+
+.secondary-gold,
+.gold-action,
+.receipt-action {
+  background: var(--usc-gold);
+  border-color: var(--usc-gold);
+  color: var(--usc-white);
+}
+
+.secondary-gold:hover,
+.gold-action:hover,
+.receipt-action:hover {
+  background: var(--usc-gold-dark);
+  border-color: var(--usc-gold-dark);
+}
+
+/* Footer */
+
+footer,
+.site-footer {
+  background: var(--usc-ink);
+  color: var(--usc-white);
+  border-top: 3px solid var(--usc-gold);
+}
+
+footer a,
+.site-footer a {
+  color: var(--usc-white);
+}
+
+footer a:hover,
+.site-footer a:hover {
+  color: var(--usc-sky);
+}
+
+/* Mobile navigation */
+
+@media (max-width: 768px) {
+  .hero,
+  .hero-section,
+  .public-hero {
+    background:
+      linear-gradient(
+        180deg,
+        var(--usc-sky-soft) 0%,
+        var(--usc-white) 90%
+      );
+  }
+
+  .nav-cta,
+  .nav-button,
+  .header-cta,
+  .cta-button {
+    min-height: 44px;
+  }
+}
+
+/* Respect reduced-motion preferences */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ===========================================================
+   USCOURIER — PUBLIC SITE PRODUCTION VISUAL UPGRADE
+   Sky Blue / White / Royal Gold
+   Scoped to the public-facing website.
+   =========================================================== */
+
+/* -----------------------------------------------------------
+   Public page foundation
+----------------------------------------------------------- */
+
+.public-home {
+  background: var(--usc-white);
+  color: var(--usc-ink);
+}
+
+.public-home *,
+.public-home *::before,
+.public-home *::after {
+  box-sizing: border-box;
+}
+
+/* -----------------------------------------------------------
+   Public hero
+----------------------------------------------------------- */
+
+.public-home .public-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 620px;
+  background:
+    radial-gradient(
+      circle at 82% 20%,
+      rgba(56,189,248,.22),
+      transparent 28rem
+    ),
+    linear-gradient(
+      135deg,
+      #0369A1 0%,
+      #0284C7 48%,
+      #38BDF8 100%
+    );
+  color: var(--usc-white);
+  border-bottom: 1px solid rgba(212,175,55,.45);
+}
+
+.public-home .public-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3,105,161,.94) 0%,
+      rgba(3,105,161,.72) 52%,
+      rgba(56,189,248,.48) 100%
+    );
+}
+
+.public-home .public-hero-grid {
+  opacity: .16;
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,.18) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.18) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+}
+
+.public-home .public-hero-glow {
+  opacity: .45;
+  background: var(--usc-gold);
+  filter: blur(90px);
+}
+
+.public-home .public-hero-glow-one {
+  background: rgba(212,175,55,.35);
+}
+
+.public-home .public-hero-glow-two {
+  background: rgba(255,255,255,.20);
+}
+
+/* -----------------------------------------------------------
+   Hero content
+----------------------------------------------------------- */
+
+.public-home .public-hero-copy {
+  color: var(--usc-white);
+}
+
+.public-home .public-eyebrow {
+  color: var(--usc-gold-light);
+  letter-spacing: .12em;
+  font-weight: 800;
+}
+
+.public-home .public-hero-copy h1 {
+  color: var(--usc-white);
+  text-shadow: 0 2px 18px rgba(3,105,161,.24);
+}
+
+.public-home .public-hero-copy h1 span {
+  color: var(--usc-gold-light);
+}
+
+.public-home .public-hero-copy > p {
+  color: rgba(255,255,255,.90);
+}
+
+.public-home .public-hero-trust {
+  color: rgba(255,255,255,.86);
+}
+
+.public-home .public-hero-trust span {
+  border-color: rgba(255,255,255,.24);
+  background: rgba(255,255,255,.10);
+}
+
+/* -----------------------------------------------------------
+   Hero buttons
+----------------------------------------------------------- */
+
+.public-home .public-hero-actions .btn-gold,
+.public-home .public-hero-actions .primary-btn {
+  background: var(--usc-gold);
+  border-color: var(--usc-gold);
+  color: #102A43;
+  box-shadow: 0 8px 22px rgba(212,175,55,.24);
+}
+
+.public-home .public-hero-actions .btn-gold:hover,
+.public-home .public-hero-actions .primary-btn:hover {
+  background: var(--usc-gold-light);
+  border-color: var(--usc-gold-light);
+  color: #102A43;
+}
+
+.public-home .public-hero-actions .btn-outline {
+  color: var(--usc-white);
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.65);
+}
+
+.public-home .public-hero-actions .btn-outline:hover {
+  color: var(--usc-sky-deep);
+  background: var(--usc-white);
+  border-color: var(--usc-white);
+}
+
+/* -----------------------------------------------------------
+   Tracking console
+----------------------------------------------------------- */
+
+.public-home .public-hero-console {
+  background: rgba(255,255,255,.98);
+  border: 1px solid rgba(255,255,255,.70);
+  box-shadow:
+    0 24px 70px rgba(3,105,161,.28),
+    0 0 0 1px rgba(212,175,55,.18);
+  color: var(--usc-ink);
+}
+
+.public-home .public-console-top {
+  background: var(--usc-sky-soft);
+  border-bottom-color: var(--usc-border);
+}
+
+.public-home .public-console-top strong {
+  color: var(--usc-sky-deep);
+}
+
+.public-home .public-track-input {
+  background: var(--usc-white);
+  border-color: var(--usc-border);
+}
+
+.public-home .public-track-input:focus-within {
+  border-color: var(--usc-sky);
+  box-shadow: 0 0 0 3px rgba(56,189,248,.16);
+}
+
+.public-home .public-track-input > .icon {
+  color: var(--usc-sky-deep);
+}
+
+.public-home .public-track-input input {
+  color: var(--usc-ink);
+}
+
+.public-home .public-track-input input::placeholder {
+  color: var(--usc-muted);
+}
+
+.public-home .public-track-buttons button {
+  background: var(--usc-sky);
+  border-color: var(--usc-sky);
+  color: var(--usc-white);
+}
+
+.public-home .public-track-buttons button:hover {
+  background: var(--usc-sky-dark);
+  border-color: var(--usc-sky-dark);
+}
+
+.public-home .public-console-foot {
+  color: var(--usc-muted);
+  border-top-color: var(--usc-border);
+}
+
+/* -----------------------------------------------------------
+   Public statistics
+----------------------------------------------------------- */
+
+.public-home .public-home-body {
+  background: var(--usc-white);
+}
+
+.public-home .public-stat-strip {
+  background: var(--usc-white);
+  border: 1px solid var(--usc-border);
+  box-shadow: 0 12px 34px rgba(15,23,42,.06);
+}
+
+.public-home .public-stat {
+  color: var(--usc-slate);
+}
+
+.public-home .public-stat strong {
+  color: var(--usc-sky-deep);
+}
+
+.public-home .public-stat strong span {
+  color: var(--usc-gold-dark);
+}
+
+.public-home .public-stat small {
+  color: var(--usc-muted);
+}
+
+/* -----------------------------------------------------------
+   Section headings
+----------------------------------------------------------- */
+
+.public-home .public-section-heading {
+  color: var(--usc-ink);
+}
+
+.public-home .public-section-heading h2 {
+  color: var(--usc-ink);
+}
+
+.public-home .public-section-heading h2::after {
+  background: var(--usc-gold);
+}
+
+.public-home .public-section-heading > p {
+  color: var(--usc-muted);
+}
+
+/* -----------------------------------------------------------
+   Service cards
+----------------------------------------------------------- */
+
+.public-home .public-service-grid > * {
+  background: var(--usc-white);
+  border: 1px solid var(--usc-border);
+  box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+.public-home .public-service-grid > *:hover {
+  border-color: rgba(56,189,248,.52);
+  box-shadow: 0 16px 38px rgba(3,105,161,.12);
+  transform: translateY(-3px);
+}
+
+.public-home .public-feature-icon {
+  background: var(--usc-sky-light);
+  color: var(--usc-sky-deep);
+  border-color: rgba(56,189,248,.28);
+}
+
+.public-home .public-service-grid h3 {
+  color: var(--usc-ink);
+}
+
+.public-home .public-service-grid p {
+  color: var(--usc-muted);
+}
+
+/* -----------------------------------------------------------
+   Visibility / tracking panel
+----------------------------------------------------------- */
+
+.public-home .public-visibility-panel {
+  background:
+    linear-gradient(
+      135deg,
+      var(--usc-sky-soft),
+      var(--usc-white)
+    );
+  border: 1px solid var(--usc-border);
+  box-shadow: 0 16px 40px rgba(15,23,42,.07);
+}
+
+.public-home .public-visibility-copy h2 {
+  color: var(--usc-ink);
+}
+
+.public-home .public-visibility-copy p {
+  color: var(--usc-muted);
+}
+
+.public-home .public-visibility-lines {
+  border-left-color: rgba(56,189,248,.35);
+}
+
+.public-home .public-visibility-lines div {
+  border-color: var(--usc-border);
+  background: var(--usc-white);
+}
+
+.public-home .public-visibility-lines span {
+  color: var(--usc-sky-deep);
+}
+
+.public-home .public-visibility-lines strong {
+  color: var(--usc-ink);
+}
+
+/* -----------------------------------------------------------
+   Public content cards
+----------------------------------------------------------- */
+
+.public-home + section .card,
+.public-home ~ section .card {
+  background: var(--usc-white);
+  border-color: var(--usc-border);
+  color: var(--usc-ink);
+  box-shadow: 0 10px 30px rgba(15,23,42,.05);
+}
+
+.public-home ~ section .card h2,
+.public-home ~ section .card h3 {
+  color: var(--usc-ink);
+}
+
+.public-home ~ section .card p,
+.public-home ~ section .card label {
+  color: var(--usc-muted);
+}
+
+/* -----------------------------------------------------------
+   Public forms
+----------------------------------------------------------- */
+
+.public-home ~ section .form-control,
+.public-home ~ section input,
+.public-home ~ section select,
+.public-home ~ section textarea {
+  background: var(--usc-white);
+  color: var(--usc-ink);
+  border-color: var(--usc-border);
+}
+
+.public-home ~ section .form-control:focus,
+.public-home ~ section input:focus,
+.public-home ~ section select:focus,
+.public-home ~ section textarea:focus {
+  border-color: var(--usc-sky-dark);
+  box-shadow: 0 0 0 3px rgba(56,189,248,.15);
+}
+
+/* -----------------------------------------------------------
+   Public navigation
+----------------------------------------------------------- */
+
+body:not(.admin-page) > header {
+  background: rgba(255,255,255,.98);
+  border-bottom: 1px solid var(--usc-border);
+  box-shadow: 0 3px 16px rgba(3,105,161,.06);
+}
+
+body:not(.admin-page) > header nav a {
+  color: var(--usc-slate);
+}
+
+body:not(.admin-page) > header nav a:hover,
+body:not(.admin-page) > header nav a.active {
+  color: var(--usc-sky-deep);
+  background: var(--usc-sky-light);
+}
+
+/* -----------------------------------------------------------
+   Public modal
+----------------------------------------------------------- */
+
+#modal-qr-scanner {
+  background: rgba(15,23,42,.62);
+}
+
+#modal-qr-scanner > .card {
+  background: var(--usc-white);
+  border-color: var(--usc-border);
+}
+
+/* -----------------------------------------------------------
+   Accessibility / reduced motion
+----------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .public-home *,
+  .public-home *::before,
+  .public-home *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* -----------------------------------------------------------
+   Mobile public branding
+----------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .public-home .public-hero {
+    min-height: auto;
+  }
+
+  .public-home .public-hero-console {
+    box-shadow: 0 14px 34px rgba(3,105,161,.20);
+  }
+
+  .public-home .public-stat-strip {
+    box-shadow: 0 8px 22px rgba(15,23,42,.05);
+  }
+}
+
+
+/* ===========================================================
+   USCOURIER — FINAL PUBLIC CASCADE
+   Authoritative public-facing brand layer.
+   Sky Blue / White / Royal Gold.
+   =========================================================== */
+
+/* Public header */
+
+body > header {
+  background: #FFFFFF;
+  border-bottom: 1px solid #CBD5E1;
+  box-shadow: 0 2px 14px rgba(3,105,161,.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+body > header .logo-brand {
+  color: #0F172A;
+}
+
+body > header nav a {
+  color: #334155;
+}
+
+body > header nav a:hover,
+body > header nav a.active {
+  color: #0369A1;
+  background: #E0F2FE;
+}
+
+/* Public home must remain white outside the hero */
+
+.public-home {
+  background: #FFFFFF;
+  color: #0F172A;
+}
+
+/* Authoritative public hero */
+
+.public-home .public-hero {
+  background:
+    radial-gradient(
+      circle at 86% 18%,
+      rgba(212,175,55,.18),
+      transparent 24rem
+    ),
+    linear-gradient(
+      135deg,
+      #0369A1 0%,
+      #0284C7 52%,
+      #38BDF8 100%
+    );
+  color: #FFFFFF;
+  border-bottom: 1px solid rgba(212,175,55,.45);
+}
+
+.public-home .public-hero-copy h1,
+.public-home .public-hero-copy > p,
+.public-home .public-hero-trust {
+  color: #FFFFFF;
+}
+
+.public-home .public-hero-copy h1 span,
+.public-home .public-eyebrow {
+  color: #F8E7A1;
+}
+
+/* Authoritative tracking panel */
+
+.public-home .public-hero-console {
+  background: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid rgba(212,175,55,.28);
+  box-shadow:
+    0 24px 65px rgba(3,105,161,.24),
+    0 0 0 1px rgba(255,255,255,.30);
+}
+
+.public-home .public-console-top {
+  background: #F0F9FF;
+  border-bottom: 1px solid #CBD5E1;
+}
+
+.public-home .public-console-top strong {
+  color: #0369A1;
+}
+
+.public-home .public-track-input {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+}
+
+.public-home .public-track-input input {
+  color: #0F172A;
+}
+
+.public-home .public-track-buttons .btn-gold {
+  background: #D4AF37;
+  border-color: #D4AF37;
+  color: #102A43;
+}
+
+.public-home .public-track-buttons .btn-outline {
+  background: #FFFFFF;
+  border-color: #38BDF8;
+  color: #0369A1;
+}
+
+/* Public statistics */
+
+.public-home .public-stat-strip {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+.public-home .public-stat {
+  color: #334155;
+  border-right-color: #E2E8F0;
+}
+
+.public-home .public-stat strong {
+  color: #0369A1;
+}
+
+.public-home .public-stat strong span {
+  color: #A67C00;
+}
+
+/* Public content */
+
+.public-home .public-section-heading h2,
+.public-home .public-service-grid h3,
+.public-home .public-visibility-copy h2,
+.public-home .public-visibility-lines strong {
+  color: #0F172A;
+}
+
+.public-home .public-section-heading > p,
+.public-home .public-service-grid p,
+.public-home .public-visibility-copy p {
+  color: #64748B;
+}
+
+.public-home .public-feature-card,
+.public-home .public-service-grid > * {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+.public-home .public-feature-card:hover,
+.public-home .public-service-grid > *:hover {
+  border-color: rgba(56,189,248,.60);
+  box-shadow: 0 16px 38px rgba(3,105,161,.12);
+}
+
+.public-home .public-feature-icon {
+  background: #E0F2FE;
+  border-color: rgba(56,189,248,.30);
+  color: #0369A1;
+}
+
+.public-home .public-feature-number {
+  color: #94A3B8;
+}
+
+.public-home .public-text-action {
+  color: #A67C00;
+}
+
+.public-home .public-visibility-panel {
+  background:
+    linear-gradient(
+      135deg,
+      #F0F9FF 0%,
+      #FFFFFF 72%
+    );
+  border-color: #CBD5E1;
+  box-shadow: 0 14px 36px rgba(15,23,42,.06);
+}
+
+.public-home .public-visibility-lines div {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+}
+
+.public-home .public-visibility-lines span {
+  color: #A67C00;
+}
+
+/* Public buttons */
+
+.public-home .btn-gold,
+.public-home .public-primary-action {
+  background: #D4AF37;
+  border-color: #D4AF37;
+  color: #102A43;
+}
+
+.public-home .btn-gold:hover,
+.public-home .public-primary-action:hover {
+  background: #A67C00;
+  border-color: #A67C00;
+  color: #FFFFFF;
+}
+
+.public-home .btn-outline,
+.public-home .public-secondary-action {
+  background: #FFFFFF;
+  border-color: rgba(255,255,255,.72);
+  color: #0369A1;
+}
+
+.public-home .btn-outline:hover,
+.public-home .public-secondary-action:hover {
+  background: #E0F2FE;
+  border-color: #E0F2FE;
+  color: #0369A1;
+}
+
+/* Public tracking/services/forms sections */
+
+#view-tracking,
+#view-services,
+#view-contact {
+  background: #FFFFFF;
+  color: #0F172A;
+}
+
+#view-tracking .card,
+#view-services .card,
+#view-contact .card {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 30px rgba(15,23,42,.05);
+}
+
+#view-tracking h1,
+#view-tracking h2,
+#view-tracking h3,
+#view-services h1,
+#view-services h2,
+#view-services h3,
+#view-contact h1,
+#view-contact h2,
+#view-contact h3 {
+  color: #0F172A;
+}
+
+#view-tracking .form-control,
+#view-contact .form-control,
+#view-services .form-control {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+/* Preserve semantic status colors.
+   Do not recolor success/error/warning states. */
+
+/* Public modal */
+
+#modal-qr-scanner {
+  background: rgba(15,23,42,.62);
+}
+
+#modal-qr-scanner > .card {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+/* Mobile */
+
+@media (max-width: 720px) {
+  body > header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .public-home .public-hero-content {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .public-home .public-hero-copy h1 {
+    font-size: clamp(2.5rem, 12vw, 4rem);
+  }
+
+  .public-home .public-service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-home .public-stat-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .public-home .public-stat {
+    border-right: 0;
+    border-bottom: 1px solid #E2E8F0;
+  }
+}
+
+/* ============================================================
+   USCOURIER — ADMIN DASHBOARD BRAND PASS
+   Sky Blue / White / Royal Gold
+   Visual layer only — no application logic changes.
+   ============================================================ */
+
+body:has(.admin-sidebar),
+body:has(.admin-layout),
+body:has(.admin-dashboard) {
+  background: #F0F9FF;
+  color: #0F172A;
+}
+
+/* Admin navigation */
+.admin-sidebar,
+.admin-sidebar .sidebar,
+aside.admin-sidebar {
+  background: #FFFFFF;
+  border-right: 1px solid #CBD5E1;
+  box-shadow: 4px 0 20px rgba(3,105,161,.06);
+}
+
+.admin-sidebar a,
+.admin-sidebar button,
+.admin-nav a,
+.admin-nav button {
+  color: #334155;
+}
+
+.admin-sidebar a:hover,
+.admin-sidebar button:hover,
+.admin-nav a:hover,
+.admin-nav button:hover {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+.admin-sidebar a.active,
+.admin-sidebar button.active,
+.admin-nav a.active,
+.admin-nav button.active {
+  background: #E0F2FE;
+  color: #0369A1;
+  border-color: #38BDF8;
+}
+
+/* Admin header */
+.admin-header,
+.admin-topbar,
+.admin-navbar {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-bottom: 1px solid #CBD5E1;
+  box-shadow: 0 2px 14px rgba(3,105,161,.07);
+}
+
+.admin-header a,
+.admin-topbar a,
+.admin-navbar a {
+  color: #334155;
+}
+
+.admin-header a:hover,
+.admin-topbar a:hover,
+.admin-navbar a:hover {
+  color: #0369A1;
+}
+
+/* Main dashboard surface */
+.admin-main,
+.admin-content,
+.dashboard-content,
+main {
+  color: #0F172A;
+}
+
+/* Cards / panels */
+.admin-card,
+.dashboard-card,
+.card,
+.panel,
+.stat-card,
+.summary-card {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+.admin-card:hover,
+.dashboard-card:hover,
+.stat-card:hover,
+.summary-card:hover {
+  border-color: rgba(56,189,248,.55);
+}
+
+/* Headings */
+.admin-main h1,
+.admin-main h2,
+.admin-main h3,
+.admin-content h1,
+.admin-content h2,
+.admin-content h3,
+.dashboard-content h1,
+.dashboard-content h2,
+.dashboard-content h3 {
+  color: #0F172A;
+}
+
+/* Tables */
+.admin-main table,
+.admin-content table,
+.dashboard-content table {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+.admin-main thead,
+.admin-content thead,
+.dashboard-content thead {
+  background: #F0F9FF;
+  color: #0369A1;
+}
+
+.admin-main th,
+.admin-main td,
+.admin-content th,
+.admin-content td,
+.dashboard-content th,
+.dashboard-content td {
+  border-color: #E2E8F0;
+}
+
+.admin-main tbody tr:hover,
+.admin-content tbody tr:hover,
+.dashboard-content tbody tr:hover {
+  background: #F0F9FF;
+}
+
+/* Forms */
+.admin-main input,
+.admin-main select,
+.admin-main textarea,
+.admin-content input,
+.admin-content select,
+.admin-content textarea {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+.admin-main input:focus,
+.admin-main select:focus,
+.admin-main textarea:focus,
+.admin-content input:focus,
+.admin-content select:focus,
+.admin-content textarea:focus {
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 3px rgba(56,189,248,.16);
+  outline: none;
+}
+
+/* Primary actions */
+.admin-main .btn-gold,
+.admin-content .btn-gold,
+.dashboard-content .btn-gold {
+  background: #D4AF37;
+  border-color: #D4AF37;
+  color: #102A43;
+}
+
+.admin-main .btn-gold:hover,
+.admin-content .btn-gold:hover,
+.dashboard-content .btn-gold:hover {
+  background: #A67C00;
+  border-color: #A67C00;
+  color: #FFFFFF;
+}
+
+/* Secondary actions */
+.admin-main .btn-outline,
+.admin-content .btn-outline,
+.dashboard-content .btn-outline {
+  background: #FFFFFF;
+  border-color: #38BDF8;
+  color: #0369A1;
+}
+
+.admin-main .btn-outline:hover,
+.admin-content .btn-outline:hover,
+.dashboard-content .btn-outline:hover {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+/* Brand mark */
+.admin-sidebar .uc-brand-mark,
+.admin-header .uc-brand-mark,
+.admin-navbar .uc-brand-mark {
+  background: #0369A1;
+  color: #FFFFFF;
+  border-color: #D4AF37;
+}
+
+.admin-sidebar .uc-brand-name,
+.admin-header .uc-brand-name,
+.admin-navbar .uc-brand-name {
+  color: #0F172A;
+}
+
+.admin-sidebar .uc-brand-copy small,
+.admin-header .uc-brand-copy small,
+.admin-navbar .uc-brand-copy small {
+  color: #A67C00;
+}
+
+/* Gold accents */
+.admin-main .accent,
+.admin-content .accent,
+.dashboard-content .accent,
+.admin-main .section-label,
+.admin-content .section-label {
+  color: #A67C00;
+}
+
+/* Keep semantic status colors intact.
+   Do NOT globally recolor success/error/warning indicators. */
+
+/* Responsive */
+@media (max-width: 820px) {
+  .admin-sidebar,
+  .admin-sidebar .sidebar,
+  aside.admin-sidebar {
+    box-shadow: 8px 0 28px rgba(3,105,161,.14);
+  }
+
+  .admin-card,
+  .dashboard-card,
+  .stat-card,
+  .summary-card {
+    box-shadow: 0 8px 24px rgba(15,23,42,.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar *,
+  .admin-header *,
+  .admin-content *,
+  .dashboard-content * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+
+/* ============================================================
+   USCOURIER — FAST-TRACK PLATFORM-WIDE BRAND LAYER
+   Sky Blue / White / Royal Gold
+   Visual styling only.
+   ============================================================ */
+
+/* Shared application surfaces */
+.customer-page,
+.customer-shell,
+.customer-layout,
+.customer-main,
+.tracking-page,
+.tracking-shell,
+.shipment-page,
+.shipment-details,
+.portal-page,
+.portal-shell {
+  background: #F0F9FF;
+  color: #0F172A;
+}
+
+/* Shared headers/navigation */
+.customer-header,
+.customer-topbar,
+.portal-header,
+.tracking-header,
+.shipment-header {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-bottom: 1px solid #CBD5E1;
+}
+
+/* Shared cards */
+.customer-card,
+.portal-card,
+.tracking-card,
+.shipment-card,
+.customer-page .card,
+.portal-page .card,
+.tracking-page .card,
+.shipment-page .card {
+  background: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 10px 30px rgba(15,23,42,.06);
+}
+
+/* Shared headings */
+.customer-page h1,
+.customer-page h2,
+.customer-page h3,
+.portal-page h1,
+.portal-page h2,
+.portal-page h3,
+.tracking-page h1,
+.tracking-page h2,
+.tracking-page h3,
+.shipment-page h1,
+.shipment-page h2,
+.shipment-page h3 {
+  color: #0F172A;
+}
+
+/* Shared navigation */
+.customer-nav a,
+.portal-nav a,
+.tracking-nav a {
+  color: #334155;
+}
+
+.customer-nav a:hover,
+.customer-nav a.active,
+.portal-nav a:hover,
+.portal-nav a.active,
+.tracking-nav a:hover,
+.tracking-nav a.active {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+/* Shared inputs */
+.customer-page input,
+.customer-page select,
+.customer-page textarea,
+.portal-page input,
+.portal-page select,
+.portal-page textarea,
+.tracking-page input,
+.tracking-page select,
+.tracking-page textarea {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+.customer-page input:focus,
+.customer-page select:focus,
+.customer-page textarea:focus,
+.portal-page input:focus,
+.portal-page select:focus,
+.portal-page textarea:focus,
+.tracking-page input:focus,
+.tracking-page select:focus,
+.tracking-page textarea:focus {
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 3px rgba(56,189,248,.16);
+  outline: none;
+}
+
+/* Primary buttons */
+.customer-page .btn-primary,
+.customer-page .btn-gold,
+.portal-page .btn-primary,
+.portal-page .btn-gold,
+.tracking-page .btn-primary,
+.tracking-page .btn-gold,
+.shipment-page .btn-primary,
+.shipment-page .btn-gold {
+  background: #D4AF37;
+  border-color: #D4AF37;
+  color: #102A43;
+}
+
+.customer-page .btn-primary:hover,
+.customer-page .btn-gold:hover,
+.portal-page .btn-primary:hover,
+.portal-page .btn-gold:hover,
+.tracking-page .btn-primary:hover,
+.tracking-page .btn-gold:hover,
+.shipment-page .btn-primary:hover,
+.shipment-page .btn-gold:hover {
+  background: #A67C00;
+  border-color: #A67C00;
+  color: #FFFFFF;
+}
+
+/* Secondary buttons */
+.customer-page .btn-outline,
+.portal-page .btn-outline,
+.tracking-page .btn-outline,
+.shipment-page .btn-outline {
+  background: #FFFFFF;
+  border-color: #38BDF8;
+  color: #0369A1;
+}
+
+/* Shipment/tracking accents */
+.tracking-page .tracking-number,
+.shipment-page .tracking-number,
+.tracking-page .shipment-id {
+  color: #0369A1;
+  font-weight: 700;
+}
+
+.tracking-page .progress,
+.shipment-page .progress {
+  background: #E0F2FE;
+}
+
+.tracking-page .progress-bar,
+.shipment-page .progress-bar {
+  background: #38BDF8;
+}
+
+/* Tables */
+.customer-page table,
+.portal-page table,
+.tracking-page table,
+.shipment-page table {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-color: #CBD5E1;
+}
+
+.customer-page thead,
+.portal-page thead,
+.tracking-page thead,
+.shipment-page thead {
+  background: #F0F9FF;
+  color: #0369A1;
+}
+
+/* Gold labels */
+.customer-page .section-label,
+.portal-page .section-label,
+.tracking-page .section-label,
+.shipment-page .section-label {
+  color: #A67C00;
+}
+
+/* Responsive safety */
+@media (max-width: 720px) {
+  .customer-page,
+  .portal-page,
+  .tracking-page,
+  .shipment-page {
+    overflow-x: hidden;
+  }
+
+  .customer-card,
+  .portal-card,
+  .tracking-card,
+  .shipment-card {
+    border-radius: 14px;
+  }
+}
+
+/* Accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(56,189,248,.55);
+  outline-offset: 2px;
+}
+
+/* IMPORTANT:
+   Semantic success/error/warning colors remain untouched. */
+/* ===== END MERGED LEGACY SITE THEME RULES ===== */
+
+
+/* ===== MERGED LEGACY ADMIN RULES ===== */
+/* Preserved during CSS consolidation. Source: public/assets/brand/uscourier-admin.css */
+/* These rules remain here temporarily so existing page behavior is preserved. */
+
+/*
+ * ============================================================
+ * USCOURIER ADMIN DESIGN SYSTEM
+ * ============================================================
+ *
+ * Final visual layer for the existing Admin Portal.
+ *
+ * Brand:
+ *   Sky Blue  #38BDF8
+ *   Blue      #0284C7
+ *   Deep Blue #0369A1
+ *   Gold      #D4AF37
+ *   White     #FFFFFF
+ *
+ * This file intentionally contains visual overrides only.
+ * Existing JavaScript, APIs, authentication and business
+ * functionality remain untouched.
+ */
+
+:root {
+  --admin-sky: #38BDF8;
+  --admin-sky-dark: #0284C7;
+  --admin-sky-deep: #0369A1;
+  --admin-sky-light: #E0F2FE;
+
+  --admin-gold: #D4AF37;
+  --admin-gold-dark: #A67C00;
+  --admin-gold-light: #F8E7A1;
+
+  --admin-white: #FFFFFF;
+  --admin-bg: #F8FAFC;
+  --admin-surface: #FFFFFF;
+
+  --admin-text: #0F172A;
+  --admin-text-secondary: #334155;
+  --admin-text-muted: #64748B;
+
+  --admin-border: #E2E8F0;
+  --admin-border-strong: #CBD5E1;
+
+  --admin-success: #15803D;
+  --admin-success-bg: #DCFCE7;
+
+  --admin-warning: #A16207;
+  --admin-warning-bg: #FEF3C7;
+
+  --admin-danger: #B91C1C;
+  --admin-danger-bg: #FEE2E2;
+
+  --admin-info-bg: #E0F2FE;
+
+  --admin-radius-sm: 7px;
+  --admin-radius-md: 10px;
+  --admin-radius-lg: 14px;
+
+  --admin-shadow-sm:
+    0 1px 3px rgba(15, 23, 42, .06);
+
+  --admin-shadow-md:
+    0 8px 24px rgba(15, 23, 42, .08);
+
+  --admin-shadow-lg:
+    0 18px 45px rgba(15, 23, 42, .12);
+
+  --admin-font: Tahoma, Arial, Helvetica, sans-serif;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+html,
+body {
+  font-family: var(--admin-font);
+  color: var(--admin-text);
+}
+
+body.admin-standalone-page,
+body.admin-portal-active {
+  background: var(--admin-bg);
+}
+
+.admin-portal-shell,
+.admin-portal-main,
+.admin-sidebar,
+.admin-mobile-header,
+.admin-command-center,
+.admin-message-center,
+.admin-staff-management,
+.admin-tracking-workspace,
+.admin-parcel-workspace {
+  font-family: var(--admin-font);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+
+.admin-sidebar {
+  background: var(--admin-white) !important;
+  color: var(--admin-text) !important;
+  border-right: 1px solid var(--admin-border) !important;
+  box-shadow: 3px 0 18px rgba(15, 23, 42, .045);
+}
+
+.admin-sidebar-brand {
+  min-height: 74px;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  background: var(--admin-white) !important;
+}
+
+.admin-sidebar-logo {
+  color: var(--admin-text) !important;
+}
+
+.admin-sidebar-logo:hover {
+  color: var(--admin-text) !important;
+}
+
+/* ============================================================
+   BRAND MARK
+   ============================================================ */
+
+.uc-brand-mark,
+.admin-dashboard-identity-mark {
+  background: var(--admin-white) !important;
+  color: var(--admin-sky-dark) !important;
+}
+
+.uc-brand-mark svg,
+.admin-dashboard-identity-mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.uc-brand-mark rect,
+.admin-dashboard-identity-mark rect {
+  fill: var(--admin-sky) !important;
+  stroke: var(--admin-sky-dark) !important;
+}
+
+.uc-brand-mark path,
+.admin-dashboard-identity-mark path {
+  stroke: var(--admin-white) !important;
+}
+
+.uc-brand-mark circle,
+.admin-dashboard-identity-mark circle {
+  fill: var(--admin-gold) !important;
+  stroke: none !important;
+}
+
+.uc-brand-name {
+  color: var(--admin-text) !important;
+}
+
+.uc-brand-copy small {
+  color: var(--admin-sky-dark) !important;
+  font-weight: 700;
+}
+
+/* ============================================================
+   SIDEBAR USER
+   ============================================================ */
+
+.admin-sidebar-user {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  background: var(--admin-bg) !important;
+}
+
+.admin-user-avatar {
+  background: var(--admin-sky-light) !important;
+  color: var(--admin-sky-deep) !important;
+  border: 1px solid rgba(56, 189, 248, .30) !important;
+  font-weight: 800;
+}
+
+.admin-user-meta strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-user-meta span {
+  color: var(--admin-text-muted) !important;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+.admin-nav-section {
+  padding: 10px 10px 4px !important;
+}
+
+.admin-nav-section-label {
+  color: var(--admin-text-muted) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: .12em !important;
+}
+
+.admin-nav-item {
+  min-height: 42px !important;
+  margin: 2px 0 !important;
+  border-radius: var(--admin-radius-sm) !important;
+  color: var(--admin-text-secondary) !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  font-family: var(--admin-font) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.admin-nav-item:hover {
+  color: var(--admin-sky-deep) !important;
+  background: var(--admin-sky-light) !important;
+  border-color: rgba(56, 189, 248, .16) !important;
+}
+
+.admin-nav-item.active {
+  color: var(--admin-sky-deep) !important;
+  background: var(--admin-sky-light) !important;
+  border-color: rgba(56, 189, 248, .24) !important;
+  box-shadow: inset 3px 0 0 var(--admin-sky);
+}
+
+.admin-nav-icon {
+  color: currentColor !important;
+  font-size: 15px !important;
+}
+
+.admin-nav-count {
+  background: var(--admin-gold) !important;
+  color: var(--admin-text) !important;
+  border: 0 !important;
+}
+
+/* ============================================================
+   SIDEBAR FOOTER
+   ============================================================ */
+
+.admin-sidebar-footer {
+  border-top: 1px solid var(--admin-border) !important;
+  background: var(--admin-white) !important;
+}
+
+.admin-system-status {
+  color: var(--admin-text-secondary) !important;
+}
+
+.admin-status-dot {
+  background: var(--admin-success) !important;
+  box-shadow: 0 0 0 4px var(--admin-success-bg) !important;
+}
+
+.admin-status-text strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-status-text small {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-sidebar-exit {
+  color: var(--admin-text-secondary) !important;
+  background: transparent !important;
+}
+
+.admin-sidebar-exit:hover {
+  color: var(--admin-danger) !important;
+  background: var(--admin-danger-bg) !important;
+}
+
+/* ============================================================
+   MAIN AREA
+   ============================================================ */
+
+.admin-portal-main {
+  background: var(--admin-bg) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-mobile-header {
+  background: var(--admin-white) !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-mobile-menu {
+  color: var(--admin-sky-deep) !important;
+  background: transparent !important;
+}
+
+.admin-mobile-title strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-mobile-title span {
+  color: var(--admin-sky-dark) !important;
+}
+
+/* ============================================================
+   DASHBOARD IDENTITY
+   ============================================================ */
+
+.admin-dashboard-identity {
+  background:
+    linear-gradient(
+      135deg,
+      var(--admin-white),
+      var(--admin-sky-light)
+    ) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-lg) !important;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.admin-dashboard-identity-copy span {
+  color: var(--admin-sky-dark) !important;
+  font-weight: 800 !important;
+}
+
+.admin-dashboard-identity-copy h1 {
+  color: var(--admin-text) !important;
+}
+
+.admin-dashboard-identity-copy p {
+  color: var(--admin-text-muted) !important;
+}
+
+/* ============================================================
+   EYEBROWS / SECTION TITLES
+   ============================================================ */
+
+.admin-eyebrow,
+.admin-section-eyebrow,
+.admin-section-label,
+.admin-panel-kicker {
+  color: var(--admin-sky-dark) !important;
+  font-weight: 800 !important;
+  letter-spacing: .1em;
+}
+
+.admin-section-title,
+.admin-panel-heading,
+.admin-command-header h2,
+.admin-staff-header h2,
+.admin-tracking-title {
+  color: var(--admin-text) !important;
+}
+
+.admin-section-description,
+.admin-detail-description,
+.admin-tracking-description {
+  color: var(--admin-text-muted) !important;
+}
+
+/* ============================================================
+   KPI CARDS
+   ============================================================ */
+
+.admin-kpi-grid {
+  gap: 14px !important;
+}
+
+.admin-kpi-card {
+  background: var(--admin-white) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-md) !important;
+  box-shadow: var(--admin-shadow-sm) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-kpi-card:hover {
+  border-color: rgba(56, 189, 248, .45) !important;
+  box-shadow: var(--admin-shadow-md) !important;
+  transform: translateY(-1px);
+}
+
+.admin-kpi-icon {
+  background: var(--admin-sky-light) !important;
+  color: var(--admin-sky-deep) !important;
+}
+
+.admin-kpi-label {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-kpi-content strong,
+.admin-kpi-value {
+  color: var(--admin-text) !important;
+}
+
+/* Gold should be an accent, not the entire card */
+
+.admin-kpi-card.admin-kpi-message .admin-kpi-icon {
+  background: rgba(212, 175, 55, .14) !important;
+  color: var(--admin-gold-dark) !important;
+}
+
+/* ============================================================
+   PANELS / CARDS
+   ============================================================ */
+
+.card,
+.admin-command-panel,
+.admin-party-card,
+.admin-route-card,
+.admin-tracking-overview-card,
+.admin-tracking-details-card,
+.admin-tracking-history-card,
+.admin-tracking-map-card,
+.admin-view-user-card,
+.admin-staff-summary-card {
+  background: var(--admin-white) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-md) !important;
+  box-shadow: var(--admin-shadow-sm) !important;
+  color: var(--admin-text) !important;
+}
+
+.card:hover,
+.admin-command-panel:hover {
+  border-color: var(--admin-border-strong) !important;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.btn,
+button.btn {
+  min-height: 40px;
+  border-radius: 8px !important;
+  font-family: var(--admin-font) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.btn-primary,
+.uc-primary-button {
+  background: var(--admin-sky) !important;
+  border-color: var(--admin-sky) !important;
+  color: var(--admin-white) !important;
+}
+
+.btn-primary:hover,
+.uc-primary-button:hover {
+  background: var(--admin-sky-dark) !important;
+  border-color: var(--admin-sky-dark) !important;
+}
+
+.btn-secondary,
+.btn-outline,
+.uc-secondary-button {
+  background: var(--admin-white) !important;
+  border-color: var(--admin-sky) !important;
+  color: var(--admin-sky-deep) !important;
+}
+
+.btn-secondary:hover,
+.btn-outline:hover,
+.uc-secondary-button:hover {
+  background: var(--admin-sky-light) !important;
+  border-color: var(--admin-sky-dark) !important;
+}
+
+.btn-gold,
+.uc-gold-button {
+  background: var(--admin-gold) !important;
+  border-color: var(--admin-gold) !important;
+  color: var(--admin-text) !important;
+}
+
+.btn-gold:hover,
+.uc-gold-button:hover {
+  background: var(--admin-gold-dark) !important;
+  border-color: var(--admin-gold-dark) !important;
+  color: var(--admin-white) !important;
+}
+
+.btn-danger,
+.btn-danger:hover {
+  color: var(--admin-white) !important;
+}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+.form-control,
+input,
+textarea,
+select {
+  font-family: var(--admin-font) !important;
+  font-size: 13px !important;
+  color: var(--admin-text) !important;
+  background: var(--admin-white) !important;
+  border-color: var(--admin-border-strong) !important;
+  border-radius: 8px !important;
+}
+
+.form-control:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--admin-sky) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .16) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--admin-text-muted) !important;
+  opacity: 1 !important;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+
+.table-responsive,
+.admin-message-table-wrap,
+.admin-parcel-table-wrap,
+.admin-staff-table-wrap {
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-md) !important;
+  background: var(--admin-white) !important;
+}
+
+table {
+  color: var(--admin-text) !important;
+}
+
+thead,
+th {
+  background: #F8FAFC !important;
+  color: var(--admin-text-secondary) !important;
+  border-color: var(--admin-border) !important;
+  font-weight: 800 !important;
+}
+
+td {
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text-secondary) !important;
+}
+
+tbody tr:hover {
+  background: var(--admin-sky-light) !important;
+}
+
+/* ============================================================
+   BADGES / STATUS
+   ============================================================ */
+
+.badge,
+.admin-status-badge,
+.admin-tracking-gps-badge {
+  font-family: var(--admin-font) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.admin-live-dot {
+  background: var(--admin-success) !important;
+}
+
+.admin-loading-dot {
+  background: var(--admin-sky) !important;
+}
+
+/* ============================================================
+   MESSAGE CENTER
+   ============================================================ */
+
+.admin-message-center,
+.admin-message-summary-item,
+.admin-message-toolbar {
+  background: var(--admin-white) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.admin-message-tab {
+  color: var(--admin-text-secondary) !important;
+  border-color: transparent !important;
+}
+
+.admin-message-tab:hover {
+  color: var(--admin-sky-deep) !important;
+  background: var(--admin-sky-light) !important;
+}
+
+.admin-message-tab.is-active {
+  color: var(--admin-sky-deep) !important;
+  border-color: var(--admin-sky) !important;
+  background: var(--admin-sky-light) !important;
+}
+
+.admin-message-summary-item.is-unread {
+  border-left-color: var(--admin-sky) !important;
+  background: #F0F9FF !important;
+}
+
+/* ============================================================
+   TRACKING
+   ============================================================ */
+
+.admin-route-marker.admin-route-origin {
+  background: var(--admin-sky) !important;
+}
+
+.admin-route-marker.admin-route-current {
+  background: var(--admin-gold) !important;
+}
+
+.admin-route-marker.admin-route-destination {
+  background: var(--admin-sky-deep) !important;
+}
+
+.admin-route-line {
+  background: linear-gradient(
+    90deg,
+    var(--admin-sky),
+    var(--admin-gold)
+  ) !important;
+}
+
+.admin-tracking-gps-badge {
+  background: var(--admin-sky-light) !important;
+  color: var(--admin-sky-deep) !important;
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+
+.modal-overlay,
+.admin-staff-modal-backdrop {
+  background: rgba(15, 23, 42, .48) !important;
+  backdrop-filter: blur(3px);
+}
+
+.admin-staff-modal-card,
+.admin-parcel-detail-modal,
+.modal-content {
+  background: var(--admin-white) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-lg) !important;
+  box-shadow: var(--admin-shadow-lg) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-modal-close,
+.admin-staff-modal-close {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-modal-close:hover,
+.admin-staff-modal-close:hover {
+  color: var(--admin-danger) !important;
+  background: var(--admin-danger-bg) !important;
+}
+
+/* ============================================================
+   ALERTS
+   ============================================================ */
+
+.admin-operational-alerts,
+.admin-status-empty,
+.admin-tracking-state {
+  border-radius: var(--admin-radius-md) !important;
+}
+
+.admin-tracking-state {
+  background: var(--admin-white) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.admin-tracking-state.admin-tracking-error {
+  background: var(--admin-danger-bg) !important;
+  border-color: #FCA5A5 !important;
+  color: var(--admin-danger) !important;
+}
+
+/* ============================================================
+   DEVELOPER CONSOLE
+   ============================================================ */
+
+[data-admin-nav="developer"] .admin-nav-icon {
+  color: var(--admin-gold-dark) !important;
+}
+
+.admin-developer-console,
+.admin-developer-card,
+.developer-console,
+.developer-card {
+  background: var(--admin-white) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+
+/* ============================================================
+   MAIL
+   ============================================================ */
+
+[data-admin-nav="mail"] .admin-nav-icon {
+  color: var(--admin-sky-dark) !important;
+}
+
+/* ============================================================
+   FOCUS / ACCESSIBILITY
+   ============================================================ */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, .35) !important;
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+  .admin-portal-main {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-portal-main {
+    padding: 12px !important;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-dashboard-identity {
+    border-radius: 10px !important;
+  }
+
+  .admin-dashboard-identity-copy h1 {
+    font-size: 20px !important;
+  }
+
+  .admin-command-header {
+    gap: 12px;
+  }
+
+  .admin-command-meta {
+    width: 100%;
+  }
+
+  .admin-command-meta .btn {
+    width: 100%;
+  }
+
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-mobile-header {
+    min-height: 58px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-portal-main {
+    padding: 10px !important;
+  }
+
+  .admin-dashboard-identity {
+    padding: 14px !important;
+  }
+
+  .admin-dashboard-identity-copy h1 {
+    font-size: 18px !important;
+  }
+
+  .btn,
+  button.btn {
+    min-height: 42px !important;
+  }
+
+  .form-control,
+  input,
+  textarea,
+  select {
+    min-height: 42px;
+  }
+}
+
+/* ============================================================
+   REDUCE MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   USCOURIER ADMIN LOGIN — FINAL BRAND OVERRIDE
+   ============================================================ */
+
+.admin-login-page {
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(56, 189, 248, 0.16),
+      transparent 34rem
+    ),
+    linear-gradient(
+      180deg,
+      #F0F9FF 0%,
+      #FFFFFF 55%,
+      #F8FAFC 100%
+    ) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-login-header {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.06) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.admin-brand-mark {
+  background: var(--admin-sky-light) !important;
+  border: 1px solid rgba(56, 189, 248, 0.42) !important;
+  color: var(--admin-sky-deep) !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08) !important;
+}
+
+.admin-brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.admin-brand-text strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-brand-text span {
+  color: var(--admin-sky-dark) !important;
+}
+
+.admin-security-label {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-security-dot {
+  background: var(--admin-gold) !important;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.35) !important;
+}
+
+.admin-login-main {
+  color: var(--admin-text) !important;
+}
+
+.admin-login-card {
+  background: var(--admin-white) !important;
+  border: 1px solid var(--admin-border) !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12) !important;
+}
+
+.admin-login-heading,
+.admin-login-heading h1,
+.admin-login-heading h2,
+.admin-login-heading strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-login-heading p,
+.admin-login-card p {
+  color: var(--admin-text-muted);
+}
+
+.admin-password-input {
+  background: var(--admin-white) !important;
+  border: 1px solid var(--admin-border-strong) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-password-input::placeholder {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-password-input:focus {
+  border-color: var(--admin-sky) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18) !important;
+  outline: none !important;
+}
+
+.admin-password-toggle {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-password-toggle:hover {
+  color: var(--admin-sky-dark) !important;
+}
+
+.admin-login-submit {
+  background: var(--admin-sky) !important;
+  border-color: var(--admin-sky) !important;
+  color: var(--admin-white) !important;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.18) !important;
+}
+
+.admin-login-submit:hover {
+  background: var(--admin-sky-dark) !important;
+  border-color: var(--admin-sky-dark) !important;
+  color: var(--admin-white) !important;
+}
+
+.admin-login-submit:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.28) !important;
+  outline-offset: 2px;
+}
+
+.admin-login-footer {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-login-card a {
+  color: var(--admin-sky-dark) !important;
+}
+
+.admin-login-card a:hover {
+  color: var(--admin-sky-deep) !important;
+}
+
+@media (max-width: 600px) {
+  .admin-login-header {
+    padding: 12px 16px !important;
+  }
+
+  .admin-login-card {
+    width: calc(100% - 28px) !important;
+    margin: 14px auto !important;
+  }
+}
+
+
+/* ============================================================
+   USCOURIER ADMIN LOGIN — FINAL BRAND OVERRIDE
+   ============================================================ */
+
+.admin-login-page {
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(56, 189, 248, 0.16),
+      transparent 34rem
+    ),
+    linear-gradient(
+      180deg,
+      #F0F9FF 0%,
+      #FFFFFF 55%,
+      #F8FAFC 100%
+    ) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-login-header {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.06) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.admin-brand-mark {
+  background: var(--admin-sky-light) !important;
+  border: 1px solid rgba(56, 189, 248, 0.42) !important;
+  color: var(--admin-sky-deep) !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08) !important;
+}
+
+.admin-brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.admin-brand-text strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-brand-text span {
+  color: var(--admin-sky-dark) !important;
+}
+
+.admin-security-label {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-security-dot {
+  background: var(--admin-gold) !important;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.35) !important;
+}
+
+.admin-login-main {
+  color: var(--admin-text) !important;
+}
+
+.admin-login-card {
+  background: var(--admin-white) !important;
+  border: 1px solid var(--admin-border) !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12) !important;
+}
+
+.admin-login-heading,
+.admin-login-heading h1,
+.admin-login-heading h2,
+.admin-login-heading strong {
+  color: var(--admin-text) !important;
+}
+
+.admin-login-heading p,
+.admin-login-card p {
+  color: var(--admin-text-muted);
+}
+
+.admin-password-input {
+  background: var(--admin-white) !important;
+  border: 1px solid var(--admin-border-strong) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-password-input::placeholder {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-password-input:focus {
+  border-color: var(--admin-sky) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18) !important;
+  outline: none !important;
+}
+
+.admin-password-toggle {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-password-toggle:hover {
+  color: var(--admin-sky-dark) !important;
+}
+
+.admin-login-submit {
+  background: var(--admin-sky) !important;
+  border-color: var(--admin-sky) !important;
+  color: var(--admin-white) !important;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.18) !important;
+}
+
+.admin-login-submit:hover {
+  background: var(--admin-sky-dark) !important;
+  border-color: var(--admin-sky-dark) !important;
+  color: var(--admin-white) !important;
+}
+
+.admin-login-submit:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.28) !important;
+  outline-offset: 2px;
+}
+
+.admin-login-footer {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-login-card a {
+  color: var(--admin-sky-dark) !important;
+}
+
+.admin-login-card a:hover {
+  color: var(--admin-sky-deep) !important;
+}
+
+@media (max-width: 600px) {
+  .admin-login-header {
+    padding: 12px 16px !important;
+  }
+
+  .admin-login-card {
+    width: calc(100% - 28px) !important;
+    margin: 14px auto !important;
+  }
+}
+/* ===== END MERGED LEGACY ADMIN RULES ===== */
+
+
+/* ===== MERGED MAIL APPLICATION RULES ===== */
+/* Preserved during CSS consolidation. Source: public/mail/mail.css */
+/* Existing Mail layout/functionality rules are retained here. */
+
+/* ============================================================
+   USCOURIER MAIL — CORE FOUNDATION
+   ============================================================ */
+
+:root {
+  --border: #dfe5ee;
+  --surface: #ffffff;
+  --surface-alt: #f3f6fa;
+  --muted: #7a8799;
+  --text: #172033;
+  --accent: var(--uc-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Tahoma, Arial, Helvetica, sans-serif;
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+body {
+  padding: 22px;
+}
+
+/* Mail application shell */
+.mail-shell {
+  position: relative;
+  width: min(1380px, 100%);
+  height: calc(100vh - 44px);
+  min-height: 650px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 18px 55px rgba(25, 42, 70, .11);
+}
+
+/* Header */
+.mail-header {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 24px;
+  border-bottom: 1px solid #e7ebf1;
+}
+
+.brand {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -.4px;
+  color: #172b4d;
+  white-space: nowrap;
+}
+
+.brand span {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.search {
+  flex: 1;
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.search input {
+  width: 100%;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid #dce3ec;
+  border-radius: 11px;
+  outline: none;
+  background: #f7f9fc;
+  color: var(--text);
+}
+
+.search input:focus {
+  border-color: #8ba8d5;
+  background: var(--surface);
+}
+
+/* Main application layout */
+.layout {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  height: calc(100% - 72px);
+  min-height: 0;
+}
+
+/* Sidebar */
+.sidebar {
+  position: relative;
+  z-index: 20;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 22px 14px;
+  border-right: 1px solid #e7ebf1;
+  background: #fbfcfe;
+}
+
+.compose {
+  width: 100%;
+  height: 44px;
+  margin-bottom: 20px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(23, 59, 118, .18);
+}
+
+.compose:hover {
+  background: var(--uc-primary-dark);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 3px 0;
+  padding: 11px 12px;
+  border-radius: 9px;
+  color: #58667a;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: #f0f4f9;
+  color: #243a5d;
+}
+
+.nav-item.active {
+  background: var(--uc-primary-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.nav-item b {
+  font-size: 13px;
+}
+
+/* Main workspace */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 24px 28px;
+  overflow: hidden;
+}
+
+.main h2 {
+  margin: 0;
+  font-size: 25px;
+  letter-spacing: -.5px;
+}
+
+.subtitle {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Toolbar */
+.mail-toolbar {
+  flex: 0 0 auto;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  border-bottom: 1px solid #e7ebf1;
+}
+
+.mail-toolbar button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #68768a;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.mail-toolbar button:hover {
+  background: #eef2f7;
+  color: var(--accent);
+}
+
+.mail-toolbar span {
+  flex: 1;
+}
+
+/* Mail workspace */
+.mail-content {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(360px, 1.15fr);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+/* Message-list column */
+.message-list-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
+.list-head {
+  flex: 0 0 auto;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.list-head span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.message-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.message-empty {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Reader */
+.reader {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.reader-thread {
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.reader-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.reader-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 22px;
+}
+
+.reader-empty h3 {
+  margin: 0 0 7px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.reader-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Compose */
+.compose-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 24px;
+  background: rgba(15, 27, 45, .42);
+}
+
+.compose-modal[hidden] {
+  display: none;
+}
+
+.compose-card {
+  width: min(560px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 22px 70px rgba(10, 25, 45, .25);
+}
+
+.compose-head {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5eaf1;
+  background: #f7f9fc;
+}
+
+.compose-head strong {
+  font-size: 14px;
+}
+
+.compose-head button {
+  border: 0;
+  background: transparent;
+  color: #657389;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.compose-card input,
+.compose-card textarea {
+  display: block;
+  width: 100%;
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: 1px solid #e8edf3;
+  outline: 0;
+  color: var(--text);
+}
+
+.compose-card textarea {
+  height: 240px;
+  resize: vertical;
+  border-bottom: 0;
+}
+
+.compose-foot {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5eaf1;
+}
+
+.compose-foot button {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.compose-foot button:first-child {
+  background: var(--accent);
+  color: #fff;
+}
+
+.compose-foot button:last-child {
+  background: #eef2f7;
+  color: #34445d;
+}
+
+.compose-recipient-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compose-recipient-row input {
+  min-width: 0;
+  flex: 1;
+}
+
+.attach-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.attach-btn:hover {
+  background: var(--surface-alt);
+}
+
+/* Generic legacy empty state */
+.empty {
+  min-height: 400px;
+  height: calc(100% - 82px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+  border: 1px dashed #d6dee9;
+  border-radius: 15px;
+  background: #fcfdff;
+  color: #78869a;
+  text-align: center;
+}
+
+.empty strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #34445d;
+  font-size: 16px;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Base mobile sizing; drawer behavior is defined later. */
+@media (max-width: 760px) {
+  body {
+    padding: 0;
+  }
+
+  .mail-shell {
+    width: 100%;
+    height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+    border: 0;
+  }
+
+  .mail-header {
+    height: 64px;
+    gap: 12px;
+    padding: 0 16px;
+  }
+
+  .brand {
+    font-size: 18px;
+  }
+
+  .search {
+    display: none;
+  }
+
+  .layout {
+    height: calc(100% - 64px);
+  }
+
+  .main {
+    padding: 18px 12px;
+  }
+
+  .main h2 {
+    font-size: 22px;
+  }
+
+  .empty {
+    min-height: 420px;
+    height: calc(100% - 70px);
+  }
+}
+
+@media (max-width: 600px) {
+  .compose-modal {
+    padding: 0;
+  }
+
+  .compose-card {
+    width: 100%;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .compose-recipient-row {
+    flex-direction: column;
+  }
+}
+
+.uc-mail-brand{display:flex;align-items:center;gap:.65rem}.uc-mail-brand-mark{width:38px;height:38px;flex:0 0 38px;display:inline-flex;align-items:center;justify-content:center}.uc-mail-brand-mark svg{width:100%;height:100%;display:block}.uc-mail-brand-mark rect{fill:#111827;stroke:#D4AF37;stroke-width:2}.uc-mail-brand-mark path{fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}.uc-mail-brand-mark path:first-of-type{fill:#38BDF8;stroke:#fff;stroke-width:1.8}.uc-mail-brand-mark circle{fill:#D4AF37;stroke:#111827;stroke-width:1.5}.uc-mail-brand-copy{display:flex;flex-direction:column;gap:.16rem}.uc-mail-brand-copy strong{color:#f5f7fa;font-size:.9rem;font-weight:900;letter-spacing:.07em}.uc-mail-brand-copy small{color:#D4AF37;font-size:.52rem;font-weight:800;letter-spacing:.12em}
+
+.mail-login{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at top right, rgba(201,162,39,.12), transparent 34%),
+    linear-gradient(135deg,#0b1220 0%,#111827 52%,#0b1220 100%);
+}
+
+.mail-login-card{
+  width:min(100%,460px);
+  padding:36px;
+  border:1px solid rgba(201,162,39,.28);
+  border-radius:22px;
+  background:rgba(17,24,39,.96);
+  box-shadow:0 24px 70px rgba(0,0,0,.38);
+}
+
+.mail-login-brand{
+  margin-bottom:30px;
+}
+
+.mail-login-heading{
+  margin-bottom:24px;
+}
+
+.mail-login-eyebrow{
+  margin:0 0 8px;
+  color:#D4AF37;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.mail-login-heading h1{
+  margin:0 0 10px;
+  color:#fff;
+  font-size:clamp(1.7rem,5vw,2.2rem);
+  line-height:1.1;
+}
+
+.mail-login-heading p:last-child{
+  margin:0;
+  color:#aeb7c5;
+  line-height:1.6;
+}
+
+.mail-login-field{
+  display:block;
+  margin-bottom:18px;
+}
+
+.mail-login-field>span{
+  display:block;
+  margin-bottom:8px;
+  color:#e5e7eb;
+  font-size:.85rem;
+  font-weight:700;
+}
+
+.mail-login-field input{
+  width:100%;
+  box-sizing:border-box;
+  padding:13px 14px;
+  border:1px solid #374151;
+  border-radius:11px;
+  background:#0b1220;
+  color:#fff;
+  outline:none;
+  font:inherit;
+}
+
+.mail-login-field input::placeholder{
+  color:#687386;
+}
+
+.mail-login-field input:focus{
+  border-color:#D4AF37;
+  box-shadow:0 0 0 3px rgba(201,162,39,.12);
+}
+
+.mail-login-password{
+  position:relative;
+}
+
+.mail-login-password input{
+  padding-right:76px;
+}
+
+.mail-login-password button{
+  position:absolute;
+  top:50%;
+  right:8px;
+  transform:translateY(-50%);
+  border:0;
+  background:transparent;
+  color:#D4AF37;
+  font-size:.7rem;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.mail-login-submit{
+  width:100%;
+  margin-top:4px;
+  padding:14px 18px;
+  border:0;
+  border-radius:11px;
+  background:#D4AF37;
+  color:#111827;
+  font-weight:900;
+  cursor:pointer;
+  transition:transform .15s ease,filter .15s ease;
+}
+
+.mail-login-submit:hover{
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+}
+
+.mail-login-submit:disabled{
+  opacity:.65;
+  cursor:wait;
+  transform:none;
+}
+
+.mail-login-status{
+  min-height:22px;
+  margin-top:14px;
+  color:#aeb7c5;
+  font-size:.82rem;
+  line-height:1.5;
+}
+
+.mail-login-status.error{
+  color:#ff8b8b;
+}
+
+.mail-login-status.success{
+  color:#8fe0ad;
+}
+
+.mail-login-security{
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid rgba(255,255,255,.08);
+  color:#8f9aaa;
+  font-size:.75rem;
+}
+
+.mail-login-security span{
+  color:#8fe0ad;
+}
+
+@media(max-width:520px){
+  .mail-login{
+    padding:16px;
+  }
+
+  .mail-login-card{
+    padding:26px 20px;
+    border-radius:18px;
+  }
+}
+
+[hidden]{display:none !important}
+.reader-thread{
+  height:100%;
+  overflow:auto;
+  background:var(--surface);
+}
+
+.reader-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:18px 20px;
+  border-bottom:1px solid var(--border);
+}
+
+.reader-heading{
+  min-width:0;
+}
+
+.reader-heading h3{
+  margin:0 0 5px;
+  color:var(--text);
+  font-size:17px;
+  line-height:1.3;
+}
+
+.reader-heading span{
+  color:var(--muted);
+  font-size: 13px;
+}
+
+.reader-actions{
+  display:flex;
+  gap:8px;
+  flex-shrink:0;
+}
+
+.reader-action{
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--surface);
+  color:var(--accent);
+  padding:8px 13px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.reader-action:hover{
+  background:var(--surface-alt);
+}
+
+.thread-message{
+  margin:16px 18px;
+  padding:17px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+}
+
+.thread-message.selected{
+  box-shadow:0 5px 18px rgba(25,42,70,.06);
+}
+
+.thread-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:7px;
+}
+
+.thread-sender{
+  min-width:0;
+  color:var(--text);
+  font-size:13px;
+  font-weight:700;
+  overflow-wrap:anywhere;
+}
+
+.thread-meta time{
+  flex-shrink:0;
+  color:var(--muted);
+  font-size: 13px;
+}
+
+.thread-recipients{
+  margin-bottom:14px;
+  color:var(--muted);
+  font-size: 13px;
+  overflow-wrap:anywhere;
+}
+
+.reader-body{
+  color:#303b4d;
+  font-size:14px;
+  line-height:1.7;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.reader-body p{
+  margin:0;
+}
+
+.reader-attachments{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:16px;
+  padding-top:12px;
+  border-top:1px solid #edf0f4;
+}
+
+.reader-attachment{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 9px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:var(--surface-alt);
+  color:#46546a;
+  font-size: 13px;
+}
+
+@media(max-width:760px){
+  .mail-content.reader-open .message-list{
+    display:none;
+  }
+
+  .mail-content.reader-open .reader{
+    display:block;
+  }
+
+  .reader-head{
+    padding:15px;
+  }
+
+  .thread-message{
+    margin:12px;
+    padding:14px;
+  }
+
+  .thread-meta{
+    flex-direction:column;
+    gap:4px;
+  }
+}
+
+
+/* ============================================================
+   MAIL MESSAGE LIST
+   Numbered rows: # | Sender | Subject | Date | Actions
+   ============================================================ */
+
+.message-row-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  width: 100%;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.message-row-wrap:hover {
+  background: #f8fafc;
+}
+
+.message-row-wrap .message-row {
+  width: 100%;
+  min-width: 0;
+}
+
+.message-row {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns:
+    38px
+    minmax(150px, .85fr)
+    minmax(180px, 1.4fr)
+    minmax(125px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.message-row:hover {
+  background: #eef4fc;
+}
+
+.message-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.message-row.unread,
+.message-row-wrap .message-row.unread {
+  font-weight: 700;
+}
+
+.message-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.message-row.unread .message-number {
+  background: #e7efff;
+  color: var(--accent);
+}
+
+.message-sender,
+.message-subject {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-sender {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.message-subject {
+  color: #4c5a6e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.message-row.unread .message-subject {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.message-date {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.message-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 10px 8px 2px;
+  flex-shrink: 0;
+}
+
+.message-action {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #718096;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  transition:
+    background-color .15s ease,
+    border-color .15s ease,
+    color .15s ease,
+    transform .15s ease;
+}
+
+.message-action:hover {
+  background: #f3f6fa;
+  border-color: #dbe2ea;
+  color: var(--uc-primary-deep);
+}
+
+.message-action:focus-visible {
+  outline: 2px solid var(--uc-primary-deep);
+  outline-offset: 2px;
+}
+
+.message-action:active {
+  transform: scale(.95);
+}
+
+.message-action-danger:hover {
+  background: #fff2f2;
+  border-color: #f3c7c7;
+  color: #b42318;
+}
+
+.message-action[disabled] {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.message-star {
+  color: #8a96a8;
+}
+
+.message-star.is-starred,
+.message-action[aria-pressed="true"] {
+  color: #b7791f;
+}
+
+.message-star.is-starred:hover,
+.message-action[aria-pressed="true"]:hover {
+  color: #9c5f08;
+  background: #fff8e8;
+  border-color: #f1dfb5;
+}
+
+/* Keep mailbox controls usable on narrow screens. */
+@media (max-width: 900px) {
+  .message-row {
+    grid-template-columns:
+      34px
+      minmax(120px, .8fr)
+      minmax(140px, 1fr)
+      auto;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .message-row-actions {
+    gap: 2px;
+    padding-right: 6px;
+  }
+
+  .message-action {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .message-row-wrap {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .message-row {
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-areas:
+      "number sender"
+      "number subject"
+      "number date";
+    align-items: center;
+    gap: 3px 9px;
+    padding: 10px 12px;
+  }
+
+  .message-number {
+    grid-area: number;
+  }
+
+  .message-sender {
+    grid-area: sender;
+  }
+
+  .message-subject {
+    grid-area: subject;
+  }
+
+  .message-date {
+    grid-area: date;
+    text-align: left;
+  }
+
+  .message-row-actions {
+    align-self: center;
+    gap: 1px;
+    padding: 0 5px 0 2px;
+  }
+
+  .message-action {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .message-row {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 2px 7px;
+    padding: 9px 8px;
+  }
+
+  .message-row-actions {
+    padding-right: 3px;
+  }
+
+  .message-action {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
+}
+
+
+/* ============================================================
+   CC / BCC
+   ============================================================ */
+
+.compose-to-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #e8edf3;
+}
+
+.compose-to-row > input {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0 !important;
+}
+
+.recipient-options {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding-right: 10px;
+}
+
+.recipient-toggle {
+  border: 0;
+  background: transparent;
+  color: #617087;
+  padding: 5px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recipient-toggle:hover,
+.recipient-toggle[aria-expanded="true"] {
+  background: #eef3f9;
+  color: var(--uc-primary-deep);
+}
+
+.recipient-extra {
+  border-bottom: 1px solid #e8edf3;
+}
+
+.recipient-extra input {
+  border-bottom: 0 !important;
+}
+
+/* ============================================================
+   Reader
+   ============================================================ */
+
+.reader-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255,255,255,.97);
+  backdrop-filter: blur(8px);
+}
+
+.reader-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.reader-back:hover {
+  text-decoration: underline;
+}
+
+.reader-heading h3 {
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+/* ============================================================
+   Mobile sidebar drawer
+   ============================================================ */
+
+.sidebar-toggle {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.sidebar-mobile-head {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 760px) {
+
+  .mail-header {
+    height: 64px;
+  }
+
+  .sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .layout {
+    height: calc(100% - 64px);
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(285px, 86vw);
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-105%);
+    transition: transform .22s ease;
+    box-shadow: 12px 0 35px rgba(15,27,45,.18);
+  }
+
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-mobile-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 42px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+
+  .sidebar-mobile-head strong {
+    color: var(--text);
+    font-size: 16px;
+  }
+
+  .sidebar-mobile-head button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: block;
+    background: rgba(10,18,32,.45);
+    backdrop-filter: blur(2px);
+  }
+
+  .main {
+    height: 100%;
+    padding: 18px 12px;
+  }
+
+  .mail-content {
+    min-height: 0;
+  }
+}
+
+/* ============================================================
+   Better message-reader state
+   ============================================================ */
+
+.mail-content.reader-open {
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 1.25fr);
+}
+
+.mail-content.reader-open .reader {
+  box-shadow: inset 1px 0 0 #edf0f4;
+}
+
+@media (max-width: 900px) {
+  .mail-content.reader-open {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .mail-content.reader-open {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mail-content.reader-open .message-list {
+    display: none;
+  }
+
+  .mail-content.reader-open .reader {
+    display: block;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .compose-to-row {
+    gap: 2px;
+  }
+
+  .recipient-options {
+    padding-right: 6px;
+  }
+
+  .recipient-toggle {
+    padding: 5px;
+  }
+}
+
+/* USCOURIER MAIL — MOBILE DRAWER FIX */
+@media (max-width: 760px) {
+  .mail-shell {
+    overflow: hidden;
+  }
+
+  .layout {
+    position: relative;
+  }
+
+  .sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: min(310px, 88vw) !important;
+    height: 100dvh !important;
+    transform: translate3d(-105%, 0, 0) !important;
+    transition: transform .24s cubic-bezier(.4,0,.2,1) !important;
+    z-index: 1001 !important;
+    overflow-y: auto !important;
+    visibility: hidden;
+  }
+
+  .sidebar.is-open {
+    display: block !important;
+    transform: translate3d(0,0,0) !important;
+    visibility: visible;
+  }
+
+  .sidebar-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    display: block !important;
+    background: rgba(15,23,42,.42) !important;
+    backdrop-filter: blur(2px);
+    z-index: 1000 !important;
+  }
+
+  .sidebar-backdrop[hidden] {
+    display: none !important;
+  }
+
+  .sidebar-toggle {
+    display: inline-flex !important;
+  }
+
+  body:has(.sidebar.is-open) {
+    overflow: hidden;
+  }
+}
+/* Outbox delivery status */
+.message-delivery-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 9px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.message-delivery-status-queued {
+  opacity: .75;
+}
+
+.message-delivery-status-sending {
+  opacity: .9;
+}
+
+.message-delivery-status-failed {
+  font-weight: 800;
+}
+
+.message-delivery-status-sent {
+  opacity: .75;
+}
+
+.message-retry-button {
+  min-width: 58px;
+  padding-inline: 9px;
+  font-weight: 700;
+}
+
+.message-retry-button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+@media (max-width: 760px) {
+  .message-delivery-status {
+    min-height: 26px;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  .message-retry-button {
+    min-width: 56px;
+  }
+}
+
+/* ============================================================
+   USCOURIER PRODUCTION MAIL UI V1
+   Visual enhancement only.
+   Backend/API/authentication/database unchanged.
+   ============================================================ */
+
+:root {
+  --ucm-blue: var(--uc-primary);
+  --ucm-blue-dark: var(--uc-primary-dark);
+  --ucm-blue-soft: var(--uc-primary-soft);
+  --ucm-gold: #D4AF37;
+  --ucm-bg: var(--uc-surface);
+  --ucm-surface: var(--uc-white);
+  --ucm-surface-soft: var(--uc-surface);
+  --ucm-border: var(--uc-border);
+  --ucm-text: var(--uc-text);
+  --ucm-muted: #687386;
+}
+
+.mail-shell {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(23, 59, 118, .045),
+      transparent 30rem
+    ),
+    var(--ucm-bg);
+}
+
+.mail-header {
+  background: rgba(255, 255, 255, .97);
+  border-bottom: 1px solid var(--ucm-border);
+  box-shadow: 0 1px 3px rgba(23, 32, 51, .07);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 20;
+}
+
+.brand {
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.brand::after {
+  content: "MAIL";
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--ucm-blue-soft);
+  color: var(--ucm-blue);
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.search {
+  flex: 1;
+  max-width: 680px;
+}
+
+.search input {
+  min-height: 42px;
+  border: 1px solid var(--ucm-border);
+  border-radius: 999px;
+  background: var(--ucm-surface-soft);
+  padding-left: 18px;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+.search input:focus {
+  background: var(--ucm-surface);
+  border-color: var(--ucm-blue);
+  box-shadow: 0 0 0 3px rgba(23, 59, 118, .10);
+}
+
+.sidebar {
+  background: rgba(255, 255, 255, .98);
+  border-right: 1px solid var(--ucm-border);
+}
+
+.compose {
+  min-height: 48px;
+  border-radius: 14px;
+  background: var(--ucm-blue);
+  color: #fff;
+  border: 0;
+  box-shadow: 0 7px 18px rgba(23, 59, 118, .18);
+  font-weight: 750;
+}
+
+.compose:hover {
+  background: var(--ucm-blue-dark);
+  transform: translateY(-1px);
+}
+
+.nav-item {
+  border-radius: 9px;
+  margin: 2px 8px;
+}
+
+.nav-item:hover {
+  background: var(--ucm-surface-soft);
+}
+
+.nav-item.active {
+  background: var(--ucm-blue-soft);
+  color: var(--ucm-blue);
+  font-weight: 750;
+}
+
+.message-list-panel {
+  background: var(--ucm-surface);
+  border: 1px solid var(--ucm-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(23, 32, 51, .07);
+  overflow: hidden;
+}
+
+.list-head {
+  background: var(--ucm-surface-soft);
+  border-bottom: 1px solid var(--ucm-border);
+}
+
+.message-row-wrap {
+  border-bottom: 1px solid #edf0f4;
+  transition: background .14s ease;
+}
+
+.message-row-wrap:hover {
+  background: #f8fbff;
+}
+
+.message-row.unread {
+  background: #f7faff;
+}
+
+.message-row.unread .message-sender,
+.message-row.unread .message-subject {
+  font-weight: 800;
+  color: var(--ucm-text);
+}
+
+.reader {
+  background: var(--ucm-surface);
+  border: 1px solid var(--ucm-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(23, 32, 51, .07);
+  overflow: hidden;
+}
+
+.reader-head {
+  background: var(--ucm-surface);
+  border-bottom: 1px solid var(--ucm-border);
+}
+
+.thread-message {
+  background: var(--ucm-surface);
+  border-bottom: 1px solid var(--ucm-border);
+}
+
+.thread-message.selected {
+  background: #fbfcfe;
+}
+
+.thread-sender {
+  color: var(--ucm-text);
+  font-weight: 800;
+}
+
+.thread-recipients,
+.thread-meta {
+  color: var(--ucm-muted);
+}
+
+.reader-body {
+  color: #202938;
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+}
+
+.reader-action {
+  min-height: 38px;
+  border: 1px solid var(--ucm-border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ucm-text);
+}
+
+.reader-action:hover {
+  background: var(--ucm-blue-soft);
+  border-color: #b8c9e6;
+}
+
+.compose-modal {
+  background: rgba(15, 23, 42, .54);
+  backdrop-filter: blur(4px);
+}
+
+.compose-card {
+  border: 1px solid var(--ucm-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .25);
+  overflow: hidden;
+}
+
+.compose-head {
+  background: var(--ucm-blue);
+  color: #fff;
+}
+
+.compose-card input:focus,
+.compose-card textarea:focus {
+  border-color: var(--ucm-blue);
+  box-shadow: 0 0 0 3px rgba(23, 59, 118, .09);
+  outline: none;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+.nav-item:focus-visible,
+.message-row:focus-visible {
+  outline: 3px solid rgba(23, 59, 118, .20);
+  outline-offset: 2px;
+}
+
+@media (max-width: 820px) {
+  .search {
+    max-width: none;
+  }
+
+  .message-list-panel,
+  .reader {
+    border-radius: 12px;
+  }
+
+  .thread-message {
+    padding: 18px;
+  }
+
+  .reader-head {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .message-row-actions {
+    display: none;
+  }
+
+  .reader-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+
+
+/* ============================================================
+   USCOURIER MAILBOX BRAND IDENTITY
+============================================================ */
+
+.mail-brand-mark {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  overflow:hidden;
+}
+
+.mail-brand-mark img {
+  display:block;
+  width:44px;
+  height:44px;
+  object-fit:contain;
+}
+
+.brand {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.brand > img {
+  display:block;
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  flex:0 0 36px;
+}
+
+.brand > span {
+  display:inline-block;
+}
+
+.uc-mail-brand-logo {
+  display:block;
+  width:38px;
+  height:38px;
+  object-fit:contain;
+}
+
+/* ============================================================
+   USCOURIER FINAL BRAND NORMALIZATION
+   Sky Blue + White + Royal Gold
+   Visual overrides only — mailbox logic remains unchanged.
+   ============================================================ */
+
+:root {
+  --accent: var(--uc-primary);
+  --accent-dark: var(--uc-primary-dark);
+  --accent-deep: var(--uc-primary-deep);
+  --accent-soft: var(--uc-primary-light);
+}
+
+/* Mail application foundation */
+
+.mail-app,
+.mail-shell,
+.mail-layout,
+.mail-main,
+.mail-content {
+  color: #0F172A;
+}
+
+/* Primary mailbox actions */
+
+.mail-login-submit,
+.mail-compose-submit,
+.mail-send-button,
+.mail-primary,
+.mail-action-primary,
+[data-action="send"],
+[data-action="compose"] {
+  background: #38BDF8;
+  border-color: #38BDF8;
+  color: #FFFFFF;
+}
+
+.mail-login-submit:hover,
+.mail-compose-submit:hover,
+.mail-send-button:hover,
+.mail-primary:hover,
+.mail-action-primary:hover,
+[data-action="send"]:hover,
+[data-action="compose"]:hover {
+  background: #0284C7;
+  border-color: #0284C7;
+  color: #FFFFFF;
+}
+
+/* Mail identity / brand accents */
+
+.mail-brand-mark,
+.mail-logo,
+.mail-avatar {
+  border-color: #BAE6FD;
+}
+
+.mail-login-brand strong,
+.mail-brand-name,
+.mail-header-brand strong {
+  color: #0F172A;
+}
+
+.mail-login-eyebrow,
+.mail-brand-accent,
+.mail-header-brand small {
+  color: #0284C7;
+}
+
+/* Active navigation */
+
+.mail-nav a.active,
+.mail-nav button.active,
+.mail-folder.active,
+.mail-sidebar-item.active,
+.mail-nav-item.active {
+  background: #E0F2FE;
+  color: #0369A1;
+  border-color: #BAE6FD;
+}
+
+/* Focus */
+
+.mail-app input:focus,
+.mail-app select:focus,
+.mail-app textarea:focus,
+.mail-login input:focus,
+.mail-compose input:focus,
+.mail-compose textarea:focus {
+  border-color: #38BDF8;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .18);
+}
+
+/* Links */
+
+.mail-app a {
+  color: #0284C7;
+}
+
+.mail-app a:hover {
+  color: #0369A1;
+}
+
+/* Royal Gold premium accents */
+
+.mail-star.active,
+.mail-important.active,
+.mail-premium,
+.mail-gold-accent {
+  color: #A67C00;
+}
+
+.mail-badge-gold,
+.mail-status-gold {
+  background: #FFF9E6;
+  color: #A67C00;
+  border-color: #F8E7A1;
+}
+
+/* Compose / selected controls */
+
+.mail-compose,
+.mail-toolbar .active,
+.mail-toolbar button[aria-pressed="true"] {
+  border-color: #BAE6FD;
+}
+
+.mail-compose-header,
+.mail-toolbar {
+  border-color: #E2E8F0;
+}
+
+/* Accessible keyboard focus */
+
+.mail-app :focus-visible,
+.mail-login :focus-visible {
+  outline: 3px solid rgba(56, 189, 248, .55);
+  outline-offset: 2px;
+}
+
+/* Mobile browser/theme color alignment */
+
+@media (max-width: 700px) {
+  .mail-sidebar {
+    border-right-color: #E2E8F0;
+  }
+}
+
+/* ============================================================
+   END USCOURIER FINAL BRAND NORMALIZATION
+   ============================================================ */
+
+/* ===== END MERGED MAIL APPLICATION RULES ===== */

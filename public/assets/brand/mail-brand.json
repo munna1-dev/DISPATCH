@@ -2,8 +2,8 @@
   "displayName": "US COURIER MAILBOX",
   "brandName": "USCOURIER",
   "tagline": "Professional Courier & Logistics Services",
-  "avatar": "/assets/brand/uscourier-icon.svg",
-  "logo": "/assets/brand/uscourier-logo.svg",
+  "avatar": "/assets/brand/icons/uscourier-mark.svg",
+  "logo": "/assets/brand/icons/uscourier-logo.svg",
   "primaryColor": "#38BDF8",
   "accentColor": "#D4AF37"
 }

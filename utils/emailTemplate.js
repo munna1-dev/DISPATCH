@@ -21,20 +21,20 @@ function contactEmailTemplate(name, email, subject, message) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <title>Customer Message | US COURIER</title>
+  <title>Customer Message | USCOURIER</title>
 </head>
 
 <body style="
   margin:0;
   padding:0;
   width:100%;
-  background:#f3f6fa;
-  color:#172033;
+  background:#F8FAFC;
+  color:#0F172A;
   font-family:Arial,Helvetica,sans-serif;
 ">
 
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-  style="width:100%;margin:0;padding:28px 12px;background:#f3f6fa;">
+  style="width:100%;margin:0;padding:28px 12px;background:#F8FAFC;">
   <tr>
     <td align="center">
 
@@ -43,7 +43,7 @@ function contactEmailTemplate(name, email, subject, message) {
           width:100%;
           max-width:680px;
           background:#ffffff;
-          border:1px solid #dfe5ee;
+          border:1px solid #E2E8F0;
           border-radius:14px;
           overflow:hidden;
         ">
@@ -52,25 +52,20 @@ function contactEmailTemplate(name, email, subject, message) {
         <tr>
           <td style="
             padding:22px 28px;
-            background:#111827;
+            background:#38BDF8;
             border-bottom:4px solid #D4AF37;
           ">
 
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
               <tr>
                 <td width="52" valign="middle">
-                  <div style="
-                    width:42px;
-                    height:42px;
-                    line-height:42px;
-                    text-align:center;
-                    background:#111827;
-                    border:2px solid #D4AF37;
-                    border-radius:9px;
-                    color:#ffffff;
-                    font-size:21px;
-                    font-weight:900;
-                  ">UC</div>
+                  <img
+                    src="${escapeHtml(process.env.PUBLIC_APP_URL || "https://uscourier.app")}/assets/brand/icons/uscourier-mark.svg"
+                    width="46"
+                    height="46"
+                    alt="USCOURIER"
+                    style="display:block;width:46px;height:46px;border:0;"
+                  />
                 </td>
 
                 <td valign="middle" style="padding-left:12px;">
@@ -80,7 +75,7 @@ function contactEmailTemplate(name, email, subject, message) {
                     line-height:22px;
                     font-weight:900;
                     letter-spacing:2px;
-                  ">US COURIER</div>
+                  ">USCOURIER</div>
 
                   <div style="
                     color:#D4AF37;
@@ -100,7 +95,7 @@ function contactEmailTemplate(name, email, subject, message) {
         <tr>
           <td style="padding:30px 30px 8px 30px;">
             <div style="
-              color:#173b76;
+              color:#0284C7;
               font-size:25px;
               line-height:34px;
               font-weight:800;
@@ -123,22 +118,22 @@ function contactEmailTemplate(name, email, subject, message) {
 
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
               style="
-                background:#f7f9fc;
-                border:1px solid #e3e8ef;
+                background:#F8FAFC;
+                border:1px solid #E2E8F0;
                 border-radius:10px;
               ">
 
               <tr>
                 <td style="
                   padding:12px 15px;
-                  color:#68778c;
+                  color:#64748B;
                   font-size:12px;
                   font-weight:700;
                 ">NAME</td>
 
                 <td style="
                   padding:12px 15px;
-                  color:#172033;
+                  color:#0F172A;
                   font-size:14px;
                 ">${safeName}</td>
               </tr>
@@ -146,14 +141,14 @@ function contactEmailTemplate(name, email, subject, message) {
               <tr>
                 <td style="
                   padding:12px 15px;
-                  color:#68778c;
+                  color:#64748B;
                   font-size:12px;
                   font-weight:700;
                 ">EMAIL</td>
 
                 <td style="
                   padding:12px 15px;
-                  color:#173b76;
+                  color:#0284C7;
                   font-size:14px;
                 ">${safeEmail}</td>
               </tr>
@@ -161,14 +156,14 @@ function contactEmailTemplate(name, email, subject, message) {
               <tr>
                 <td style="
                   padding:12px 15px;
-                  color:#68778c;
+                  color:#64748B;
                   font-size:12px;
                   font-weight:700;
                 ">SUBJECT</td>
 
                 <td style="
                   padding:12px 15px;
-                  color:#172033;
+                  color:#0F172A;
                   font-size:14px;
                   font-weight:700;
                 ">${safeSubject}</td>
@@ -183,14 +178,14 @@ function contactEmailTemplate(name, email, subject, message) {
         <tr>
           <td style="
             padding:22px 30px 30px 30px;
-            color:#34445d;
+            color:#334155;
             font-size:15px;
             line-height:1.7;
           ">
 
             <div style="
               margin-bottom:10px;
-              color:#173b76;
+              color:#0284C7;
               font-size:14px;
               font-weight:800;
             ">
@@ -200,7 +195,7 @@ function contactEmailTemplate(name, email, subject, message) {
             <div style="
               padding:18px;
               background:#ffffff;
-              border:1px solid #dfe5ee;
+              border:1px solid #E2E8F0;
               border-left:4px solid #D4AF37;
               border-radius:8px;
             ">
@@ -214,41 +209,41 @@ function contactEmailTemplate(name, email, subject, message) {
         <tr>
           <td style="
             padding:22px 30px;
-            background:#f7f9fc;
-            border-top:1px solid #e3e8ef;
+            background:#F8FAFC;
+            border-top:1px solid #E2E8F0;
           ">
 
             <div style="
-              color:#173b76;
+              color:#0284C7;
               font-size:14px;
               line-height:20px;
               font-weight:800;
             ">
-              US COURIER
+              USCOURIER
             </div>
 
             <div style="
               margin-top:4px;
-              color:#68778c;
+              color:#64748B;
               font-size:12px;
               line-height:18px;
             ">
-              Reliable logistics. Professional delivery.
+              Professional Courier &amp; Logistics Services.
             </div>
 
             <div style="
               margin-top:8px;
-              color:#68778c;
+              color:#64748B;
               font-size:11px;
               line-height:17px;
             ">
-              This message was submitted through the US COURIER contact form.
+              This message was submitted through the USCOURIER contact form.
               Please handle customer information appropriately.
             </div>
 
             <div style="
               margin-top:10px;
-              color:#8a96a8;
+              color:#64748B;
               font-size:11px;
               line-height:17px;
             ">

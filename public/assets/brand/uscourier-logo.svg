@@ -3,7 +3,7 @@
      role="img"
      aria-labelledby="title desc">
   <title id="title">USCOURIER</title>
-  <desc id="desc">USCOURIER professional courier and logistics logo</desc>
+  <desc id="desc">USCOURIER professional courier and logistics logo.</desc>
 
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
@@ -12,67 +12,104 @@
     </linearGradient>
   </defs>
 
-  <!-- Parcel / forward-motion symbol -->
-  <g transform="translate(22 25)">
+  <!-- Courier symbol -->
+  <g transform="translate(18 18)">
+    <!-- Parcel -->
     <path
-      d="M68 15 L126 46 L126 111 L68 142 L10 111 L10 46 Z"
-      fill="#FFFFFF"
+      d="M38 42 L82 20 L126 42 L126 100 L82 124 L38 100 Z"
+      fill="none"
       stroke="url(#sky)"
-      stroke-width="10"
+      stroke-width="9"
       stroke-linejoin="round"/>
 
+    <!-- Parcel top -->
     <path
-      d="M10 46 L68 78 L126 46"
+      d="M38 42 L82 66 L126 42"
       fill="none"
       stroke="#38BDF8"
-      stroke-width="10"
+      stroke-width="9"
       stroke-linejoin="round"/>
 
+    <!-- Parcel fold -->
     <path
-      d="M68 78 L68 142"
-      fill="none"
-      stroke="#D4AF37"
-      stroke-width="10"/>
-
-    <!-- Directional delivery arrow -->
-    <path
-      d="M42 94 L82 94"
+      d="M82 66 V124"
       fill="none"
       stroke="#0284C7"
-      stroke-width="10"
+      stroke-width="8"
       stroke-linecap="round"/>
 
+    <!-- Gold package detail -->
     <path
-      d="M72 82 L86 94 L72 106"
+      d="M82 66 V31"
       fill="none"
-      stroke="#0284C7"
-      stroke-width="10"
+      stroke="#D4AF37"
+      stroke-width="8"
+      stroke-linecap="round"/>
+
+    <!-- Forward movement -->
+    <path
+      d="M103 91 C124 91 139 84 151 70 L165 54"
+      fill="none"
+      stroke="#D4AF37"
+      stroke-width="9"
       stroke-linecap="round"
       stroke-linejoin="round"/>
+
+    <path
+      d="M148 54 L166 53 L161 71"
+      fill="none"
+      stroke="#D4AF37"
+      stroke-width="9"
+      stroke-linecap="round"
+      stroke-linejoin="round"/>
+
+    <!-- Route -->
+    <path
+      d="M20 132 C57 145 104 145 139 128"
+      fill="none"
+      stroke="#38BDF8"
+      stroke-width="5"
+      stroke-linecap="round"
+      stroke-dasharray="3 12"/>
+
+    <circle cx="20" cy="132" r="6" fill="#D4AF37"/>
   </g>
 
   <!-- Wordmark -->
-  <text
-    x="185"
-    y="88"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="62"
-    font-weight="800"
-    letter-spacing="2"
-    fill="#0F172A">
-    USCOURIER
-  </text>
+  <g transform="translate(205 48)">
+    <text
+      x="0"
+      y="62"
+      font-family="Tahoma, Arial, Helvetica, sans-serif"
+      font-size="58"
+      font-weight="800"
+      letter-spacing="2"
+      fill="#0F172A">USCOURIER</text>
 
-  <rect x="188" y="105" width="330" height="4" rx="2" fill="#D4AF37"/>
+    <rect
+      x="2"
+      y="78"
+      width="72"
+      height="5"
+      rx="2.5"
+      fill="#D4AF37"/>
 
-  <text
-    x="188"
-    y="137"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="20"
-    font-weight="600"
-    letter-spacing="4"
-    fill="#475569">
-    COURIER • LOGISTICS • DELIVERY
-  </text>
+    <text
+      x="0"
+      y="112"
+      font-family="Tahoma, Arial, Helvetica, sans-serif"
+      font-size="18"
+      font-weight="600"
+      letter-spacing="4"
+      fill="#475569">LOGISTICS • DELIVERY</text>
+
+    <text
+      x="0"
+      y="140"
+      font-family="Tahoma, Arial, Helvetica, sans-serif"
+      font-size="12"
+      font-weight="500"
+      letter-spacing="2.5"
+      fill="#64748B">SECURE • FAST • CONNECTED</text>
+  </g>
 </svg>

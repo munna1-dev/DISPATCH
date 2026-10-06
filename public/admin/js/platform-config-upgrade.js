@@ -1992,9 +1992,9 @@
       }
 
       .platform-config-nav button.active {
-        background: #173b76;
+        background: var(--uc-primary-deep);
         color: #fff;
-        border-color: #173b76;
+        border-color: var(--uc-primary-deep);
       }
 
       .platform-config-message {
@@ -2073,8 +2073,8 @@
       }
 
       .platform-staff-item.active {
-        border-color: #173b76;
-        box-shadow: 0 0 0 2px rgba(23,59,118,.08);
+        border-color: var(--uc-primary-deep);
+        box-shadow: 0 0 0 2px rgba(3,105,161,.08);
       }
 
       .platform-staff-item strong,
