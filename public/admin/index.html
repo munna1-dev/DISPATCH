@@ -1973,7 +1973,7 @@
         <button onclick="closeQrScannerModal()" class="btn-outline" style="padding: 0.2rem 0.6rem;">&times;</button>
       </div>
       <div id="qr-reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
-      <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+      <p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 1rem;">
         Point your camera at a US Courier QR Code to parse tracking waybill.
       </p>
     </div>
@@ -1986,31 +1986,31 @@
       <form onsubmit="handleCreateShipmentSubmit(event)">
         <div class="grid-2">
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Sender Name</label>
+            <label style="font-size:13px; color:var(--text-muted);">Sender Name</label>
             <input type="text" id="cs-sender-name" class="form-control" required placeholder="Taiwan Electronics Corp">
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Sender City / Country</label>
+            <label style="font-size:13px; color:var(--text-muted);">Sender City / Country</label>
             <input type="text" id="cs-sender-country" class="form-control" required value="Taipei, Taiwan">
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Recipient Name</label>
+            <label style="font-size:13px; color:var(--text-muted);">Recipient Name</label>
             <input type="text" id="cs-recipient-name" class="form-control" required placeholder="Metro Distribution Hub">
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Recipient City / Country</label>
+            <label style="font-size:13px; color:var(--text-muted);">Recipient City / Country</label>
             <input type="text" id="cs-recipient-country" class="form-control" required value="New York, USA">
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Origin Gateway</label>
+            <label style="font-size:13px; color:var(--text-muted);">Origin Gateway</label>
             <input type="text" id="cs-origin" class="form-control" required placeholder="Taipei, Taiwan">
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Destination Gateway</label>
+            <label style="font-size:13px; color:var(--text-muted);">Destination Gateway</label>
             <input type="text" id="cs-destination" class="form-control" required placeholder="New York, NY, USA">
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Service Level</label>
+            <label style="font-size:13px; color:var(--text-muted);">Service Level</label>
             <select id="cs-service" class="form-control">
               <option>Express Air Freight</option>
               <option>Standard Ground Express</option>
@@ -2018,18 +2018,18 @@
             </select>
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Est. Delivery Date</label>
+            <label style="font-size:13px; color:var(--text-muted);">Est. Delivery Date</label>
             <input type="date" id="cs-eta" class="form-control" required>
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Package Count & Weight (kg)</label>
+            <label style="font-size:13px; color:var(--text-muted);">Package Count & Weight (kg)</label>
             <div style="display:flex; gap:0.5rem;">
               <input type="number" id="cs-pkg-count" class="form-control" value="1" placeholder="Count">
               <input type="number" step="0.1" id="cs-weight" class="form-control" value="2.5" placeholder="Weight">
             </div>
           </div>
           <div>
-            <label style="font-size:0.8rem; color:var(--text-muted);">Declared Value</label>
+            <label style="font-size:13px; color:var(--text-muted);">Declared Value</label>
             <div style="display:flex; gap:0.5rem;">
               <select id="cs-currency" class="form-control" style="width: 90px;">
                 <option>USD</option><option>EUR</option><option>GBP</option>
@@ -2041,7 +2041,7 @@
           </div>
         </div>
         <div style="margin-top: 1rem;">
-          <label style="font-size:0.8rem; color:var(--text-muted);">Cargo Description</label>
+          <label style="font-size:13px; color:var(--text-muted);">Cargo Description</label>
           <input type="text" id="cs-desc" class="form-control" placeholder="Microcontrollers and precision hardware">
         </div>
         <div style="margin-top: 1.5rem; text-align: right;">
@@ -2634,44 +2634,44 @@
               <small>LOGISTICS &amp; DELIVERY</small>
             </span>
           </div>
-          <p style="font-size:0.8rem; color:#555;">ENTERPRISE LOGISTICS & GLOBAL FREIGHT SERVICES</p>
+          <p style="font-size:13px; color:#555;">ENTERPRISE LOGISTICS & GLOBAL FREIGHT SERVICES</p>
         </div>
         <div style="text-align:right;">
           <h2 style="font-size:1.1rem; color:#b30000;">OFFICIAL WAYBILL RECEIPT</h2>
-          <p style="font-size:0.8rem; color:#555;" id="prt-date">Date: </p>
+          <p style="font-size:13px; color:#555;" id="prt-date">Date: </p>
         </div>
       </div>
 
       <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; background:#f9f9f9; padding:1rem; border:1px solid #ddd;">
         <div>
-          <p style="font-size:0.75rem; color:#666; text-transform:uppercase;">Tracking Number</p>
+          <p style="font-size:13px; color:#666; text-transform:uppercase;">Tracking Number</p>
           <h2 id="prt-tracking" style="font-family:Tahoma, Arial, Helvetica, sans-serif; color:#111;">-</h2>
         </div>
         <div>
-          <p style="font-size:0.75rem; color:#666; text-transform:uppercase;">Service Level</p>
+          <p style="font-size:13px; color:#666; text-transform:uppercase;">Service Level</p>
           <h3 id="prt-service" style="color:#111;">-</h3>
         </div>
         <div>
-          <p style="font-size:0.75rem; color:#666; text-transform:uppercase;">Current Status</p>
+          <p style="font-size:13px; color:#666; text-transform:uppercase;">Current Status</p>
           <h3 id="prt-status" style="color:#2ecc71;">-</h3>
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
         <div style="border:1px solid #ddd; padding:1rem;">
-          <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:0.85rem;">SHIPPER DETAILS</h4>
+          <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:13px;">SHIPPER DETAILS</h4>
           <p id="prt-sender-name"><strong>Name:</strong> -</p>
           <p id="prt-sender-origin"><strong>Origin:</strong> -</p>
         </div>
         <div style="border:1px solid #ddd; padding:1rem;">
-          <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:0.85rem;">CONSIGNEE DETAILS</h4>
+          <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:13px;">CONSIGNEE DETAILS</h4>
           <p id="prt-recipient-name"><strong>Name:</strong> -</p>
           <p id="prt-recipient-dest"><strong>Destination:</strong> -</p>
         </div>
       </div>
 
       <div style="border:1px solid #ddd; padding:1rem; margin-bottom:1.5rem;">
-        <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:0.85rem;">CARGO & MANIFEST DATA</h4>
+        <h4 style="border-bottom:1px solid #ddd; padding-bottom:0.3rem; margin-bottom:0.5rem; font-size:13px;">CARGO & MANIFEST DATA</h4>
         <p id="prt-desc"><strong>Cargo Manifest:</strong> -</p>
         <p id="prt-pkg"><strong>Package Count / Weight:</strong> -</p>
         <p id="prt-value"><strong>Declared Value:</strong> -</p>
@@ -2681,7 +2681,7 @@
         <div id="prt-qrcode-box"></div>
         <div style="text-align:center; margin-right:3rem;">
           <div style="border-bottom:1px solid #111; width:200px; margin-bottom:0.3rem;"></div>
-          <p style="font-size:0.75rem; color:#555;">Authorized Dispatch Officer</p>
+          <p style="font-size:13px; color:#555;">Authorized Dispatch Officer</p>
         </div>
       </div>
 
@@ -2901,11 +2901,7 @@
     <script src="/admin/js/admin.js"></script>
     <script src="/admin/js/platform-config-upgrade.js"></script>
 
-<div class="usc-brand" aria-label="USCOURIER">
-  <img class="usc-brand-logo"
-       src="/assets/brand/icons/uscourier-logo.svg"
-       alt="USCOURIER - Professional Courier and Logistics Services">
-</div>
+
 
 </body>
 </html>

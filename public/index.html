@@ -296,15 +296,14 @@
   <!-- Navigation -->
   <header>
     <a onclick="showSection('home')" class="logo-brand uc-brand uc-brand--public">
-      <span class="uc-brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 48 48" role="img">
-          <rect x="2.5" y="2.5" width="43" height="43" rx="12"></rect>
-          <path d="M9 27h19l5-7h6v12H9z"></path>
-          <path d="M12 16h15M12 21h10"></path>
-          <circle cx="17" cy="32" r="2.8"></circle>
-          <circle cx="34" cy="32" r="2.8"></circle>
-          <path d="M11 39h26"></path>
-        </svg>
+      <span class="uc-brand-mark">
+        <img
+          src="/assets/brand/icons/uscourier-mark.svg"
+          alt="USCOURIER"
+          width="42"
+          height="42"
+          loading="eager"
+        >
       </span>
       <span class="uc-brand-copy">
         <span class="uc-brand-name">US COURIER</span>
@@ -567,11 +566,11 @@
           <div class="grid-2">
             <div>
               <h4 style="color: var(--uc-gold);">Domestic Ground Express</h4>
-              <p style="font-size: 0.9rem; color: var(--text-muted);">Scheduled time-definite distribution across North American hubs with direct vehicle telemetry.</p>
+              <p style="font-size: 13px; color: var(--text-muted);">Scheduled time-definite distribution across North American hubs with direct vehicle telemetry.</p>
             </div>
             <div>
               <h4 style="color: var(--uc-gold);">International Air Cargo</h4>
-              <p style="font-size: 0.9rem; color: var(--text-muted);">Priority global air gateways facilitating customs clearance and fast transit between US, TW, and EU hubs.</p>
+              <p style="font-size: 13px; color: var(--text-muted);">Priority global air gateways facilitating customs clearance and fast transit between US, TW, and EU hubs.</p>
             </div>
           </div>
         </div>
@@ -590,20 +589,20 @@
           <form onsubmit="handleContactSubmit(event)">
             <div class="grid-2">
               <div style="margin-bottom: 1rem;">
-                <label style="font-size: 0.8rem; color: var(--text-muted);">Your Name</label>
+                <label style="font-size: 13px; color: var(--text-muted);">Your Name</label>
                 <input type="text" id="cnt-name" class="form-control" placeholder="John Doe" required>
               </div>
               <div style="margin-bottom: 1rem;">
-                <label style="font-size: 0.8rem; color: var(--text-muted);">Email Address</label>
+                <label style="font-size: 13px; color: var(--text-muted);">Email Address</label>
                 <input type="email" id="cnt-email" class="form-control" placeholder="john@example.com" required>
               </div>
             </div>
             <div style="margin-bottom: 1rem;">
-              <label style="font-size: 0.8rem; color: var(--text-muted);">Subject / Waybill Inquiry</label>
+              <label style="font-size: 13px; color: var(--text-muted);">Subject / Waybill Inquiry</label>
               <input type="text" id="cnt-subject" class="form-control" placeholder="Inquiry regarding shipment" required>
             </div>
             <div style="margin-bottom: 1.5rem;">
-              <label style="font-size: 0.8rem; color: var(--text-muted);">Message</label>
+              <label style="font-size: 13px; color: var(--text-muted);">Message</label>
               <textarea id="cnt-message" class="form-control" rows="5" placeholder="Please provide details..." required></textarea>
             </div>
             <button type="submit" class="btn-gold"><span class="icon icon-send"></span> Send Message</button>
@@ -687,7 +686,7 @@
                     type="button"
                     onclick="downloadPublicTrackingQr()"
                     class="btn-outline"
-                    style="padding:0.4rem 0.8rem; font-size:0.8rem;"
+                    style="padding:0.4rem 0.8rem; font-size:13px;"
                   >
                     <span class="icon icon-download"></span> Download QR Code
                   </button>
@@ -696,7 +695,7 @@
                     type="button"
                     onclick="triggerPrintOfficialReceipt()"
                     class="btn-gold"
-                    style="padding:0.4rem 0.8rem; font-size:0.8rem;"
+                    style="padding:0.4rem 0.8rem; font-size:13px;"
                   >
                     <span class="icon icon-print"></span> Print Official Receipt
                   </button>
@@ -784,7 +783,7 @@
         <button onclick="closeQrScannerModal()" class="btn-outline" style="padding: 0.2rem 0.6rem;">&times;</button>
       </div>
       <div id="qr-reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
-      <p style="color: var(--text-muted); font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+      <p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 1rem;">
         Point your camera at a US Courier QR Code to parse tracking waybill.
       </p>
     </div>
@@ -814,12 +813,6 @@
     });
   </script>
 
-
-<div class="usc-brand" aria-label="USCOURIER">
-  <img class="usc-brand-logo"
-       src="/assets/brand/icons/uscourier-logo.svg"
-       alt="USCOURIER - Professional Courier and Logistics Services">
-</div>
 
 </body>
 </html>
