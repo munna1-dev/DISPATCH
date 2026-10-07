@@ -229,43 +229,22 @@
     </div>
 
     <div class="uc-public-logistics-visual" aria-label="USCOURIER logistics operations">
-
-      <figure class="uc-logistics-image-main">
+      <div class="uc-logistics-brand-visual">
         <img
-          src=""
-          alt="Professional delivery truck supporting courier logistics operations"
+          src="/assets/brand/icons/uscourier-logo.svg"
+          alt="USCOURIER — Global Logistics"
+          width="520"
+          height="123"
           loading="eager"
           decoding="async"
         >
-
-        <figcaption class="uc-logistics-image-overlay">
-          <strong>Reliable delivery operations</strong>
-          <span>Road, freight and logistics coordination.</span>
-        </figcaption>
-      </figure>
-
-      <div class="uc-logistics-image-cards">
-
-        <figure class="uc-logistics-image-card">
-          <img
-            src=""
-            alt="Logistics staff working with cargo shipments"
-            loading="lazy"
-            decoding="async"
-          >
-          <figcaption>Professional logistics teams</figcaption>
-        </figure>
-
-        <figure class="uc-logistics-image-card">
-          <img
-            src=""
-            alt="Cargo aircraft supporting international freight logistics"
-            loading="lazy"
-            decoding="async"
-          >
-          <figcaption>Air freight connectivity</figcaption>
-        </figure>
-
+        <div class="uc-logistics-route">
+          <span>SHIPMENT</span>
+          <span class="route-line"></span>
+          <span>IN TRANSIT</span>
+          <span class="route-line"></span>
+          <span>DELIVERY</span>
+        </div>
       </div>
     </div>
 
@@ -325,130 +304,11 @@
 
     <!-- View: Home -->
     <section id="view-home" class="public-home">
-      <div class="public-hero">
-        <div class="public-hero-grid"></div>
-        <div class="public-hero-glow public-hero-glow-one"></div>
-        <div class="public-hero-glow public-hero-glow-two"></div>
-
-        <div class="public-hero-content container">
-          <div class="public-hero-copy">
-            <div class="public-eyebrow">
-              <span class="public-live-dot"></span>
-              GLOBAL COURIER & LOGISTICS
-            </div>
-
-            <h1>
-              Move what matters.
-              <span>Track every mile.</span>
-            </h1>
-
-            <p>
-              Reliable parcel and freight logistics with a clear,
-              professional tracking experience from dispatch to delivery.
-            </p>
-
-            <div class="public-hero-actions">
-              <button
-                type="button"
-                class="btn-gold public-primary-action"
-                onclick="showSection('tracking')"
-              >
-                <span class="icon icon-search"></span>
-                Track a Shipment
-              </button>
-
-              <button
-                type="button"
-                class="btn-outline public-secondary-action"
-                onclick="showSection('services')"
-              >
-                Explore Services
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-
-            <div class="public-hero-trust">
-              <span><span class="icon icon-check"></span> Secure waybill lookup</span>
-              <span><span class="icon icon-check"></span> QR-enabled tracking</span>
-              <span><span class="icon icon-check"></span> Shipment event history</span>
-            </div>
-          </div>
-
-          <div class="public-hero-console">
-            <div class="public-console-top">
-              <div>
-                <span class="public-console-kicker">SHIPMENT CONTROL</span>
-                <strong>Track your parcel</strong>
-              </div>
-              <span class="public-console-status">
-                <span class="public-live-dot"></span>
-                ONLINE
-              </span>
-            </div>
-
-            <form
-              class="public-track-form"
-              onsubmit="handleTrackSubmit(event, 'home-tracking-input')"
-            >
-              <label for="home-tracking-input">
-                Tracking / Waybill Number
-              </label>
-
-              <div class="public-track-input">
-                <span class="icon icon-search"></span>
-                <input
-                  type="text"
-                  id="home-tracking-input"
-                  class="form-control"
-                  placeholder="Enter your tracking number"
-                  autocomplete="off"
-                  required
-                />
-              </div>
-
-              <div class="public-track-buttons">
-                <button type="submit" class="btn-gold">
-                  Track Shipment
-                  <span aria-hidden="true">→</span>
-                </button>
-
-                <button
-                  type="button"
-                  onclick="openQrScannerModal('home-tracking-input')"
-                  class="btn-outline"
-                >
-                  <span class="icon icon-qr"></span>
-                  Scan QR
-                </button>
-              </div>
-            </form>
-
-            <div class="public-console-foot">
-              <span>Real shipment records</span>
-              <span>•</span>
-              <span>Secure lookup</span>
-              <span>•</span>
-              <span>Instant status view</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="container public-home-body">
         <div class="public-stat-strip">
           <div class="public-stat">
             <strong>24<span>/7</span></strong>
             <small>Tracking access</small>
-          </div>
-
-          <div class="public-stat">
-            <strong>140<span>+</span></strong>
-            <small>Gateway capability</small>
-          </div>
-
-          <div class="public-stat">
-            <strong>99<span>.8%</span></strong>
-            <small>Illustrative service target</small>
           </div>
 
           <div class="public-stat">
