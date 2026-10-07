@@ -199,6 +199,35 @@
 </head>
 <body>
 
+  <!-- Navigation -->
+  <header>
+    <a onclick="showSection('home')" class="logo-brand uc-brand uc-brand--public">
+      <span class="uc-brand-mark">
+        <img
+          src="/assets/brand/icons/uscourier-mark.svg"
+          alt="USCOURIER"
+          width="42"
+          height="42"
+          loading="eager"
+        >
+      </span>
+      <span class="uc-brand-copy">
+        <span class="uc-brand-name">US COURIER</span>
+        <small>GLOBAL LOGISTICS</small>
+      </span>
+    </a>
+    <nav>
+      <ul>
+        <li><a onclick="showSection('home')" id="nav-home" class="active">Home</a></li>
+        <li><a onclick="showSection('tracking')" id="nav-tracking">Track Parcel</a></li>
+        <li><a onclick="showSection('services')" id="nav-services">Services</a></li>
+        <li><a onclick="showSection('contact')" id="nav-contact">Contact Us</a></li>
+      </ul>
+    </nav>
+  </header>
+
+
+
 <section class="uc-public-logistics-hero" aria-labelledby="uc-logistics-hero-title">
   <div class="uc-public-logistics-hero__inner">
 
@@ -230,14 +259,18 @@
 
     <div class="uc-public-logistics-visual" aria-label="USCOURIER logistics operations">
       <div class="uc-logistics-brand-visual">
-        <img
-          src="/assets/brand/icons/uscourier-logo.svg"
-          alt="USCOURIER — Global Logistics"
-          width="520"
-          height="123"
-          loading="eager"
-          decoding="async"
-        >
+        <div class="uc-logistics-brand-visual__mark">
+          <img
+            src="/assets/brand/icons/uscourier-mark.svg"
+            alt="USCOURIER"
+            width="76"
+            height="76"
+            loading="eager"
+            decoding="async"
+          >
+        </div>
+        <div class="uc-logistics-brand-visual__name">US COURIER</div>
+        <div class="uc-logistics-brand-visual__descriptor">GLOBAL LOGISTICS</div>
         <div class="uc-logistics-route">
           <span>SHIPMENT</span>
           <span class="route-line"></span>
@@ -250,54 +283,6 @@
 
   </div>
 </section>
-
-<section class="uc-logistics-trust-strip" aria-label="USCOURIER capabilities">
-
-  <div class="uc-logistics-trust-item">
-    <strong>Shipment visibility</strong>
-    <span>Track important delivery milestones and shipment activity.</span>
-  </div>
-
-  <div class="uc-logistics-trust-item">
-    <strong>Professional operations</strong>
-    <span>Coordinated logistics support from pickup through delivery.</span>
-  </div>
-
-  <div class="uc-logistics-trust-item">
-    <strong>Road &amp; air logistics</strong>
-    <span>Courier and freight movement designed around your shipment.</span>
-  </div>
-
-</section>
-
-
-
-  <!-- Navigation -->
-  <header>
-    <a onclick="showSection('home')" class="logo-brand uc-brand uc-brand--public">
-      <span class="uc-brand-mark">
-        <img
-          src="/assets/brand/icons/uscourier-mark.svg"
-          alt="USCOURIER"
-          width="42"
-          height="42"
-          loading="eager"
-        >
-      </span>
-      <span class="uc-brand-copy">
-        <span class="uc-brand-name">US COURIER</span>
-        <small>GLOBAL LOGISTICS</small>
-      </span>
-    </a>
-    <nav>
-      <ul>
-        <li><a onclick="showSection('home')" id="nav-home" class="active">Home</a></li>
-        <li><a onclick="showSection('tracking')" id="nav-tracking">Track Parcel</a></li>
-        <li><a onclick="showSection('services')" id="nav-services">Services</a></li>
-        <li><a onclick="showSection('contact')" id="nav-contact">Contact Us</a></li>
-      </ul>
-    </nav>
-  </header>
 
   <!-- Main Viewport -->
   <main id="app-viewport">

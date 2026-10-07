@@ -5807,3 +5807,304 @@ body a:focus {
 .in-transit {
   color: #0284C7 !important;
 }
+
+
+/* ============================================================
+   USCOURIER PUBLIC PORTAL + MAIL LOGIN FINAL UI
+   Unified with the authoritative USCOURIER master design system.
+   ============================================================ */
+
+body {
+  font-family: var(--uc-font) !important;
+  font-size: 14px !important;
+  color: #000000 !important;
+  background: var(--uc-white) !important;
+}
+
+/* ---------------- PUBLIC PORTAL ---------------- */
+
+.uc-public-logistics-hero {
+  background:
+    linear-gradient(
+      135deg,
+      var(--uc-primary-soft),
+      var(--uc-white) 62%,
+      var(--uc-gold-soft)
+    ) !important;
+}
+
+.uc-public-logistics-hero__inner {
+  max-width: 1180px;
+  padding: 56px 24px 48px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, .72fr);
+  gap: 40px;
+}
+
+.uc-public-logistics-copy h1,
+.uc-public-logistics-copy p,
+.public-section-heading h2,
+.public-section-heading p,
+.public-feature-card h3,
+.public-feature-card p,
+.public-visibility-copy h2,
+.public-visibility-copy p,
+.uc-logistics-trust-item strong,
+.uc-logistics-trust-item span {
+  font-family: var(--uc-font) !important;
+}
+
+.uc-public-logistics-copy h1,
+.public-section-heading h2,
+.public-feature-card h3,
+.public-visibility-copy h2 {
+  color: #000000 !important;
+}
+
+.uc-public-logistics-copy p,
+.public-section-heading p,
+.public-feature-card p,
+.public-visibility-copy p,
+.uc-logistics-trust-item span,
+.public-stat small {
+  color: #000000 !important;
+}
+
+.uc-logistics-brand-visual {
+  display: flex;
+  min-height: 310px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 34px;
+  background: var(--uc-white);
+  border: 1px solid var(--uc-border);
+  border-radius: var(--uc-radius-xl);
+  box-shadow: var(--uc-shadow-lg);
+  text-align: center;
+}
+
+.uc-logistics-brand-visual__mark img {
+  display: block;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+}
+
+.uc-logistics-brand-visual__name {
+  margin-top: 14px;
+  color: #000000;
+  font-family: var(--uc-font);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.uc-logistics-brand-visual__descriptor {
+  margin-top: 5px;
+  color: var(--uc-primary-deep);
+  font-family: var(--uc-font);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.uc-logistics-route {
+  width: 100%;
+  margin-top: 30px;
+}
+
+.uc-logistics-route span {
+  color: #000000 !important;
+  font-size: 14px !important;
+  font-weight: 800;
+}
+
+.uc-logistics-route .route-line {
+  background: var(--uc-primary);
+}
+
+.uc-logistics-trust-strip {
+  order: 3;
+}
+
+.public-home {
+  order: 4;
+}
+
+.uc-logistics-trust-item,
+.public-feature-card {
+  background: var(--uc-white) !important;
+  border-color: var(--uc-border) !important;
+}
+
+.public-feature-icon,
+.public-feature-number,
+.public-eyebrow,
+.public-text-action {
+  color: var(--uc-primary-deep) !important;
+}
+
+.public-visibility-panel {
+  border-color: var(--uc-border-brand) !important;
+  background:
+    linear-gradient(
+      135deg,
+      var(--uc-primary-soft),
+      var(--uc-white)
+    ) !important;
+}
+
+.public-visibility-panel button {
+  background: var(--uc-gold) !important;
+  color: #000000 !important;
+  border-color: var(--uc-gold) !important;
+}
+
+/* ---------------- MAIL LOGIN ---------------- */
+
+.mail-login {
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--uc-primary-soft),
+      var(--uc-white) 60%,
+      var(--uc-gold-soft)
+    ) !important;
+  color: #000000 !important;
+  font-family: var(--uc-font) !important;
+}
+
+.mail-login-card {
+  width: min(100%, 480px);
+  padding: 34px;
+  background: var(--uc-white) !important;
+  border: 1px solid var(--uc-border);
+  border-top: 4px solid var(--uc-primary);
+  border-radius: var(--uc-radius-xl);
+  box-shadow: var(--uc-shadow-lg);
+}
+
+.mail-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 26px;
+  color: #000000 !important;
+}
+
+.mail-login-brand .mail-brand-mark {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--uc-primary-light);
+}
+
+.mail-login-brand .mail-brand-mark img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.mail-login-brand strong {
+  color: #000000 !important;
+  font-size: 18px !important;
+  font-weight: 900;
+}
+
+.mail-login-brand > span:last-child {
+  color: var(--uc-primary-deep) !important;
+  font-size: 14px !important;
+  font-weight: 800;
+}
+
+.mail-login-eyebrow {
+  color: var(--uc-primary-deep) !important;
+  font-size: 14px !important;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.mail-login-heading h1 {
+  color: #000000 !important;
+  font-family: var(--uc-font) !important;
+  font-size: 28px !important;
+  line-height: 1.2;
+}
+
+.mail-login-heading p:last-child,
+.mail-login-field > span,
+.mail-login-status,
+.mail-login-security {
+  color: #000000 !important;
+  font-size: 14px !important;
+}
+
+.mail-login-field input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--uc-border-strong);
+  border-radius: var(--uc-radius-md);
+  background: var(--uc-white) !important;
+  color: #000000 !important;
+  font-family: var(--uc-font) !important;
+  font-size: 14px !important;
+}
+
+.mail-login-field input::placeholder {
+  color: #000000 !important;
+  opacity: .6;
+}
+
+.mail-login-field input:focus {
+  border-color: var(--uc-primary);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, .18);
+}
+
+.mail-login-password button {
+  color: var(--uc-primary-deep) !important;
+  font-size: 14px !important;
+}
+
+.mail-login-submit {
+  min-height: 44px;
+  margin-top: 6px;
+  border: 1px solid var(--uc-primary-dark);
+  border-radius: var(--uc-radius-md);
+  background: var(--uc-primary-dark) !important;
+  color: #FFFFFF !important;
+  font-family: var(--uc-font) !important;
+  font-size: 14px !important;
+  font-weight: 800;
+}
+
+.mail-login-submit:hover {
+  background: var(--uc-primary-deep) !important;
+}
+
+.mail-login-security {
+  border-top: 1px solid var(--uc-border);
+}
+
+@media (max-width: 760px) {
+  .uc-public-logistics-hero__inner {
+    grid-template-columns: 1fr;
+    padding: 40px 18px 32px;
+  }
+
+  .uc-logistics-brand-visual {
+    min-height: 260px;
+  }
+
+  .mail-login {
+    padding: 16px;
+  }
+
+  .mail-login-card {
+    padding: 26px 20px;
+  }
+}
