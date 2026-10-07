@@ -93,7 +93,7 @@
 
 html {
   font-family: var(--uc-font);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--uc-text);
   background: var(--uc-white);
   -webkit-text-size-adjust: 100%;
@@ -102,7 +102,7 @@ html {
 body {
   margin: 0;
   font-family: var(--uc-font);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--uc-text);
   background: var(--uc-white);
@@ -198,7 +198,7 @@ a:hover {
 .uc-brand-copy small {
   margin-top: 4px;
   color: var(--uc-text-muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: .08em;
   white-space: nowrap;
@@ -219,7 +219,7 @@ a:hover {
   padding: 9px 16px;
   border-radius: var(--uc-radius-md);
   font-family: var(--uc-font);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
   transition:
@@ -308,7 +308,7 @@ a:hover {
   min-height: 26px;
   padding: 4px 9px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.1;
 }
@@ -378,7 +378,7 @@ a:hover {
 .uc-table th {
   color: var(--uc-text-secondary);
   background: var(--uc-surface);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   text-align: left;
 }
@@ -437,7 +437,7 @@ a:hover {
   display: inline-flex;
   margin-bottom: 12px;
   color: var(--uc-primary-deep);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: .09em;
   text-transform: uppercase;
@@ -593,7 +593,7 @@ a:hover {
   display: block;
   margin-top: 3px;
   color: var(--uc-text-muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .tracking-status,
@@ -647,7 +647,7 @@ a:hover {
 @media (max-width: 640px) {
   html,
   body {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .uc-brand-bar {
@@ -2607,7 +2607,7 @@ body.admin-portal-active {
 
 .admin-nav-section-label {
   color: var(--admin-text-muted) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
   letter-spacing: .12em !important;
 }
@@ -2620,7 +2620,7 @@ body.admin-portal-active {
   background: transparent !important;
   border: 1px solid transparent !important;
   font-family: var(--admin-font) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 700 !important;
 }
 
@@ -2846,7 +2846,7 @@ button.btn {
   min-height: 40px;
   border-radius: 8px !important;
   font-family: var(--admin-font) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
 }
 
@@ -2906,7 +2906,7 @@ input,
 textarea,
 select {
   font-family: var(--admin-font) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   color: var(--admin-text) !important;
   background: var(--admin-white) !important;
   border-color: var(--admin-border-strong) !important;
@@ -2970,7 +2970,7 @@ tbody tr:hover {
 .admin-status-badge,
 .admin-tracking-gps-badge {
   font-family: var(--admin-font) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 800 !important;
 }
 
@@ -3684,7 +3684,7 @@ body {
 }
 
 .nav-item b {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Main workspace */
@@ -3706,7 +3706,7 @@ body {
 .subtitle {
   margin-top: 7px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Toolbar */
@@ -3776,7 +3776,7 @@ body {
 
 .list-head span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .message-list {
@@ -3794,7 +3794,7 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Reader */
@@ -3843,7 +3843,7 @@ body {
 
 .reader-empty p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Compose */
@@ -3955,7 +3955,7 @@ body {
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -3987,7 +3987,7 @@ body {
 
 .empty p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Base mobile sizing; drawer behavior is defined later. */
@@ -4250,7 +4250,7 @@ body {
 
 .reader-heading span{
   color:var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .reader-actions{
@@ -4295,7 +4295,7 @@ body {
 .thread-sender{
   min-width:0;
   color:var(--text);
-  font-size:13px;
+  font-size:14px;
   font-weight:700;
   overflow-wrap:anywhere;
 }
@@ -4303,13 +4303,13 @@ body {
 .thread-meta time{
   flex-shrink:0;
   color:var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .thread-recipients{
   margin-bottom:14px;
   color:var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   overflow-wrap:anywhere;
 }
 
@@ -4342,7 +4342,7 @@ body {
   border-radius:7px;
   background:var(--surface-alt);
   color:#46546a;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 @media(max-width:760px){
@@ -4434,7 +4434,7 @@ body {
   border-radius: 7px;
   background: var(--surface-alt);
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -4453,12 +4453,12 @@ body {
 
 .message-sender {
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .message-subject {
   color: #4c5a6e;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -4469,7 +4469,7 @@ body {
 
 .message-date {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
   text-align: right;
 }
@@ -4631,7 +4631,7 @@ body {
   .message-action {
     width: 26px;
     height: 26px;
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 
@@ -4666,7 +4666,7 @@ body {
   color: #617087;
   padding: 5px 6px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -4705,7 +4705,7 @@ body {
   border: 0;
   background: transparent;
   color: var(--accent);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -4931,7 +4931,7 @@ body {
   padding: 4px 9px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -4968,7 +4968,7 @@ body {
   .message-delivery-status {
     min-height: 26px;
     padding: 4px 8px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .message-retry-button {
@@ -5445,3 +5445,223 @@ textarea:focus-visible,
    ============================================================ */
 
 /* ===== END MERGED MAIL APPLICATION RULES ===== */
+
+
+/* USCOURIER GLOBAL TYPOGRAPHY OVERRIDE */
+html,
+body {
+  font-family: Tahoma, Arial, sans-serif !important;
+  font-size: 14px !important;
+  color: #000000 !important;
+}
+
+body *,
+input,
+textarea,
+select,
+button,
+option {
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+body,
+p,
+span,
+div,
+label,
+li,
+td,
+th,
+small,
+caption,
+input,
+textarea,
+select,
+button,
+.placeholder,
+.form-text,
+.help-text,
+.muted,
+.description {
+  font-size: 14px;
+  color: #000000;
+}
+
+::placeholder {
+  color: #000000 !important;
+  opacity: 0.72;
+}
+
+input,
+textarea,
+select {
+  color: #000000 !important;
+}
+
+button {
+  color: #000000;
+}
+
+a {
+  color: #0284C7;
+}
+
+a:hover {
+  color: #0369A1;
+}
+
+/* Preserve white text where the branded component requires it */
+.uc-btn-primary,
+.uc-btn-primary *,
+button.uc-btn-primary,
+button.uc-btn-primary *,
+.uc-brand-button,
+.uc-brand-button * {
+  color: #FFFFFF !important;
+}
+
+
+/* USCOURIER GLOBAL TYPOGRAPHY OVERRIDE */
+html,
+body {
+  font-family: Tahoma, Arial, sans-serif !important;
+  font-size: 14px !important;
+  color: #000000 !important;
+}
+
+body *,
+input,
+textarea,
+select,
+button,
+option {
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+body,
+p,
+span,
+div,
+label,
+li,
+td,
+th,
+small,
+caption,
+input,
+textarea,
+select,
+button,
+.placeholder,
+.form-text,
+.help-text,
+.muted,
+.description {
+  font-size: 14px;
+  color: #000000;
+}
+
+::placeholder {
+  color: #000000 !important;
+  opacity: 0.72;
+}
+
+input,
+textarea,
+select {
+  color: #000000 !important;
+}
+
+button {
+  color: #000000;
+}
+
+a {
+  color: #0284C7;
+}
+
+a:hover {
+  color: #0369A1;
+}
+
+/* Preserve white text where the branded component requires it */
+.uc-btn-primary,
+.uc-btn-primary *,
+button.uc-btn-primary,
+button.uc-btn-primary *,
+.uc-brand-button,
+.uc-brand-button * {
+  color: #FFFFFF !important;
+}
+
+/* USCOURIER GLOBAL TYPOGRAPHY — 14px TAHOMA / BLACK */
+html,
+body {
+  font-family: Tahoma, Arial, sans-serif !important;
+  font-size: 14px !important;
+  color: #000000 !important;
+}
+
+body *,
+input,
+textarea,
+select,
+button,
+option {
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+body,
+p,
+span,
+div,
+label,
+li,
+td,
+th,
+caption,
+input,
+textarea,
+select,
+button,
+.placeholder,
+.form-text,
+.help-text,
+.description {
+  color: #000000;
+}
+
+input,
+textarea,
+select {
+  color: #000000 !important;
+  font-size: 14px !important;
+}
+
+::placeholder {
+  color: #000000 !important;
+  opacity: 0.72;
+}
+
+button {
+  font-size: 14px;
+}
+
+/* Preserve white text on branded blue buttons */
+.uc-btn-primary,
+.uc-btn-primary *,
+button.uc-btn-primary,
+button.uc-btn-primary *,
+.uc-brand-button,
+.uc-brand-button * {
+  color: #FFFFFF !important;
+}
+
+/* Keep functional link color */
+a {
+  color: #0284C7;
+}
+
+a:hover {
+  color: #0369A1;
+}
