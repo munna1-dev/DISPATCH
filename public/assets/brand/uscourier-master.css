@@ -5665,3 +5665,145 @@ a {
 a:hover {
   color: #0369A1;
 }
+
+/* ============================================================
+   USCOURIER — FINAL GLOBAL TYPOGRAPHY STANDARD
+   Tahoma / 14px / readable black text
+   ============================================================ */
+
+html,
+body {
+  font-family: Tahoma, Arial, sans-serif !important;
+  font-size: 14px !important;
+  color: #000000 !important;
+}
+
+body,
+body * {
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+body p,
+body span,
+body div,
+body label,
+body li,
+body td,
+body th,
+body small,
+body caption,
+body input,
+body textarea,
+body select,
+body option,
+body button {
+  font-family: Tahoma, Arial, sans-serif !important;
+  font-size: 14px !important;
+}
+
+/* Normal text is black */
+body p,
+body span,
+body div,
+body label,
+body li,
+body td,
+body th,
+body small,
+body caption {
+  color: #000000;
+}
+
+/* Form text */
+body input,
+body textarea,
+body select,
+body option {
+  color: #000000 !important;
+  background-color: #FFFFFF;
+}
+
+/* Placeholder text */
+body input::placeholder,
+body textarea::placeholder {
+  color: #000000 !important;
+  opacity: .70;
+}
+
+/* Links retain the USCOURIER blue */
+body a {
+  color: #0284C7;
+}
+
+/* Primary branded buttons retain white text */
+body .uc-btn-primary,
+body .uc-btn-primary *,
+body .uc-brand-button,
+body .uc-brand-button *,
+body .btn-primary,
+body .btn-primary * {
+  color: #FFFFFF !important;
+}
+
+/* Gold buttons remain readable */
+body .btn-gold,
+body .btn-gold * {
+  color: #000000 !important;
+}
+
+/* Keep headings strong and readable */
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6 {
+  font-family: Tahoma, Arial, sans-serif !important;
+  color: #000000;
+}
+
+/* Do not allow tiny captions/labels */
+body [style*="font-size: 13px"],
+body [style*="font-size:13px"],
+body [style*="font-size: 12px"],
+body [style*="font-size:12px"],
+body [style*="font-size: 11px"],
+body [style*="font-size:11px"] {
+  font-size: 14px !important;
+}
+
+/* Accessible readable focus */
+body input:focus,
+body textarea:focus,
+body select:focus,
+body button:focus,
+body a:focus {
+  outline: 2px solid #38BDF8;
+  outline-offset: 2px;
+}
+
+/* Preserve functional status colors */
+.status-success,
+.status-delivered,
+.delivered {
+  color: #166534 !important;
+}
+
+.status-error,
+.error,
+.danger {
+  color: #B91C1C !important;
+}
+
+.status-delayed,
+.delayed,
+.warning {
+  color: #A67C00 !important;
+}
+
+.status-pending,
+.pending,
+.status-transit,
+.in-transit {
+  color: #0284C7 !important;
+}
